@@ -168,14 +168,14 @@ def create_image(image_data: Dict[str, Any]) -> Dict[str, Any]:
     
     # 准备JSON字段
     if 'tags' in image_data and image_data['tags']:
-        tags_json = json.dumps(image_data['tags'])
+        tags_json = json.dumps(image_data['tags'], ensure_ascii=False)
     else:
-        tags_json = json.dumps([])
+        tags_json = json.dumps([], ensure_ascii=False)
     
     if 'metadata' in image_data and image_data['metadata']:
-        metadata_json = json.dumps(image_data['metadata'])
+        metadata_json = json.dumps(image_data['metadata'], ensure_ascii=False)
     else:
-        metadata_json = json.dumps({})
+        metadata_json = json.dumps({}, ensure_ascii=False)
     
     cursor.execute("""
     INSERT INTO images (uuid, filename, filepath, title, description, file_size, file_type,
@@ -248,12 +248,12 @@ def update_image(uuid: str, update_data: Dict[str, Any]) -> Optional[Dict[str, A
     # 处理标签
     if 'tags' in update_data and update_data['tags'] is not None:
         update_fields.append("tags = ?")
-        params.append(json.dumps(update_data['tags']))
+        params.append(json.dumps(update_data['tags'], ensure_ascii=False))
     
     # 处理元数据
     if 'metadata' in update_data and update_data['metadata'] is not None:
         update_fields.append("metadata = ?")
-        params.append(json.dumps(update_data['metadata']))
+        params.append(json.dumps(update_data['metadata'], ensure_ascii=False))
     
     # 更新时间戳
     update_fields.append("updated_at = ?")
