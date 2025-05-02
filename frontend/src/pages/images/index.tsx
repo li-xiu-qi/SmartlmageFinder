@@ -52,6 +52,7 @@ const ImagesPage: React.FC = () => {
   const [selectedImage, setSelectedImage] = useState<ImageDetail | null>(null);
   const [detailVisible, setDetailVisible] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [gridColumns, setGridColumns] = useState<number>(2); // 新增：每行图片数量设置
 
   // 筛选条件
   const [form] = Form.useForm();
@@ -200,6 +201,18 @@ const ImagesPage: React.FC = () => {
     );
   };
 
+  // 处理标签点击
+  const handleTagClick = (tag: string) => {
+    // 设置筛选条件
+    const updatedTags = [...(filterValues.tags || [])];
+    if (!updatedTags.includes(tag)) {
+      updatedTags.push(tag);
+      form.setFieldsValue({ tags: updatedTags });
+      setFilterValues(prev => ({ ...prev, tags: updatedTags }));
+      setPage(1);
+    }
+  };
+
   // 渲染筛选表单
   const renderFilterForm = () => (
     <Card style={{ marginBottom: 16 }}>
@@ -279,6 +292,14 @@ const ImagesPage: React.FC = () => {
           <Radio.Button value="grid"><AppstoreOutlined /> 网格</Radio.Button>
           <Radio.Button value="list"><BarsOutlined /> 列表</Radio.Button>
         </Radio.Group>
+        {viewMode === 'grid' && (
+          <Select value={gridColumns} onChange={setGridColumns} style={{ width: 120 }}>
+            <Option value={1}>1 列</Option>
+            <Option value={2}>2 列</Option>
+            <Option value={3}>3 列</Option>
+            <Option value={4}>4 列</Option>
+          </Select>
+        )}
       </Space>
     </div>
   );
@@ -291,46 +312,16 @@ const ImagesPage: React.FC = () => {
 
     if (viewMode === 'grid') {
       return (
-        <Row gutter={[16, 16]}>
+        <Row gutter={[24, 24]}>
           {images.map(image => (
-            <Col xs={12} sm={8} md={6} lg={4} key={image.uuid}>
+            <Col xs={24} sm={12} md={12} lg={24 / gridColumns} xl={24 / gridColumns} key={image.uuid}>
               <div className="image-card-wrapper">
                 <ImageCard 
                   image={image} 
                   onClick={handleImageClick} 
-                  showTags={true} 
+                  showTags={true}
+                  onTagClick={handleTagClick}
                 />
-                <div className="image-preview-button">
-                  <Tooltip title="预览大图">
-                    <Button 
-                      type="primary" 
-                      shape="circle" 
-                      size="small" 
-                      icon={<EyeOutlined />} 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // 创建一个临时节点用于预览
-                        const previewImage = document.createElement('div');
-                        document.body.appendChild(previewImage);
-                        const root = React.createRoot(previewImage);
-                        root.render(
-                          <Image 
-                            src={getImageUrl(image.filepath)}
-                            preview={{
-                              visible: true,
-                              onVisibleChange: (visible) => {
-                                if (!visible) {
-                                  document.body.removeChild(previewImage);
-                                }
-                              },
-                            }}
-                            style={{ display: 'none' }}
-                          />
-                        );
-                      }}
-                    />
-                  </Tooltip>
-                </div>
               </div>
             </Col>
           ))}
@@ -362,7 +353,13 @@ const ImagesPage: React.FC = () => {
                   </p>
                   <div>
                     {image.tags.map(tag => (
-                      <Tag key={tag}>{tag}</Tag>
+                      <Tag 
+                        key={tag} 
+                        onClick={() => handleTagClick(tag)}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        {tag}
+                      </Tag>
                     ))}
                   </div>
                 </div>

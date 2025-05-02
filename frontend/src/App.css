@@ -1,8 +1,22 @@
 #root {
-  max-width: 1280px;
+  max-width: 1400px;
+  width: 100%;
   margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  padding: 1rem;
+  text-align: left;
+}
+
+/* 响应式布局调整 */
+@media (max-width: 768px) {
+  #root {
+    padding: 0.75rem;
+  }
+}
+
+@media (min-width: 1200px) {
+  #root {
+    padding: 1.5rem;
+  }
 }
 
 .logo {

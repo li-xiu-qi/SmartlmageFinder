@@ -20,6 +20,7 @@
     font-weight: 600;
     font-size: 18px;
     line-height: 64px;
+    white-space: nowrap;
   }
 
   .trigger {
@@ -36,6 +37,7 @@
 .header-search {
   flex: 1;
   max-width: 500px;
+  min-width: 200px;
 }
 
 .header-right {
@@ -47,4 +49,54 @@
 .system-status {
   display: flex;
   gap: 16px;
+}
+
+/* 响应式布局调整 */
+@media (max-width: 900px) {
+  .system-status {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-header {
+    padding: 0 12px;
+  }
+  
+  .header-search {
+    max-width: 300px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1400px) {
+  .main-header {
+    padding: 0 16px;
+  }
+  
+  .header-search {
+    max-width: 400px;
+  }
+}
+
+/* 内容区域的响应式调整 */
+.ant-layout-content {
+  transition: padding 0.3s ease;
+}
+
+@media (max-width: 900px) {
+  .ant-layout-content {
+    padding: 16px !important;
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1400px) {
+  .ant-layout-content {
+    padding: 20px !important;
+  }
+}
+
+@media (min-width: 1401px) {
+  .ant-layout-content {
+    padding: 24px !important;
+  }
 }

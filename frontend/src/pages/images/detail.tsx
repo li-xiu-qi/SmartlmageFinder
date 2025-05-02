@@ -408,6 +408,7 @@ const ImageDetailView: React.FC<ImageDetailViewProps> = ({ image, onUpdate, onDe
                     </div>
                   }
                   size="small"
+                  styles={{ body: { padding: '12px' } }}
                 >
                   <Card.Meta
                     title={img.title}
