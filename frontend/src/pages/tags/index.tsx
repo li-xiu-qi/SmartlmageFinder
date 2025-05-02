@@ -28,6 +28,19 @@ import { Tag as TagType } from '@/types';
 
 const { Title, Text } = Typography;
 
+// 解码可能的Unicode字符串
+const decodeUnicode = (str: string): string => {
+  try {
+    // 尝试解码Unicode转义序列（如\u4f60\u597d）
+    return str.replace(/\\u[\dA-F]{4}/gi, match => 
+      String.fromCharCode(parseInt(match.replace(/\\u/g, ''), 16))
+    );
+  } catch (error) {
+    console.error('Unicode解码失败:', error);
+    return str; // 如果解码失败，返回原始字符串
+  }
+};
+
 const TagsPage: React.FC = () => {
   const [tags, setTags] = useState<TagType[]>([]);
   const [loading, setLoading] = useState(false);
@@ -69,7 +82,7 @@ const TagsPage: React.FC = () => {
       render: (text: string) => (
         <Link to={`/images?tags=${text}`}>
           <Tag color="blue" style={{ fontSize: '14px', padding: '4px 8px' }}>
-            {text}
+            {decodeUnicode(text)}
           </Tag>
         </Link>
       ),
@@ -149,7 +162,7 @@ const TagsPage: React.FC = () => {
                           cursor: 'pointer'
                         }}
                       >
-                        {tag.name} ({tag.count})
+                        {decodeUnicode(tag.name)} ({tag.count})
                       </Tag>
                     </Link>
                   ))}
