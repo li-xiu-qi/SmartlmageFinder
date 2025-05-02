@@ -14,26 +14,39 @@ VECTOR_DIM = 1024
 
 
 # 全局变量
-text_index = None  # 文本向量索引
+title_index = None  # 标题向量索引
+description_index = None  # 描述向量索引
 image_index = None  # 图像向量索引
 uuid_map = {}  # UUID到索引ID的映射
 
 
 def init_indices():
     """初始化向量索引"""
-    global text_index, image_index, uuid_map
+    global title_index, description_index, image_index, uuid_map
     
-    # 创建或加载文本向量索引
-    if os.path.exists(settings.TEXT_INDEX_PATH):
+    # 创建或加载标题向量索引
+    if os.path.exists(settings.TITLE_INDEX_PATH):
         try:
-            text_index = faiss.read_index(settings.TEXT_INDEX_PATH)
-            print(f"已加载文本向量索引，包含{text_index.ntotal}个向量")
+            title_index = faiss.read_index(settings.TITLE_INDEX_PATH)
+            print(f"已加载标题向量索引，包含{title_index.ntotal}个向量")
         except Exception as e:
-            print(f"加载文本向量索引失败: {e}")
-            text_index = faiss.IndexFlatIP(VECTOR_DIM)  # 使用内积相似度
+            print(f"加载标题向量索引失败: {e}")
+            title_index = faiss.IndexFlatIP(VECTOR_DIM)  # 使用内积相似度
     else:
-        text_index = faiss.IndexFlatIP(VECTOR_DIM)
-        print("创建了新的文本向量索引")
+        title_index = faiss.IndexFlatIP(VECTOR_DIM)
+        print("创建了新的标题向量索引")
+    
+    # 创建或加载描述向量索引
+    if os.path.exists(settings.DESCRIPTION_INDEX_PATH):
+        try:
+            description_index = faiss.read_index(settings.DESCRIPTION_INDEX_PATH)
+            print(f"已加载描述向量索引，包含{description_index.ntotal}个向量")
+        except Exception as e:
+            print(f"加载描述向量索引失败: {e}")
+            description_index = faiss.IndexFlatIP(VECTOR_DIM)
+    else:
+        description_index = faiss.IndexFlatIP(VECTOR_DIM)
+        print("创建了新的描述向量索引")
     
     # 创建或加载图像向量索引
     if os.path.exists(settings.IMAGE_INDEX_PATH):

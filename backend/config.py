@@ -13,7 +13,7 @@ def ensure_directories_exist(file_paths=None, dir_paths=None):
     if file_paths:
         for file_path in file_paths:
             dir_name = os.path.dirname(file_path)
-            if dir_name and not os.path.exists(dir_name):
+            if (dir_name and not os.path.exists(dir_name)):
                 os.makedirs(dir_name, exist_ok=True)
                 print(f"已创建目录: {dir_name}")
     
@@ -36,7 +36,8 @@ class Settings(BaseSettings):
     # 向量设置
     # 索引文件路径
     # FAISS索引文件路径
-    TEXT_INDEX_PATH: str = "./data/faiss/text_vectors.faiss"
+    TITLE_INDEX_PATH: str = "./data/faiss/title_vectors.faiss"
+    DESCRIPTION_INDEX_PATH: str = "./data/faiss/description_vectors.faiss"
     IMAGE_INDEX_PATH: str = "./data/faiss/image_vectors.faiss"
     UUID_MAP_PATH: str = "./data/faiss/uuid_map.pickle"
     
@@ -101,7 +102,8 @@ settings: Settings = Settings()
 ensure_directories_exist(
     file_paths=[
         settings.DB_PATH,
-        settings.TEXT_INDEX_PATH, 
+        settings.TITLE_INDEX_PATH,
+        settings.DESCRIPTION_INDEX_PATH, 
         settings.IMAGE_INDEX_PATH,
         settings.UUID_MAP_PATH
     ],

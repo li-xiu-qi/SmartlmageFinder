@@ -28,9 +28,9 @@ async def get_images(
     tag_list = None
     if tags:
         tag_list = [tag.strip() for tag in tags if tag.strip()]
-    print("tags:", tags)
-    print("tags_type:", type(tags))
-    print("tag_list:", tag_list)
+    # print("tags:", tags)
+    # print("tags_type:", type(tags))
+    # print("tag_list:", tag_list)
     # 获取图片列表和总数
     images, total_count = db.get_images(
         page=page,
