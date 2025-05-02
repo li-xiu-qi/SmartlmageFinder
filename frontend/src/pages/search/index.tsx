@@ -24,7 +24,8 @@ import {
   FilterOutlined,
   ReloadOutlined,
   LoadingOutlined,
-  InboxOutlined
+  InboxOutlined,
+  DeleteOutlined
 } from '@ant-design/icons';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import type { UploadFile, UploadProps } from 'antd';
@@ -46,6 +47,13 @@ const searchModes = [
   { value: 'hybrid', label: '混合搜索' }
 ];
 
+// 定义向量类型选项
+const vectorTypes = [
+  { value: 'title', label: '标题向量' },
+  { value: 'description', label: '描述向量' },
+  { value: 'mixed', label: '混合向量' },
+];
+
 const SearchPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -65,13 +73,14 @@ const SearchPage: React.FC = () => {
   useEffect(() => {
     const query = searchParams.get('q');
     const mode = searchParams.get('mode') || 'vector';
+    const vectorType = searchParams.get('vector_type') || 'mixed';
     const tagsParam = searchParams.get('tags');
     
     // 如果URL中有查询参数，设置表单值
     if (query) {
       form.setFieldsValue({ query });
       // 执行搜索
-      handleTextSearch({ query, mode });
+      handleTextSearch({ query, mode, vector_type: vectorType });
     }
     
     if (tagsParam) {
@@ -81,6 +90,10 @@ const SearchPage: React.FC = () => {
     
     if (mode) {
       form.setFieldsValue({ mode });
+    }
+    
+    if (vectorType) {
+      form.setFieldsValue({ vector_type: vectorType });
     }
   }, []);
 
@@ -103,7 +116,7 @@ const SearchPage: React.FC = () => {
   // 执行文本搜索
   const handleTextSearch = async (values: any) => {
     try {
-      const { query, mode, field, tags, date_range } = values;
+      const { query, mode, vector_type, field, tags, date_range } = values;
       
       if (!query || query.trim() === '') {
         message.warning('请输入搜索关键词');
@@ -116,13 +129,13 @@ const SearchPage: React.FC = () => {
       const searchParams: any = {
         q: query,
         mode: mode || 'vector',
-        field: field || 'all',
+        vector_type: vector_type || 'mixed',
         limit: 50,
       };
       
       // 添加标签过滤
       if (tags && tags.length > 0) {
-        searchParams.tags = tags;
+        searchParams.tags = tags.join(',');
       }
       
       // 添加日期范围过滤
@@ -135,7 +148,8 @@ const SearchPage: React.FC = () => {
       setSearchParams({ 
         q: query,
         mode: searchParams.mode,
-        ...(searchParams.tags ? { tags: searchParams.tags.join(',') } : {})
+        vector_type: searchParams.vector_type,
+        ...(searchParams.tags ? { tags: searchParams.tags } : {})
       });
       
       // 调用搜索API
@@ -171,7 +185,7 @@ const SearchPage: React.FC = () => {
       
       // 添加标签过滤
       if (values.tags && values.tags.length > 0) {
-        params.tags = values.tags;
+        params.tags = values.tags.join(',');
       }
       
       // 添加日期范围过滤
@@ -256,7 +270,7 @@ const SearchPage: React.FC = () => {
         onFinish={handleTextSearch}
         initialValues={{
           mode: 'vector',
-          field: 'all',
+          vector_type: 'mixed',
         }}
       >
         <Form.Item name="query">
@@ -288,11 +302,15 @@ const SearchPage: React.FC = () => {
                 </Form.Item>
               </Col>
               <Col xs={24} md={8}>
-                <Form.Item name="field" label="搜索字段">
+                <Form.Item 
+                  name="vector_type" 
+                  label="向量类型"
+                  tooltip="选择用于搜索的向量类型，仅在向量或混合搜索模式下有效"
+                >
                   <Select>
-                    <Option value="all">全部</Option>
-                    <Option value="title">仅标题</Option>
-                    <Option value="description">仅描述</Option>
+                    {vectorTypes.map(type => (
+                      <Option key={type.value} value={type.value}>{type.label}</Option>
+                    ))}
                   </Select>
                 </Form.Item>
               </Col>

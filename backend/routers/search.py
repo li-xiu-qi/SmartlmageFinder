@@ -7,6 +7,7 @@ from datetime import datetime
 import json
 from PIL import Image as PILImage
 from .. import db
+from .. import vector_db
 import tempfile
 import time
 import numpy as np
@@ -35,7 +36,8 @@ else:
 async def text_search(
     q: str = Query(..., description="搜索查询文本"),
     mode: str = Query("hybrid", description="搜索模式: vector、text或hybrid"),
-    limit: int = Query(20, ge=1, le=100, description="返回结果数量"),
+    vector_type: str = Query("mixed", description="向量类型: title、description或mixed"),
+    limit: int = Query(20, ge=1, le=1000, description="返回结果数量"),
     start_date: Optional[str] = Query(None, description="开始日期过滤"),
     end_date: Optional[str] = Query(None, description="结束日期过滤"),
     tags: Optional[str] = Query(None, description="标签过滤，逗号分隔")
@@ -60,44 +62,42 @@ async def text_search(
             tags=tag_list
         )
     elif mode == "vector" and vector_search_available:
-        # 使用纯向量搜索 (暂未实现，后续版本添加)
-        # 先通过文本搜索获取结果
-        results = db.search_by_text(
-            query=q,
-            mode="text",
-            limit=limit*2,  # 获取更多结果以便后续排序
-            start_date=start_date,
-            end_date=end_date,
-            tags=tag_list
-        )
+        # 使用纯向量搜索
+        # 根据向量类型选择不同的搜索方法
+        if vector_type == "title":
+            vector_results = vector_db.search_by_title(q, limit=limit*2)
+        elif vector_type == "description":
+            vector_results = vector_db.search_by_description(q, limit=limit*2)
+        else:  # mixed - 默认或不识别的类型
+            vector_results = vector_db.search_by_text(q, limit=limit*2)
+            
+        # 获取向量搜索结果的详细信息并应用过滤
+        results = []
+        for vec_result in vector_results:
+            # 获取图片详细信息
+            img = db.get_image_by_uuid(vec_result["uuid"])
+            if img:
+                # 应用过滤条件
+                include = True
+                # 日期过滤
+                if start_date and img["created_at"] < start_date:
+                    include = False
+                if end_date and img["created_at"] > end_date:
+                    include = False
+                # 标签过滤
+                if tag_list and not any(tag in img["tags"] for tag in tag_list):
+                    include = False
+                    
+                if include:
+                    # 添加相似度得分
+                    img["score"] = float(vec_result["similarity"])
+                    results.append(img)
         
-        # 获取查询文本的向量表示
-        try:
-            query_vector = encode_text(q)
-            
-            # 为结果图片生成向量并计算相似度
-            # 注：实际实现应该在数据库中存储向量，这里仅作为示例
-            for result in results:
-                # 在实际实现中，这些向量应从数据库获取而不是即时计算
-                if result['title']:
-                    # 简单计算基于标题的相似度
-                    title_vector = encode_text(result['title'])
-                    # 计算余弦相似度
-                    similarity = np.dot(query_vector, title_vector) / (np.linalg.norm(query_vector) * np.linalg.norm(title_vector))
-                    result['score'] = max(similarity, result['score'])
-            
-            # 按相似度排序
-            results.sort(key=lambda x: x['score'], reverse=True)
-            # 限制结果数量
-            results = results[:limit]
-            
-        except Exception as e:
-            print(f"向量搜索出错: {e}")
-            # 如果向量搜索失败，回退到文本搜索
-            pass
+        # 限制结果数量
+        results = results[:limit]
     else:  # hybrid模式，结合文本和向量搜索
-        # 先获取所有匹配的结果
-        results = db.search_by_text(
+        # 获取文本搜索结果
+        text_results = db.search_by_text(
             query=q,
             mode="text",
             limit=limit*2,
@@ -106,29 +106,58 @@ async def text_search(
             tags=tag_list
         )
         
-        # 如果向量搜索可用，使用向量相似度重新排序
-        if vector_search_available and results:
-            try:
-                query_vector = encode_text(q)
-                
-                # 计算向量相似度
-                for result in results:
-                    if result['title']:
-                        title_vector = encode_text(result['title'])
-                        # 计算余弦相似度
-                        similarity = np.dot(query_vector, title_vector) / (np.linalg.norm(query_vector) * np.linalg.norm(title_vector))
-                        # 混合分数：文本匹配分数 * 0.4 + 向量相似度 * 0.6
-                        result['score'] = result['score'] * 0.4 + similarity * 0.6
-                
-                # 按混合分数排序
-                results.sort(key=lambda x: x['score'], reverse=True)
-                # 限制结果数量
-                results = results[:limit]
-                
-            except Exception as e:
-                print(f"混合搜索出错: {e}")
-                # 如果混合搜索失败，保持文本搜索结果
-                pass
+        # 如果向量搜索可用，获取向量搜索结果
+        vector_results = []
+        if vector_search_available:
+            # 根据向量类型选择不同的搜索方法
+            if vector_type == "title":
+                vector_results = vector_db.search_by_title(q, limit=limit*2)
+            elif vector_type == "description":
+                vector_results = vector_db.search_by_description(q, limit=limit*2)
+            else:  # mixed - 默认或不识别的类型
+                vector_results = vector_db.search_by_text(q, limit=limit*2)
+        
+        # 合并结果，使用两种搜索的得分
+        all_results = {}
+        
+        # 添加文本搜索结果
+        for result in text_results:
+            uuid = result["uuid"]
+            all_results[uuid] = result
+            # 文本搜索得分权重为0.4
+            all_results[uuid]["score"] = result["score"] * 0.4
+        
+        # 添加向量搜索结果
+        for result in vector_results:
+            uuid = result["uuid"]
+            if uuid in all_results:
+                # 如果已存在，结合向量搜索相似度（权重0.6）
+                all_results[uuid]["score"] += float(result["similarity"]) * 0.6
+            else:
+                # 如果尚不存在，获取图片信息并添加
+                img = db.get_image_by_uuid(uuid)
+                if img:
+                    # 应用过滤条件
+                    include = True
+                    # 日期过滤
+                    if start_date and img["created_at"] < start_date:
+                        include = False
+                    if end_date and img["created_at"] > end_date:
+                        include = False
+                    # 标签过滤
+                    if tag_list and not any(tag in img["tags"] for tag in tag_list):
+                        include = False
+                        
+                    if include:
+                        # 只有向量得分，权重为0.6
+                        img["score"] = float(result["similarity"]) * 0.6
+                        all_results[uuid] = img
+        
+        # 转换为列表并按混合分数排序
+        results = list(all_results.values())
+        results.sort(key=lambda x: x["score"], reverse=True)
+        # 限制结果数量
+        results = results[:limit]
     
     # 计算处理时间
     end_time = time.time()
@@ -151,6 +180,7 @@ async def text_search(
         metadata={
             "query": q,
             "mode": mode,
+            "vector_type": vector_type,
             "total": len(formatted_results),
             "time_ms": processing_time
         }
@@ -185,74 +215,63 @@ async def image_search(
     try:
         start_time = time.time()
         
-        # 获取所有图片
-        # 注意：在实际实现中，应该预先存储所有图片的向量，并使用高效的向量检索
-        images, _ = db.get_images(page=1, page_size=500)  # 获取一批图片进行搜索
+        # 使用向量索引进行图像搜索
+        vector_results = vector_db.search_by_image(temp_path, limit=limit*2)
+            
+        # 获取向量搜索结果的详细信息并应用过滤
+        results = []
+        for vec_result in vector_results:
+            # 获取图片详细信息
+            img = db.get_image_by_uuid(vec_result["uuid"])
+            if img:
+                # 应用过滤条件
+                include = True
+                # 日期过滤
+                if start_date and img["created_at"] < start_date:
+                    include = False
+                if end_date and img["created_at"] > end_date:
+                    include = False
+                # 标签过滤
+                if tag_list and not any(tag in img["tags"] for tag in tag_list):
+                    include = False
+                    
+                if include:
+                    # 添加相似度得分
+                    img["score"] = float(vec_result["similarity"])
+                    results.append(img)
         
-        # 加载查询图像并计算其向量
-        try:
-            query_img = PILImage.open(temp_path)
-            query_vector = encode_image(query_img)
+        # 限制结果数量
+        results = results[:limit]
+        
+        # 格式化结果
+        formatted_results = []
+        for result in results:
+            formatted_results.append({
+                "uuid": result["uuid"],
+                "title": result["title"],
+                "description": result.get("description", ""),
+                "filepath": result["filepath"],
+                "score": float(result["score"]),  # 确保score是浮点数
+                "tags": result["tags"]
+            })
+        
+        end_time = time.time()
+        processing_time = int((end_time - start_time) * 1000)  # 毫秒
+        
+        return ResponseModel.success(
+            data={"results": formatted_results},
+            metadata={
+                "mode": "vector",
+                "total": len(formatted_results),
+                "time_ms": processing_time
+            }
+        )
             
-            # 计算每张图片与查询图片的相似度
-            results = []
-            for img in images:
-                try:
-                    # 在实际实现中，这些向量应从数据库获取而不是即时计算
-                    img_path = img["filepath"]
-                    if os.path.exists(img_path):
-                        db_img = PILImage.open(img_path)
-                        img_vector = encode_image(db_img)
-                        
-                        # 计算余弦相似度
-                        similarity = np.dot(query_vector, img_vector) / (np.linalg.norm(query_vector) * np.linalg.norm(img_vector))
-                        
-                        # 应用过滤条件
-                        include = True
-                        # 日期过滤
-                        if start_date and img["created_at"] < start_date:
-                            include = False
-                        if end_date and img["created_at"] > end_date:
-                            include = False
-                        # 标签过滤
-                        if tag_list and not any(tag in img["tags"] for tag in tag_list):
-                            include = False
-                            
-                        if include:
-                            results.append({
-                                "uuid": img["uuid"],
-                                "title": img["title"],
-                                "description": img.get("description", ""),
-                                "filepath": img["filepath"],
-                                "score": float(similarity),
-                                "tags": img["tags"]
-                            })
-                except Exception as e:
-                    print(f"处理图片 {img['uuid']} 出错: {e}")
-                    continue
-            
-            # 按相似度排序
-            results.sort(key=lambda x: x['score'], reverse=True)
-            # 限制结果数量
-            results = results[:limit]
-            
-            end_time = time.time()
-            processing_time = int((end_time - start_time) * 1000)  # 毫秒
-            
-            return ResponseModel.success(
-                data={"results": results},
-                metadata={
-                    "mode": "vector",
-                    "total": len(results),
-                    "time_ms": processing_time
-                }
-            )
-            
-        except Exception as e:
-            return ResponseModel.error(
-                code="PROCESSING_ERROR",
-                message=f"图片处理出错: {str(e)}"
-            )
+    except Exception as e:
+        return ResponseModel.error(
+            code="PROCESSING_ERROR",
+            message=f"图片处理出错: {str(e)}"
+        )
     finally:
         # 删除临时文件
         if os.path.exists(temp_path):
@@ -264,7 +283,8 @@ async def similar_image_search(
     limit: int = Query(20, ge=1, le=100, description="返回结果数量"),
     start_date: Optional[str] = Query(None, description="开始日期过滤"),
     end_date: Optional[str] = Query(None, description="结束日期过滤"),
-    tags: Optional[str] = Query(None, description="标签过滤，逗号分隔")
+    tags: Optional[str] = Query(None, description="标签过滤，逗号分隔"),
+    search_type: str = Query("image", description="搜索类型: title、description或image")
 ):
     """根据系统中已存在的图片UUID搜索相似图片"""
     # 检查向量搜索是否可用
@@ -289,86 +309,66 @@ async def similar_image_search(
     
     start_time = time.time()
     
-    # 获取参考图片路径
-    ref_image_path = image["filepath"]
-    if not os.path.exists(ref_image_path):
-        return ResponseModel.error(
-            code="FILE_ERROR",
-            message="参考图片文件不存在"
-        )
-    
     try:
-        # 获取所有图片
-        images, _ = db.get_images(page=1, page_size=500)  # 获取一批图片进行搜索
+        # 使用向量索引搜索相似内容
+        vector_results = vector_db.search_by_uuid(uuid, limit=limit*2, search_type=search_type)
         
-        # 加载参考图像并计算其向量
-        try:
-            ref_img = PILImage.open(ref_image_path)
-            ref_vector = encode_image(ref_img)
-            
-            # 计算每张图片与参考图片的相似度
-            results = []
-            for img in images:
-                # 跳过参考图片自身
-                if img["uuid"] == uuid:
-                    continue
-                    
-                try:
-                    img_path = img["filepath"]
-                    if os.path.exists(img_path):
-                        db_img = PILImage.open(img_path)
-                        img_vector = encode_image(db_img)
-                        
-                        # 计算余弦相似度
-                        similarity = np.dot(ref_vector, img_vector) / (np.linalg.norm(ref_vector) * np.linalg.norm(img_vector))
-                        
-                        # 应用过滤条件
-                        include = True
-                        # 日期过滤
-                        if start_date and img["created_at"] < start_date:
-                            include = False
-                        if end_date and img["created_at"] > end_date:
-                            include = False
-                        # 标签过滤
-                        if tag_list and not any(tag in img["tags"] for tag in tag_list):
-                            include = False
-                            
-                        if include:
-                            results.append({
-                                "uuid": img["uuid"],
-                                "title": img["title"],
-                                "description": img.get("description", ""),
-                                "filepath": img["filepath"],
-                                "score": float(similarity),
-                                "tags": img["tags"]
-                            })
-                except Exception as e:
-                    print(f"处理图片 {img['uuid']} 出错: {e}")
-                    continue
-            
-            # 按相似度排序
-            results.sort(key=lambda x: x['score'], reverse=True)
-            # 限制结果数量
-            results = results[:limit]
-            
-            end_time = time.time()
-            processing_time = int((end_time - start_time) * 1000)  # 毫秒
-            
-            return ResponseModel.success(
-                data={"results": results},
-                metadata={
-                    "reference_uuid": uuid,
-                    "mode": "vector",
-                    "total": len(results),
-                    "time_ms": processing_time
-                }
-            )
-            
-        except Exception as e:
+        if not vector_results:
             return ResponseModel.error(
-                code="PROCESSING_ERROR",
-                message=f"图片处理出错: {str(e)}"
+                code="NO_VECTOR",
+                message=f"未找到图片{search_type}向量索引，请先建立索引"
             )
+        
+        # 获取向量搜索结果的详细信息并应用过滤
+        results = []
+        for vec_result in vector_results:
+            # 获取图片详细信息
+            img = db.get_image_by_uuid(vec_result["uuid"])
+            if img:
+                # 应用过滤条件
+                include = True
+                # 日期过滤
+                if start_date and img["created_at"] < start_date:
+                    include = False
+                if end_date and img["created_at"] > end_date:
+                    include = False
+                # 标签过滤
+                if tag_list and not any(tag in img["tags"] for tag in tag_list):
+                    include = False
+                    
+                if include:
+                    # 添加相似度得分
+                    img["score"] = float(vec_result["similarity"])
+                    results.append(img)
+        
+        # 格式化结果
+        formatted_results = []
+        for result in results:
+            formatted_results.append({
+                "uuid": result["uuid"],
+                "title": result["title"],
+                "description": result.get("description", ""),
+                "filepath": result["filepath"],
+                "score": float(result["score"]),
+                "tags": result["tags"]
+            })
+        
+        # 限制结果数量
+        formatted_results = formatted_results[:limit]
+        
+        end_time = time.time()
+        processing_time = int((end_time - start_time) * 1000)  # 毫秒
+        
+        return ResponseModel.success(
+            data={"results": formatted_results},
+            metadata={
+                "reference_uuid": uuid,
+                "search_type": search_type,
+                "total": len(formatted_results),
+                "time_ms": processing_time
+            }
+        )
+            
     except Exception as e:
         return ResponseModel.error(
             code="SYSTEM_ERROR",

@@ -146,7 +146,7 @@ export const searchService = {
   },
 
   // 相似图片搜索
-  searchSimilar: (uuid: string, params?: Omit<SearchParams, 'q'>): Promise<ApiResponse<{ results: ImageDetail[] }>> => {
+  searchSimilar: (uuid: string, params?: { limit?: number; search_type?: 'image' | 'title' | 'description'; start_date?: string; end_date?: string; tags?: string[] | string; }): Promise<ApiResponse<{ results: ImageDetail[] }>> => {
     return api.get(`/search/similar/${uuid}`, { params });
   },
 };

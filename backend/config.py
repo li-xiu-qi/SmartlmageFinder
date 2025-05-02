@@ -34,6 +34,8 @@ class Settings(BaseSettings):
     UPLOAD_DIR:str = "./data/images"
     
     # 向量设置
+    VECTOR_DIM: str = 1024
+
     # 索引文件路径
     # FAISS索引文件路径
     TITLE_INDEX_PATH: str = "./data/faiss/title_vectors.faiss"

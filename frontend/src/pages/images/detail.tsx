@@ -14,6 +14,10 @@ import {
   Divider,
   Card,
   Image,
+  Select,
+  Modal,
+  Spin,
+  Empty
 } from 'antd';
 import {
   EditOutlined,
@@ -28,9 +32,17 @@ import {
 } from '@ant-design/icons';
 import { imageService, tagService, metadataService, aiService, searchService } from '@/services/api';
 import { formatDate, formatFileSize, getImageUrl } from '@/utils/format';
-import { ImageDetail } from '@/types';
+import { ImageDetail, ImageSearchResult } from '@/types';
 
 const { Title, Paragraph } = Typography;
+const { Option } = Select;
+
+// 定义搜索类型选项
+const searchTypeOptions = [
+  { value: 'image', label: '图像向量' },
+  { value: 'title', label: '标题向量' },
+  { value: 'description', label: '描述向量' },
+];
 
 interface ImageDetailViewProps {
   image: ImageDetail;
@@ -46,13 +58,21 @@ const ImageDetailView: React.FC<ImageDetailViewProps> = ({ image, onUpdate, onDe
   const [description, setDescription] = useState(image.description);
   const [newTag, setNewTag] = useState('');
   const [loading, setLoading] = useState(false);
-  const [similarImages, setSimilarImages] = useState<any[]>([]);
+  const [similarImages, setSimilarImages] = useState<ImageSearchResult[]>([]);
+  const [showSimilarModal, setShowSimilarModal] = useState(false);
+  const [searchType, setSearchType] = useState<string>('image');
   
   // 获取相似图片
   const fetchSimilarImages = async () => {
     try {
       setLoading(true);
-      const response = await searchService.searchSimilar(image.uuid, { limit: 5 });
+      setShowSimilarModal(true);
+      
+      const response = await searchService.searchSimilar(image.uuid, { 
+        limit: 12,
+        search_type: searchType 
+      });
+      
       if (response.status === 'success' && response.data) {
         // 过滤掉当前图片
         const filtered = response.data.results.filter(img => img.uuid !== image.uuid);
@@ -209,6 +229,83 @@ const ImageDetailView: React.FC<ImageDetailViewProps> = ({ image, onUpdate, onDe
     );
   };
 
+  // 渲染相似图片模态框
+  const renderSimilarImagesModal = () => (
+    <Modal
+      title={`相似图片 (基于${searchTypeOptions.find(opt => opt.value === searchType)?.label || '图像向量'})`}
+      open={showSimilarModal}
+      onCancel={() => setShowSimilarModal(false)}
+      footer={null}
+      width={800}
+      destroyOnClose
+    >
+      <div style={{ marginBottom: 16 }}>
+        <Select
+          value={searchType}
+          onChange={(value) => setSearchType(value)}
+          style={{ width: 150, marginRight: 16 }}
+        >
+          {searchTypeOptions.map(option => (
+            <Option key={option.value} value={option.value}>{option.label}</Option>
+          ))}
+        </Select>
+        
+        <Button 
+          type="primary" 
+          icon={<SearchOutlined />} 
+          onClick={fetchSimilarImages}
+          loading={loading}
+        >
+          重新搜索
+        </Button>
+      </div>
+
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: '40px 0' }}>
+          <Spin size="large" />
+          <p style={{ marginTop: 16 }}>正在查找相似图片，请稍候...</p>
+        </div>
+      ) : similarImages.length > 0 ? (
+        <Row gutter={[16, 16]}>
+          {similarImages.map(img => (
+            <Col xs={12} sm={8} md={8} key={img.uuid}>
+              <Card
+                hoverable
+                cover={
+                  <div style={{ height: 160, overflow: 'hidden' }}>
+                    <img 
+                      alt={img.title} 
+                      src={getImageUrl(img.filepath)} 
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                    />
+                  </div>
+                }
+                size="small"
+              >
+                <Card.Meta
+                  title={img.title}
+                  description={
+                    <>
+                      <div>相似度: {Math.round(img.score * 100)}%</div>
+                      <div style={{ marginTop: 4 }}>
+                        {img.tags.slice(0, 2).map(tag => (
+                          <Tag key={tag} style={{ marginRight: 4 }}>{tag}</Tag>
+                        ))}
+                        {img.tags.length > 2 && <Tag>...</Tag>}
+                      </div>
+                    </>
+                  }
+                />
+              </Card>
+            </Col>
+          ))}
+        </Row>
+      ) : (
+        <Empty description="未找到相似图片" />
+      )}
+    </Modal>
+  );
+
   return (
     <div className="image-detail-drawer">
       {/* 图片预览区域 */}
@@ -358,13 +455,24 @@ const ImageDetailView: React.FC<ImageDetailViewProps> = ({ image, onUpdate, onDe
       {/* 操作按钮 */}
       <Divider />
       <div className="detail-actions">
-        <Button
-          icon={<SearchOutlined />}
-          onClick={fetchSimilarImages}
-          disabled={loading}
-        >
-          查找相似图片
-        </Button>
+        <Space>
+          <Select
+            value={searchType}
+            onChange={(value) => setSearchType(value)}
+            style={{ width: 110 }}
+          >
+            {searchTypeOptions.map(option => (
+              <Option key={option.value} value={option.value}>{option.label}</Option>
+            ))}
+          </Select>
+          <Button
+            icon={<SearchOutlined />}
+            onClick={fetchSimilarImages}
+            disabled={loading}
+          >
+            查找相似图片
+          </Button>
+        </Space>
         <Button
           icon={<RobotOutlined />}
           onClick={handleGenerateContent}
@@ -389,37 +497,8 @@ const ImageDetailView: React.FC<ImageDetailViewProps> = ({ image, onUpdate, onDe
         </Popconfirm>
       </div>
 
-      {/* 相似图片区域 */}
-      {similarImages.length > 0 && (
-        <div className="detail-section" style={{ marginTop: 24 }}>
-          <Title level={5} className="section-title">相似图片</Title>
-          <Row gutter={[8, 8]}>
-            {similarImages.map(img => (
-              <Col span={8} key={img.uuid}>
-                <Card
-                  hoverable
-                  cover={
-                    <div style={{ height: 120, overflow: 'hidden' }}>
-                      <img 
-                        alt={img.title} 
-                        src={getImageUrl(img.filepath)} 
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                      />
-                    </div>
-                  }
-                  size="small"
-                  styles={{ body: { padding: '12px' } }}
-                >
-                  <Card.Meta
-                    title={img.title}
-                    description={`相似度: ${Math.round(img.score * 100)}%`}
-                  />
-                </Card>
-              </Col>
-            ))}
-          </Row>
-        </div>
-      )}
+      {/* 相似图片模态框 */}
+      {renderSimilarImagesModal()}
     </div>
   );
 };
