@@ -1,0 +1,50 @@
+.main-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  margin-right: 20px;
+
+  h1 {
+    margin: 0 0 0 12px;
+    color: rgba(0, 0, 0, 0.85);
+    font-weight: 600;
+    font-size: 18px;
+    line-height: 64px;
+  }
+
+  .trigger {
+    font-size: 20px;
+    cursor: pointer;
+    transition: color 0.3s;
+    
+    &:hover {
+      color: #1890ff;
+    }
+  }
+}
+
+.header-search {
+  flex: 1;
+  max-width: 500px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.system-status {
+  display: flex;
+  gap: 16px;
+}

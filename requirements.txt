@@ -1,0 +1,38 @@
+# 后端
+fastapi
+# 运行服务需要
+uvicorn[standard]
+
+# 加载模型需要
+sentence-transformers
+# colber模型需要
+einops
+# clip 模型需要
+timm
+
+# 向量数据库 - 指定最新版本
+faiss-cpu==1.10.0  # 2025年4月最新稳定版本
+# 图片处理
+Pillow
+# 文件上传
+python-multipart
+# 数据库
+sqlalchemy
+# 数据验证
+pydantic
+# 全局配置
+pydantic-settings
+
+# notebook
+notebook
+
+# cpu版本 torch
+torch
+torchvision
+torchaudio
+
+# 大模型api调用
+openai
+
+# 环境变量
+python-dotenv

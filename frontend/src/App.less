@@ -1,0 +1,187 @@
+// 全局样式
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+    'Noto Color Emoji';
+}
+
+// 通用栅格间距
+.gutter-row {
+  margin-bottom: 16px;
+}
+
+// 图片卡片样式
+.image-card {
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+  }
+
+  .image-cover {
+    overflow: hidden;
+    position: relative;
+    padding-top: 75%; // 4:3比例
+    background-color: #f5f5f5;
+
+    img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+
+    &:hover img {
+      transform: scale(1.05);
+    }
+  }
+
+  .image-info {
+    padding: 8px;
+  }
+
+  .image-title {
+    font-weight: 500;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .image-meta {
+    color: rgba(0, 0, 0, 0.45);
+    font-size: 12px;
+  }
+}
+
+// 标签样式
+.tag-item {
+  margin: 0 8px 8px 0;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    opacity: 0.85;
+  }
+}
+
+// 搜索结果相似度标识
+.similarity-indicator {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 12px;
+}
+
+// 上传区域样式
+.upload-area {
+  background: #fafafa;
+  border: 1px dashed #d9d9d9;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: border-color 0.3s;
+  text-align: center;
+  padding: 20px;
+
+  &:hover {
+    border-color: #1677ff;
+  }
+
+  .ant-upload-drag-icon {
+    margin-bottom: 16px;
+
+    .anticon {
+      font-size: 48px;
+      color: #1677ff;
+    }
+  }
+
+  .ant-upload-text {
+    font-size: 16px;
+    margin: 0 0 4px;
+  }
+
+  .ant-upload-hint {
+    color: rgba(0, 0, 0, 0.45);
+  }
+}
+
+// 详情抽屉样式
+.image-detail-drawer {
+  .image-preview {
+    position: relative;
+    text-align: center;
+    margin-bottom: 24px;
+    
+    img {
+      max-width: 100%;
+      max-height: 400px;
+      border-radius: 4px;
+    }
+  }
+
+  .detail-section {
+    margin-bottom: 20px;
+    
+    .section-title {
+      font-weight: 600;
+      margin-bottom: 12px;
+      font-size: 16px;
+    }
+  }
+
+  .detail-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 24px;
+  }
+}
+
+// 首页布局
+.home-page {
+  .stat-card {
+    height: 100%;
+  }
+
+  .recent-images {
+    margin-top: 16px;
+  }
+
+  .section-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    padding-left: 8px;
+    border-left: 3px solid #1677ff;
+  }
+}
+
+// 设置页面样式
+.settings-page {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+// 404页面样式
+.not-found-page {
+  text-align: center;
+  padding: 100px 0;
+
+  h1 {
+    font-size: 72px;
+    margin-bottom: 24px;
+  }
+}
