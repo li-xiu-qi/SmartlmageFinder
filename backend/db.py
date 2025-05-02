@@ -321,38 +321,61 @@ def delete_image(uuid: str) -> bool:
 def get_popular_tags(limit: int = 50) -> List[Dict[str, Any]]:
     """获取热门标签列表"""
     conn = get_db_connection()
+    conn.row_factory = dict_factory
     cursor = conn.cursor()
     
-    # 使用SQL聚合查询获取标签
-    cursor.execute("""
-    WITH RECURSIVE split_tags(tag, rest) AS (
-        SELECT '', tags || ',' FROM images WHERE tags IS NOT NULL
-        UNION ALL
-        SELECT 
-            substr(rest, 0, instr(rest, ',')),
-            substr(rest, instr(rest, ',')+1)
-        FROM split_tags WHERE rest != ''
-    )
-    SELECT tag, COUNT(*) as count
-    FROM split_tags
-    WHERE tag != ''
-    GROUP BY tag
-    ORDER BY count DESC
-    LIMIT ?
-    """, (limit,))
+    # 查询所有图片的标签字段
+    cursor.execute("SELECT uuid, tags FROM images")
     
-    tags = []
+    # 标签计数字典
+    tag_counts = {}
+    default_tag = "未分类"  # 默认标签名称
+    
+    # 解析每个图片的标签并计数
     for row in cursor.fetchall():
-        # 清理标签名（去除JSON格式中的引号）
-        tag_name = row[0].strip('"')
-        if tag_name:
-            tags.append({
-                "name": tag_name,
-                "count": row[1]
-            })
+        try:
+            # 检查是否有标签
+            if not row['tags'] or row['tags'] == '[]':
+                # 没有标签，计数默认标签
+                if default_tag not in tag_counts:
+                    tag_counts[default_tag] = 0
+                tag_counts[default_tag] += 1
+                continue
+                
+            # 解析JSON格式的标签
+            tags_list = json.loads(row['tags'])
+            if not isinstance(tags_list, list) or len(tags_list) == 0:
+                # 解析出来是空列表，也计数默认标签
+                if default_tag not in tag_counts:
+                    tag_counts[default_tag] = 0
+                tag_counts[default_tag] += 1
+                continue
+                
+            # 计数每个标签
+            for tag in tags_list:
+                if not isinstance(tag, str):
+                    continue
+                    
+                # 确保标签是干净的字符串
+                clean_tag = tag.strip()
+                if clean_tag:
+                    if clean_tag not in tag_counts:
+                        tag_counts[clean_tag] = 0
+                    tag_counts[clean_tag] += 1
+        except json.JSONDecodeError:
+            # JSON解析失败，计数默认标签
+            if default_tag not in tag_counts:
+                tag_counts[default_tag] = 0
+            tag_counts[default_tag] += 1
+    
+    # 转换为所需的输出格式
+    tags = [{"name": tag, "count": count} for tag, count in tag_counts.items()]
+    
+    # 按使用频率排序
+    tags.sort(key=lambda x: x["count"], reverse=True)
     
     conn.close()
-    return tags
+    return tags[:limit]
 
 def add_tags_to_image(uuid: str, new_tags: List[str]) -> Optional[Dict[str, Any]]:
     """向图片添加标签"""
