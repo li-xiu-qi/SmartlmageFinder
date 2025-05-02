@@ -76,12 +76,19 @@ def init_indices():
 
 def save_indices():
     """保存向量索引到磁盘"""
-    if text_index is not None:
+    if title_index is not None:
         try:
-            faiss.write_index(text_index, settings.TEXT_INDEX_PATH)
-            print(f"文本向量索引已保存，包含{text_index.ntotal}个向量")
+            faiss.write_index(title_index, settings.TITLE_INDEX_PATH)
+            print(f"标题向量索引已保存，包含{title_index.ntotal}个向量")
         except Exception as e:
-            print(f"保存文本向量索引失败: {e}")
+            print(f"保存标题向量索引失败: {e}")
+    
+    if description_index is not None:
+        try:
+            faiss.write_index(description_index, settings.DESCRIPTION_INDEX_PATH)
+            print(f"描述向量索引已保存，包含{description_index.ntotal}个向量")
+        except Exception as e:
+            print(f"保存描述向量索引失败: {e}")
     
     if image_index is not None:
         try:
