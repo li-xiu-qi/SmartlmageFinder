@@ -17,9 +17,19 @@ import {
   Divider,
   List,
   Modal,
-  Tabs
+  Tabs,
+  Tooltip,
+  Spin
 } from 'antd';
-import { InboxOutlined, CloudUploadOutlined, DeleteOutlined, EditOutlined, CheckCircleFilled } from '@ant-design/icons';
+import { 
+  InboxOutlined, 
+  CloudUploadOutlined, 
+  DeleteOutlined, 
+  EditOutlined, 
+  CheckCircleFilled, 
+  RobotOutlined, 
+  LoadingOutlined 
+} from '@ant-design/icons';
 import type { UploadFile, UploadProps } from 'antd';
 import { imageService, aiService, tagService } from '@/services/api';
 import { useNavigate } from 'react-router-dom';
@@ -66,6 +76,10 @@ const UploadPage: React.FC = () => {
   // 添加上传状态追踪
   const [hasUploaded, setHasUploaded] = useState(false);
   
+  // AI分析相关状态
+  const [analyzingFile, setAnalyzingFile] = useState<UploadFile | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+
   // 通用设置
   const [commonSettings, setCommonSettings] = useState({
     generateMetadata: true,
@@ -142,6 +156,47 @@ const UploadPage: React.FC = () => {
       return newMap;
     });
     return true;
+  };
+
+  // AI分析图片
+  const handleAnalyzeImage = async (file: UploadFile) => {
+    if (!file.originFileObj) {
+      message.error('无法分析图片，文件数据不可用');
+      return;
+    }
+
+    try {
+      setAnalyzingFile(file);
+      setIsAnalyzing(true);
+
+      // 调用AI分析接口
+      const response = await aiService.analyzeUpload(file.originFileObj);
+
+      if (response.status === 'success' && response.data?.generated) {
+        const { title, description, tags } = response.data.generated;
+        
+        // 更新元数据
+        setImageMetadataMap(prev => ({
+          ...prev,
+          [file.uid]: {
+            ...prev[file.uid],
+            title: title || prev[file.uid]?.title || '',
+            description: description || prev[file.uid]?.description || '',
+            tags: tags || prev[file.uid]?.tags || [],
+          }
+        }));
+
+        message.success(`已成功分析图片 "${file.name}"`);
+      } else {
+        message.error(response.error?.message || 'AI分析失败，请检查API设置');
+      }
+    } catch (error: any) {
+      console.error('AI分析失败:', error);
+      message.error(`AI分析失败: ${error.message || '未知错误'}`);
+    } finally {
+      setIsAnalyzing(false);
+      setAnalyzingFile(null);
+    }
   };
 
   // 打开编辑元数据模态框
@@ -278,6 +333,67 @@ const UploadPage: React.FC = () => {
     }
   };
 
+  // 批量AI分析所有图片
+  const handleBatchAnalyze = async () => {
+    if (fileList.length === 0) {
+      message.info('请先选择要分析的图片');
+      return;
+    }
+
+    setIsAnalyzing(true);
+    const analyzedCount = {success: 0, fail: 0};
+
+    try {
+      // 逐个分析图片
+      for (const file of fileList) {
+        if (!file.originFileObj) continue;
+
+        setAnalyzingFile(file);
+        try {
+          // 调用AI分析接口
+          const response = await aiService.analyzeUpload(file.originFileObj);
+          
+          if (response.status === 'success' && response.data?.generated) {
+            const { title, description, tags } = response.data.generated;
+            
+            // 更新元数据
+            setImageMetadataMap(prev => ({
+              ...prev,
+              [file.uid]: {
+                ...prev[file.uid],
+                title: title || prev[file.uid]?.title || '',
+                description: description || prev[file.uid]?.description || '',
+                tags: tags || prev[file.uid]?.tags || [],
+              }
+            }));
+            
+            analyzedCount.success++;
+          } else {
+            analyzedCount.fail++;
+          }
+        } catch (error) {
+          console.error(`分析图片 ${file.name} 失败:`, error);
+          analyzedCount.fail++;
+        }
+
+        // 添加一点延迟，避免API速率限制
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
+      if (analyzedCount.success > 0) {
+        message.success(`成功分析 ${analyzedCount.success} 张图片${analyzedCount.fail > 0 ? `，${analyzedCount.fail} 张分析失败` : ''}`);
+      } else {
+        message.error('所有图片分析失败');
+      }
+    } catch (error) {
+      console.error('批量分析失败:', error);
+      message.error('批量分析失败');
+    } finally {
+      setIsAnalyzing(false);
+      setAnalyzingFile(null);
+    }
+  };
+
   // 查看上传结果
   const handleViewUploaded = () => {
     navigate('/images');
@@ -305,6 +421,7 @@ const UploadPage: React.FC = () => {
   const customItemRender = (originNode: React.ReactElement, file: UploadFile, fileList: UploadFile[]) => {
     const metadata = imageMetadataMap[file.uid] || {};
     const hasMetadata = metadata.title || metadata.description || (metadata.tags && metadata.tags.length > 0);
+    const isCurrentlyAnalyzing = isAnalyzing && analyzingFile?.uid === file.uid;
     
     return (
       <div className="upload-list-item" style={{ position: 'relative' }}>
@@ -332,15 +449,31 @@ const UploadPage: React.FC = () => {
             )}
           </div>
           
-          {/* 编辑按钮 - 右对齐 */}
-          <div style={{ marginLeft: 'auto' }}>
+          {/* 操作按钮区域 - 右对齐 */}
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
+            {/* AI分析按钮 */}
+            <Tooltip title="使用AI分析图片">
+              <Button 
+                type="link" 
+                size="small" 
+                icon={isCurrentlyAnalyzing ? <LoadingOutlined spin /> : <RobotOutlined />} 
+                onClick={() => handleAnalyzeImage(file)}
+                style={{ padding: 0 }}
+                disabled={isAnalyzing || hasUploaded}
+                loading={isCurrentlyAnalyzing}
+              >
+                {isCurrentlyAnalyzing ? '分析中' : 'AI分析'}
+              </Button>
+            </Tooltip>
+
+            {/* 编辑按钮 */}
             <Button 
               type="link" 
               size="small" 
               icon={<EditOutlined />} 
               onClick={() => openMetadataModal(file)}
               style={{ padding: 0 }}
-              disabled={hasUploaded}
+              disabled={hasUploaded || isCurrentlyAnalyzing}
             >
               {hasMetadata ? '编辑数据' : '添加数据'}
             </Button>
@@ -388,6 +521,27 @@ const UploadPage: React.FC = () => {
         </Dragger>
 
         <Divider />
+        
+        {/* 批量AI分析按钮 */}
+        {fileList.length > 0 && !hasUploaded && (
+          <div style={{ marginBottom: 16 }}>
+            <Row justify="center">
+              <Col>
+                <Tooltip title="使用AI分析所有图片并生成标题、描述和标签">
+                  <Button 
+                    type="default" 
+                    icon={isAnalyzing ? <LoadingOutlined /> : <RobotOutlined />} 
+                    onClick={handleBatchAnalyze}
+                    loading={isAnalyzing}
+                    disabled={hasUploaded || fileList.length === 0}
+                  >
+                    {isAnalyzing ? '分析中...' : `使用AI分析全部图片 (${fileList.length}张)`}
+                  </Button>
+                </Tooltip>
+              </Col>
+            </Row>
+          </div>
+        )}
 
         <div style={{ textAlign: 'right' }}>
           <Space>

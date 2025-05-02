@@ -220,7 +220,7 @@ export const aiService = {
   // 分析上传图片
   analyzeUpload: (image: File): Promise<ApiResponse<any>> => {
     const formData = new FormData();
-    formData.append('image', image);
+    formData.append('file', image); 
     
     return api.post('/ai/analyze-upload', formData, {
       headers: {
