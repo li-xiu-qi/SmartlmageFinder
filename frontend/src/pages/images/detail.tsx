@@ -12,7 +12,8 @@ import {
   Row,
   Col,
   Divider,
-  Card
+  Card,
+  Image,
 } from 'antd';
 import {
   EditOutlined,
@@ -23,6 +24,7 @@ import {
   SearchOutlined,
   RobotOutlined,
   ExclamationCircleOutlined,
+  EyeOutlined,
 } from '@ant-design/icons';
 import { imageService, tagService, metadataService, aiService, searchService } from '@/services/api';
 import { formatDate, formatFileSize, getImageUrl } from '@/utils/format';
@@ -211,7 +213,17 @@ const ImageDetailView: React.FC<ImageDetailViewProps> = ({ image, onUpdate, onDe
     <div className="image-detail-drawer">
       {/* 图片预览区域 */}
       <div className="image-preview">
-        <img src={getImageUrl(image.filepath)} alt={image.title} />
+        <Image 
+          src={getImageUrl(image.filepath)} 
+          alt={image.title} 
+          preview={{
+            mask: <div>
+              <EyeOutlined style={{ marginRight: 5 }} />
+              点击查看大图
+            </div>
+          }}
+          style={{ maxWidth: '100%' }}
+        />
       </div>
 
       {/* 标题和描述 */}

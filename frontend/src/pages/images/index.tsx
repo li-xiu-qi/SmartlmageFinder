@@ -15,7 +15,9 @@ import {
   Drawer,
   Radio,
   Tag,
-  Popconfirm
+  Popconfirm,
+  Image,
+  Tooltip
 } from 'antd';
 import { 
   FilterOutlined, 
@@ -23,12 +25,13 @@ import {
   AppstoreOutlined, 
   BarsOutlined,
   DeleteOutlined,
-  ReloadOutlined
+  ReloadOutlined,
+  EyeOutlined
 } from '@ant-design/icons';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import ImageCard from '@/components/ImageCard';
 import { imageService, tagService } from '@/services/api';
-import { Image, ImageDetail, Tag as TagType, ImageListParams } from '@/types';
+import { Image as ImageType, ImageDetail, Tag as TagType, ImageListParams } from '@/types';
 import ImageDetailView from './detail';
 import { getImageUrl } from '@/utils/format';
 
@@ -41,7 +44,7 @@ const ImagesPage: React.FC = () => {
 
   // 状态定义
   const [loading, setLoading] = useState(false);
-  const [images, setImages] = useState<Image[]>([]);
+  const [images, setImages] = useState<ImageType[]>([]);
   const [tags, setTags] = useState<TagType[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -137,7 +140,7 @@ const ImagesPage: React.FC = () => {
   };
 
   // 处理图片点击事件，打开详情抽屉
-  const handleImageClick = async (image: Image) => {
+  const handleImageClick = async (image: ImageType) => {
     try {
       setLoading(true);
       const response = await imageService.getImageDetail(image.uuid);
@@ -291,11 +294,44 @@ const ImagesPage: React.FC = () => {
         <Row gutter={[16, 16]}>
           {images.map(image => (
             <Col xs={12} sm={8} md={6} lg={4} key={image.uuid}>
-              <ImageCard 
-                image={image} 
-                onClick={handleImageClick} 
-                showTags={true} 
-              />
+              <div className="image-card-wrapper">
+                <ImageCard 
+                  image={image} 
+                  onClick={handleImageClick} 
+                  showTags={true} 
+                />
+                <div className="image-preview-button">
+                  <Tooltip title="预览大图">
+                    <Button 
+                      type="primary" 
+                      shape="circle" 
+                      size="small" 
+                      icon={<EyeOutlined />} 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // 创建一个临时节点用于预览
+                        const previewImage = document.createElement('div');
+                        document.body.appendChild(previewImage);
+                        const root = React.createRoot(previewImage);
+                        root.render(
+                          <Image 
+                            src={getImageUrl(image.filepath)}
+                            preview={{
+                              visible: true,
+                              onVisibleChange: (visible) => {
+                                if (!visible) {
+                                  document.body.removeChild(previewImage);
+                                }
+                              },
+                            }}
+                            style={{ display: 'none' }}
+                          />
+                        );
+                      }}
+                    />
+                  </Tooltip>
+                </div>
+              </div>
             </Col>
           ))}
         </Row>
@@ -309,11 +345,14 @@ const ImagesPage: React.FC = () => {
               key={image.uuid}
             >
               <div style={{ display: 'flex' }}>
-                <div style={{ width: 100, height: 100, overflow: 'hidden', marginRight: 16 }}>
-                  <img 
+                <div style={{ width: 100, height: 100, overflow: 'hidden', marginRight: 16, position: 'relative' }}>
+                  <Image
                     src={getImageUrl(image.filepath)} 
                     alt={image.title}
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    preview={{
+                      mask: <div><EyeOutlined style={{ marginRight: 5 }} />预览</div>,
+                    }}
                   />
                 </div>
                 <div style={{ flex: 1 }}>
