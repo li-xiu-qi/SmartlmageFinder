@@ -120,10 +120,15 @@ def get_images(page: int = 1,
         conditions.append("created_at <= ?")
         params.append(end_date)
     
+    # 改进标签过滤逻辑
     if tags and len(tags) > 0:
         tag_conditions = []
         for tag in tags:
+            # 使用JSON包含检查，查找包含特定标签的图片
+            # 由于SQLite不支持完整的JSON查询，我们使用LIKE进行匹配
+            # 但需要确保匹配的是完整的标签字符串
             tag_conditions.append("tags LIKE ?")
+            # 对特定标签进行精确匹配
             params.append(f'%"{tag}"%')
         conditions.append("(" + " OR ".join(tag_conditions) + ")")
     

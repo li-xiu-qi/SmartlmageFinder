@@ -20,15 +20,17 @@ async def get_images(
     order: str = Query("desc", description="排序方向"),
     start_date: Optional[str] = Query(None, description="开始日期过滤"),
     end_date: Optional[str] = Query(None, description="结束日期过滤"),
-    tags: Optional[str] = Query(None, description="标签过滤，逗号分隔")
+    tags: Optional[List[str]] = Query(None, description="标签过滤，可以是数组形式")
 ):
     
     """获取图片列表，支持分页、排序和多种过滤"""
     # 处理标签过滤
     tag_list = None
     if tags:
-        tag_list = [tag.strip() for tag in tags.split(",")]
-    
+        tag_list = [tag.strip() for tag in tags if tag.strip()]
+    print("tags:", tags)
+    print("tags_type:", type(tags))
+    print("tag_list:", tag_list)
     # 获取图片列表和总数
     images, total_count = db.get_images(
         page=page,
