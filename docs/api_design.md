@@ -130,6 +130,9 @@ SmartImageFinder系统的API接口基于RESTful架构设计，采用FastAPI框�
 - **请求参数**:
     - `files`: 文件数组，包含要上传的图片
     - `metadata`: (可选) JSON字符串，包含所有图片的通用元数据
+    - `title`: (可选) 字符串，图片标题
+    - `description`: (可选) 字符串，图片描述
+    - `tags`: (可选) JSON数组字符串，图片标签列表
     - `generate_metadata`: (可选) 布尔值，是否自动生成元数据，默认为`false`
 - **响应示例**:
     ```json

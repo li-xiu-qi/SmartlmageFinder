@@ -65,16 +65,42 @@ export const imageService = {
   },
 
   // 上传图片
-  uploadImages: (files: File[], metadata?: Record<string, any>, generateMetadata = false): Promise<ApiResponse<UploadResponse>> => {
+  uploadImages: (
+    files: File[], 
+    metadata?: Record<string, any>, 
+    title?: string, 
+    description?: string, 
+    tags?: string,
+    generateMetadata = false
+  ): Promise<ApiResponse<UploadResponse>> => {
     const formData = new FormData();
+    
+    // 添加文件
     files.forEach((file) => {
       formData.append('files', file);
     });
     
+    // 添加元数据
     if (metadata) {
       formData.append('metadata', JSON.stringify(metadata));
     }
     
+    // 添加标题
+    if (title) {
+      formData.append('title', title);
+    }
+    
+    // 添加描述
+    if (description) {
+      formData.append('description', description);
+    }
+    
+    // 添加标签
+    if (tags) {
+      formData.append('tags', tags);
+    }
+    
+    // 是否生成元数据
     formData.append('generate_metadata', String(generateMetadata));
     
     return api.post('/images/upload', formData, {

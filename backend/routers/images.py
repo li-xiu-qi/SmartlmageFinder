@@ -22,6 +22,7 @@ async def get_images(
     end_date: Optional[str] = Query(None, description="结束日期过滤"),
     tags: Optional[str] = Query(None, description="标签过滤，逗号分隔")
 ):
+    
     """获取图片列表，支持分页、排序和多种过滤"""
     # 处理标签过滤
     tag_list = None
@@ -82,6 +83,9 @@ async def upload_images(
     background_tasks: BackgroundTasks,
     files: List[UploadFile] = File(..., description="上传的图片文件"),
     metadata: Optional[str] = Form(None, description="图片元数据，JSON字符串"),
+    title: Optional[str] = Form(None, description="图片标题"),
+    description: Optional[str] = Form(None, description="图片描述"),
+    tags: Optional[str] = Form(None, description="图片标签，JSON数组字符串"),
 ):
     """上传单张或多张图片"""
     # 确保上传目录存在
@@ -96,6 +100,22 @@ async def upload_images(
             return ResponseModel.error(
                 code="INVALID_REQUEST",
                 message="元数据JSON格式无效"
+            )
+    
+    # 解析标签
+    common_tags = []
+    if tags:
+        try:
+            common_tags = json.loads(tags)
+            if not isinstance(common_tags, list):
+                return ResponseModel.error(
+                    code="INVALID_REQUEST",
+                    message="标签必须是JSON数组格式"
+                )
+        except json.JSONDecodeError:
+            return ResponseModel.error(
+                code="INVALID_REQUEST",
+                message="标签JSON格式无效"
             )
     
     uploaded = []
@@ -133,7 +153,9 @@ async def upload_images(
                 "width": width,
                 "height": height,
                 "metadata": common_metadata,
-                "tags": []
+                "tags": common_tags,
+                "title": title,
+                "description": description
             }
             
             # 保存到数据库
