@@ -48,7 +48,7 @@ cp .env.example .env
 4. 启动后端服务器:
 
 ```bash
-cd backend
+
 python main.py
 ```
 
