@@ -13,11 +13,11 @@ const HomePage: React.FC = () => {
   const [systemStats, setSystemStats] = useState<{
     totalImages: number;
     status: string;
-    modelStatus: string;
+    totalTags: number;
   }>({
     totalImages: 0,
     status: 'unknown',
-    modelStatus: 'unknown',
+    totalTags: 0,
   });
 
   // 获取首页所需数据
@@ -45,16 +45,20 @@ const HomePage: React.FC = () => {
             .sort((a, b) => b.count - a.count)
             .slice(0, 20);
           setTags(sortedTags);
+          
+          // 设置标签总数
+          const totalTags = tagsResponse.data.tags?.length || 0;
+          setSystemStats(prev => ({ ...prev, totalTags }));
         }
 
         // 处理系统状态数据
         if (systemResponse.status === 'success' && systemResponse.data) {
           const sysData = systemResponse.data as SystemStatus;
-          setSystemStats({
+          setSystemStats(prev => ({
+            ...prev,
             totalImages: sysData.storage.total_images,
-            status: sysData.system.status,
-            modelStatus: sysData.components.model.status,
-          });
+            status: sysData.system.status
+          }));
         }
       } catch (error) {
         console.error('获取首页数据失败:', error);
@@ -106,10 +110,9 @@ const HomePage: React.FC = () => {
           <Col xs={24} sm={8}>
             <Card className="stat-card">
               <Statistic
-                title="模型状态"
-                value={systemStats.modelStatus === 'loaded' ? '已加载' : '未加载'}
-                valueStyle={{ color: systemStats.modelStatus === 'loaded' ? '#3f8600' : '#cf1322' }}
-                prefix={systemStats.modelStatus === 'loaded' ? <CheckCircleOutlined /> : <WarningOutlined />}
+                title="标签总数"
+                value={systemStats.totalTags}
+                prefix={<TagsOutlined />}
               />
             </Card>
           </Col>

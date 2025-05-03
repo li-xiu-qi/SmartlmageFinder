@@ -1,6 +1,6 @@
 # SmartImageFinder
 ![home](assets/images/home.png)
-一个基于多模态向量模型及视觉多模态模型构建的图片搜索引擎管理系统，实现精准的以文搜文，文搜图、以图搜图多种智能检索方式。
+一个基于多模态向量模型及视觉多模态模型构建的图片搜索引擎&管理系统，实现精准的以文搜文，文搜图、以图搜图多种智能检索方式。
 ![image_manager](assets/images/image_manager.png)
 
 ## 功能特点
@@ -81,13 +81,10 @@ npm run dev
 
 ![frontend_to_backend](assets/images/frontend_to_backend.png)
 
-### 修改后端端口的地址在config.py里面进行修改
+### 修改后端配置可以在config.py里面进行修改
 
-![backend_point](assets/images/backend_point.png)
+![backend_config](assets/images/backend_config.png)
 
-### 多模态模型配置可以在环境变量配置，或者在config.py文件下进行配置
-
-![vision_model](assets/images/vision_model.png)
 更多详细信息，请参阅 [docs/](./docs/) 目录下的文档。
 
 ## 许可证

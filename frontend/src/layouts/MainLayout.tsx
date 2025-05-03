@@ -19,7 +19,7 @@ const { Search } = Input;
 
 const MainLayout: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
-  const [systemStatus, setSystemStatus] = useState<{status?: string; model?: string}>({});
+  const [systemStatus, setSystemStatus] = useState<{status?: string}>({});
   const [clearingCache, setClearingCache] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -32,15 +32,13 @@ const MainLayout: React.FC = () => {
         const response = await systemService.getSystemStatus();
         if (response.status === 'success' && response.data) {
           setSystemStatus({
-            status: response.data.system.status,
-            model: response.data.components.model.name
+            status: response.data.system.status
           });
         }
       } catch (error) {
         console.error('获取系统状态失败:', error);
         setSystemStatus({
-          status: 'error',
-          model: '未知'
+          status: 'error'
         });
       }
     };
@@ -137,7 +135,6 @@ const MainLayout: React.FC = () => {
         <div className="header-right">
           <div className="system-status">
             <Badge status={statusBadgeColor as any} text={`系统: ${systemStatus.status || '加载中'}`} />
-            <Badge status={statusBadgeColor as any} text={`模型: ${systemStatus.model || '加载中'}`} />
           </div>
 
           <Dropdown menu={settingsMenu} placement="bottomRight">

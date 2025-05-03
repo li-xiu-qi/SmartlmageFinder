@@ -146,6 +146,14 @@ const SettingsPage: React.FC = () => {
   const renderSystemStatus = () => {
     if (!systemStatus) return null;
     
+    // 获取数据库文件名
+    const getFileName = (path: string) => {
+      if (!path) return '';
+      // 同时处理 / 和 \ 分隔符，适应不同操作系统
+      const parts = path.split(/[\/\\]/);
+      return parts[parts.length - 1];
+    };
+    
     return (
       <Card title="系统状态" style={{ marginBottom: 16 }}>
         <Row gutter={[16, 16]}>
@@ -157,17 +165,17 @@ const SettingsPage: React.FC = () => {
             </Card>
           </Col>
           <Col xs={24} sm={8}>
-            <Card size="small" title="组件">
-              <p><strong>模型:</strong> {systemStatus.components.model.name}</p>
-              <p><strong>数据库:</strong> {systemStatus.components.database.type} ({systemStatus.components.database.status})</p>
-              <p><strong>多模态API:</strong> {systemStatus.components.multimodal_api.model}</p>
+            <Card size="small" title="数据库">
+              <p><strong>状态:</strong> {systemStatus.components.database.status}</p>
+              <p><strong>类型:</strong> {systemStatus.components.database.type}</p>
+              <p><strong>路径:</strong> {getFileName(systemStatus.components.database.path)}</p>
             </Card>
           </Col>
           <Col xs={24} sm={8}>
             <Card size="small" title="存储">
-              <p><strong>图片总数:</strong> {systemStatus.storage.total_images}</p>
-              <p><strong>存储大小:</strong> {systemStatus.storage.total_size_mb} MB</p>
-              <p><strong>缓存状态:</strong> {systemStatus.cache?.enabled ? '已启用' : '已禁用'}</p>
+              <p><strong>图片总数:</strong> {systemStatus.storage?.total_images || 0}</p>
+              <p><strong>标签总数:</strong> {systemStatus.storage?.total_tags || 0}</p>
+              <p><strong>存储大小:</strong> {systemStatus.storage?.total_size_mb || 0} MB</p>
             </Card>
           </Col>
         </Row>

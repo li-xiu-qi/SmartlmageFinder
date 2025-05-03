@@ -61,7 +61,7 @@ def get_cache_stats():
 
 @router.get("/status", response_model=ResponseModel)
 async def get_system_status():
-    """获取系统当前状态，包括模型加载状态和数据库连接状态"""
+    """获取系统当前状态，包括数据库连接状态和存储信息"""
     # 获取系统运行信息
     uptime = time.time() - psutil.boot_time()
     
@@ -69,15 +69,31 @@ async def get_system_status():
     try:
         conn = db.get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) FROM images")
-        image_count = cursor.fetchone()[0]
-        cursor.execute("SELECT SUM(file_size) FROM images")
-        total_size = cursor.fetchone()[0] or 0
+        
+        # 检查images表是否存在
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='images'")
+        has_images_table = cursor.fetchone() is not None
+        
+        if has_images_table:
+            cursor.execute("SELECT COUNT(*) FROM images")
+            image_count = cursor.fetchone()[0]
+            cursor.execute("SELECT SUM(file_size) FROM images")
+            total_size = cursor.fetchone()[0] or 0
+        else:
+            image_count = 0
+            total_size = 0
+        
+        # 获取标签总数 - 使用与tags.py相同的方式
+        tags = db.get_popular_tags()
+        tag_count = len(tags)
+            
         db_status = "connected"
         conn.close()
-    except Exception:
+    except Exception as e:
+        print(f"数据库连接错误: {e}")
         image_count = 0
         total_size = 0
+        tag_count = 0
         db_status = "error"
     
     # 获取缓存统计
@@ -93,13 +109,6 @@ async def get_system_status():
             "python_version": sys.version.split()[0]
         },
         "components": {
-            "model": {
-                "status": "loaded" if settings.AI_ENABLED else "disabled",
-                "name": os.path.basename(settings.MODEL_PATH),
-                "path": settings.MODEL_PATH,
-                "vector_dimension": settings.VECTOR_DIM,
-                "load_time": time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(time.time() - 3600))  # 模拟1小时前加载
-            },
             "database": {
                 "status": db_status,
                 "type": "sqlite",
@@ -115,6 +124,7 @@ async def get_system_status():
         "storage": {
             "total_images": image_count,
             "total_size_mb": round(total_size / (1024 * 1024), 2),
+            "total_tags": tag_count,
             "upload_dir": settings.UPLOAD_DIR,
             "index_paths": {
                 "image": settings.IMAGE_INDEX_PATH,
@@ -271,9 +281,7 @@ async def update_system_config(config: Dict[str, Any] = Body(...)):
             cache_base = os.path.dirname(storage_config["cacheDirectory"])
             settings.TEXT_VECTOR_CACHE_DIR = os.path.join(cache_base, "text_vector_cache")
             settings.IMAGE_VECTOR_CACHE_DIR = os.path.join(cache_base, "image_vector_cache")
-        if "maxFileSize" in storage_config:
-            # 这个值将在前端控制，后端不存储
-            pass
+
         if "maxCacheSize" in storage_config:
             settings.MAX_CACHE_SIZE_GB = float(storage_config["maxCacheSize"])
         

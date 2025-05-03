@@ -5,12 +5,13 @@ AVAILABLE_VISION_MODELS:
 DB_PATH: ./data/db/smartimagefinder.db
 DESCRIPTION_INDEX_PATH: ./data/faiss/description_vectors.faiss
 HOST: 0.0.0.0
+PORT: 1000
 IMAGE_INDEX_PATH: ./data/faiss/image_vectors.faiss
 IMAGE_VECTOR_CACHE_DIR: ./data/caches/image_vector_cache
+MAX_CACHE_SIZE_GB: 1.5
 MODEL_PATH: C:\Users\k\Desktop\BaiduSyncdisk\baidu_sync_documents\hf_models\jina-clip-v2
 OPENAI_API_BASE: https://api.siliconflow.cn/v1
-OPENAI_API_KEY: sk-eci
-PORT: 1000
+OPENAI_API_KEY: sk-
 TEXT_VECTOR_CACHE_DIR: ./data/caches/text_vector_cache
 TITLE_INDEX_PATH: ./data/faiss/title_vectors.faiss
 UPLOAD_DIR: ./data/images
