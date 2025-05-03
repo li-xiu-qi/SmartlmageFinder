@@ -18,7 +18,7 @@
 
 - **后端**: FastAPI, Python 3.10+
 - **前端**: React 18, Ant Design 5
-- **向量数据库**: Faiss
+- **向量数据库**: Faiss + Sqlite
 - **向量生成**: Jina CLIP V2
 - **多模态内容生成**: Qwen/Qwen2.5-VL-32B-Instruct
 
@@ -49,7 +49,7 @@ cp .env.example .env
 
 ```bash
 cd backend
-python app.py
+python main.py
 ```
 
 服务将在 <http://localhost:1000> 上运行，API文档可在 <http://localhost:1000/docs> 上查看。
