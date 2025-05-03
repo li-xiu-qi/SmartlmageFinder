@@ -15,7 +15,12 @@ import {
   Divider,
   Empty,
   Spin,
-  message
+  message,
+  Slider,
+  Badge,
+  Switch,
+  Tooltip,
+  Tag as AntdTag
 } from 'antd';
 import {
   SearchOutlined,
@@ -25,11 +30,13 @@ import {
   ReloadOutlined,
   LoadingOutlined,
   InboxOutlined,
-  DeleteOutlined
+  DeleteOutlined,
+  InfoCircleOutlined,
+  QuestionCircleOutlined
 } from '@ant-design/icons';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import type { UploadFile, UploadProps } from 'antd';
-import type { RcFile } from 'antd/es/upload';
+import type { RcFile } from 'antd/es.upload';
 import { searchService, tagService } from '@/services/api';
 import { Tag as TagType, ImageSearchResult } from '@/types';
 import ImageCard from '@/components/ImageCard';
@@ -40,18 +47,33 @@ const { Option } = Select;
 const { RangePicker } = DatePicker;
 const { Dragger } = Upload;
 
-// 定义搜索模式选项
-const searchModes = [
-  { value: 'vector', label: '向量搜索' },
+// 定义搜索类型选项
+const searchTypes = [
   { value: 'text', label: '文本匹配' },
+  { value: 'vector', label: '向量搜索' },
   { value: 'hybrid', label: '混合搜索' }
 ];
 
-// 定义向量类型选项
-const vectorTypes = [
+// 定义文本匹配模式选项
+const textMatchModes = [
+  { value: 'title', label: '仅标题' },
+  { value: 'description', label: '仅描述' },
+  { value: 'combined', label: '标题+描述' }
+];
+
+// 定义向量匹配模式选项
+const vectorMatchModes = [
   { value: 'title', label: '标题向量' },
   { value: 'description', label: '描述向量' },
-  { value: 'mixed', label: '混合向量' },
+  { value: 'combined', label: '标题+描述向量' }
+];
+
+// 定义图片向量匹配模式选项
+const imageMatchModes = [
+  { value: 'image', label: '图片向量' },
+  { value: 'title', label: '标题向量' },
+  { value: 'description', label: '描述向量' },
+  { value: 'combined', label: '综合向量' }
 ];
 
 const SearchPage: React.FC = () => {
@@ -69,19 +91,57 @@ const SearchPage: React.FC = () => {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState<UploadFile[]>([]);
+  const [searchTime, setSearchTime] = useState<number>(0);
+  const [selectedImageMatchModes, setSelectedImageMatchModes] = useState<string[]>(['image']); 
+  const [modeWeights, setModeWeights] = useState<{[key: string]: number}>({ 
+    image: 1.0 
+  });
+
+  // 使用 Form.useWatch 监听表单值变化
+  const watchSearchType = Form.useWatch('search_type', form);
+  const watchTextMatchMode = Form.useWatch('text_match_mode', form);
+  const watchVectorMatchMode = Form.useWatch('vector_match_mode', form);
+  const watchImageSearchType = Form.useWatch('image_search_type', form);
+  
+  // 当图片搜索类型发生变化时，更新匹配模式
+  useEffect(() => {
+    if (watchImageSearchType && watchImageSearchType !== 'combined') {
+      // 如果选择了特定的搜索类型（而非综合类型），则将匹配模式设置为该类型
+      setSelectedImageMatchModes([watchImageSearchType]);
+      setModeWeights({ [watchImageSearchType]: 1.0 });
+    } else if (watchImageSearchType === 'combined') {
+      // 如果选择了综合类型，则使用多种匹配模式
+      const newSelectedModes = ['image', 'title', 'description'];
+      setSelectedImageMatchModes(newSelectedModes);
+      
+      // 均等分配权重
+      const weight = 1.0 / newSelectedModes.length;
+      const newWeights: {[key: string]: number} = {};
+      newSelectedModes.forEach(mode => {
+        newWeights[mode] = weight;
+      });
+      setModeWeights(newWeights);
+    }
+  }, [watchImageSearchType]);
 
   // 初始化表单值
   useEffect(() => {
     const query = searchParams.get('q');
-    const mode = searchParams.get('mode') || 'vector';
-    const vectorType = searchParams.get('vector_type') || 'mixed';
+    const searchType = searchParams.get('search_type') || 'hybrid';
+    const textMatchMode = searchParams.get('text_match_mode') || 'combined';
+    const vectorMatchMode = searchParams.get('vector_match_mode') || 'combined';
     const tagsParam = searchParams.get('tags');
     
     // 如果URL中有查询参数，设置表单值
     if (query) {
       form.setFieldsValue({ query });
       // 执行搜索
-      handleTextSearch({ query, mode, vector_type: vectorType });
+      handleTextSearch({ 
+        query, 
+        search_type: searchType, 
+        text_match_mode: textMatchMode,
+        vector_match_mode: vectorMatchMode
+      });
     }
     
     if (tagsParam) {
@@ -89,13 +149,12 @@ const SearchPage: React.FC = () => {
       form.setFieldsValue({ tags: tagsArray });
     }
     
-    if (mode) {
-      form.setFieldsValue({ mode });
-    }
-    
-    if (vectorType) {
-      form.setFieldsValue({ vector_type: vectorType });
-    }
+    // 设置搜索类型和匹配模式
+    form.setFieldsValue({ 
+      search_type: searchType,
+      text_match_mode: textMatchMode,
+      vector_match_mode: vectorMatchMode
+    });
   }, []);
 
   // 获取标签数据
@@ -114,10 +173,15 @@ const SearchPage: React.FC = () => {
     fetchTags();
   }, []);
 
+  // 格式化权重为逗号分隔的字符串
+  const formatWeights = (weights: {[key: string]: number}, modes: string[]): string => {
+    return modes.map(mode => weights[mode] || 0).join(',');
+  };
+
   // 执行文本搜索
   const handleTextSearch = async (values: any) => {
     try {
-      const { query, mode, vector_type, field, tags, date_range } = values;
+      const { query, search_type, text_match_mode, vector_match_mode, tags, date_range } = values;
       
       if (!query || query.trim() === '') {
         message.warning('请输入搜索关键词');
@@ -129,8 +193,9 @@ const SearchPage: React.FC = () => {
       // 构建搜索参数
       const searchParams: any = {
         q: query,
-        mode: mode || 'vector',
-        vector_type: vector_type || 'mixed',
+        search_type: search_type || 'hybrid',
+        text_match_mode: text_match_mode || 'combined',
+        vector_match_mode: vector_match_mode || 'combined',
         limit: 50,
       };
       
@@ -148,8 +213,9 @@ const SearchPage: React.FC = () => {
       // 更新URL参数
       setSearchParams({ 
         q: query,
-        mode: searchParams.mode,
-        vector_type: searchParams.vector_type,
+        search_type: searchParams.search_type,
+        text_match_mode: searchParams.text_match_mode,
+        vector_match_mode: searchParams.vector_match_mode,
         ...(searchParams.tags ? { tags: searchParams.tags } : {})
       });
       
@@ -159,6 +225,11 @@ const SearchPage: React.FC = () => {
       if (response.status === 'success' && response.data) {
         setResults(response.data.results || []);
         setTotal(response.data.results.length);
+        
+        // 设置搜索时间（如果存在）
+        if (response.metadata?.time_ms) {
+          setSearchTime(response.metadata.time_ms);
+        }
       }
     } catch (error) {
       console.error('搜索失败:', error);
@@ -245,27 +316,49 @@ const SearchPage: React.FC = () => {
       setLoading(true);
       
       // 构建搜索参数
-      const params: any = {
-        limit: 50,
-      };
+      const formData = new FormData();
+      formData.append('image', searchImage);
+      formData.append('search_type', values.image_search_type || 'image');
+      
+      // 添加匹配模式
+      if (selectedImageMatchModes.length > 0) {
+        // 在formData中需要为每个匹配模式添加一个条目
+        selectedImageMatchModes.forEach(mode => {
+          formData.append('match_modes', mode);
+        });
+        
+        // 添加权重
+        if (Object.keys(modeWeights).length > 0) {
+          const weightString = formatWeights(modeWeights, selectedImageMatchModes);
+          formData.append('weights', weightString);
+        }
+      }
+      
+      // 添加结果限制
+      formData.append('limit', '50');
       
       // 添加标签过滤
       if (values.tags && values.tags.length > 0) {
-        params.tags = values.tags.join(',');
+        formData.append('tags', values.tags.join(','));
       }
       
       // 添加日期范围过滤
       if (values.date_range && values.date_range.length === 2) {
-        params.start_date = values.date_range[0].format('YYYY-MM-DD');
-        params.end_date = values.date_range[1].format('YYYY-MM-DD');
+        formData.append('start_date', values.date_range[0].format('YYYY-MM-DD'));
+        formData.append('end_date', values.date_range[1].format('YYYY-MM-DD'));
       }
       
       // 调用图片搜索API
-      const response = await searchService.searchByImage(searchImage, params);
+      const response = await searchService.searchByImage(formData);
       
       if (response.status === 'success' && response.data) {
         setResults(response.data.results || []);
         setTotal(response.data.results.length);
+        
+        // 设置搜索时间（如果存在）
+        if (response.metadata?.time_ms) {
+          setSearchTime(response.metadata.time_ms);
+        }
       }
     } catch (error) {
       console.error('图片搜索失败:', error);
@@ -273,6 +366,56 @@ const SearchPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // 处理匹配模式变化
+  const handleMatchModesChange = (selectedModes: string[]) => {
+    // 不允许空选项
+    if (selectedModes.length === 0) {
+      message.warning('至少需要选择一种匹配模式');
+      return;
+    }
+    
+    setSelectedImageMatchModes(selectedModes);
+    
+    // 重新初始化权重
+    const defaultWeight = 1.0 / selectedModes.length;
+    const newWeights: {[key: string]: number} = {};
+    
+    selectedModes.forEach(mode => {
+      newWeights[mode] = defaultWeight;
+    });
+    
+    setModeWeights(newWeights);
+  };
+
+  // 更新特定匹配模式的权重
+  const updateModeWeight = (mode: string, weight: number) => {
+    const newWeights = { ...modeWeights, [mode]: weight };
+    
+    // 确保权重总和为1
+    const sum = Object.values(newWeights).reduce((a, b) => a + b, 0);
+    
+    // 如果总和不是1，调整其他权重
+    if (sum !== 1 && selectedImageMatchModes.length > 1) {
+      const otherModesCount = selectedImageMatchModes.length - 1;
+      const remainingWeight = 1.0 - weight;
+      
+      if (remainingWeight <= 0) {
+        message.warning('权重无效，其他匹配模式需要有权重');
+        return;
+      }
+      
+      const weightPerOtherMode = remainingWeight / otherModesCount;
+      
+      selectedImageMatchModes.forEach(m => {
+        if (m !== mode) {
+          newWeights[m] = weightPerOtherMode;
+        }
+      });
+    }
+    
+    setModeWeights(newWeights);
   };
 
   // 切换高级选项显示
@@ -293,8 +436,9 @@ const SearchPage: React.FC = () => {
         form={form}
         onFinish={handleTextSearch}
         initialValues={{
-          mode: 'vector',
-          vector_type: 'mixed',
+          search_type: 'hybrid',
+          text_match_mode: 'combined',
+          vector_match_mode: 'combined',
         }}
       >
         <Form.Item name="query">
@@ -307,7 +451,24 @@ const SearchPage: React.FC = () => {
           />
         </Form.Item>
 
-        <div style={{ textAlign: 'right', marginBottom: 16 }}>
+        {/* 添加简要搜索模式显示 - 使用监听的表单值 */}
+        <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <Space size="small">
+              <span style={{ color: '#666' }}>当前模式:</span>
+              <AntdTag color="blue">
+                {searchTypes.find(t => t.value === watchSearchType)?.label || '混合搜索'}
+              </AntdTag>
+              <AntdTag color="cyan">
+                {textMatchModes.find(m => m.value === watchTextMatchMode)?.label || '标题+描述'}
+              </AntdTag>
+              {watchSearchType !== 'text' && (
+                <AntdTag color="green">
+                  {vectorMatchModes.find(m => m.value === watchVectorMatchMode)?.label || '标题+描述向量'}
+                </AntdTag>
+              )}
+            </Space>
+          </div>
           <Button type="link" onClick={toggleAdvanced}>
             {showAdvanced ? '收起高级选项' : '显示高级选项'}
           </Button>
@@ -317,33 +478,69 @@ const SearchPage: React.FC = () => {
           <div className="advanced-options">
             <Row gutter={16}>
               <Col xs={24} md={8}>
-                <Form.Item name="mode" label="搜索模式">
-                  <Select>
-                    {searchModes.map(mode => (
-                      <Option key={mode.value} value={mode.value}>{mode.label}</Option>
-                    ))}
-                  </Select>
-                </Form.Item>
-              </Col>
-              <Col xs={24} md={8}>
                 <Form.Item 
-                  name="vector_type" 
-                  label="向量类型"
-                  tooltip="选择用于搜索的向量类型，仅在向量或混合搜索模式下有效"
+                  name="search_type" 
+                  label={
+                    <span>
+                      搜索类型
+                      <Tooltip title="选择使用传统文本匹配、向量搜索或两者结合">
+                        <QuestionCircleOutlined style={{ marginLeft: 4 }} />
+                      </Tooltip>
+                    </span>
+                  }
                 >
                   <Select>
-                    {vectorTypes.map(type => (
+                    {searchTypes.map(type => (
                       <Option key={type.value} value={type.value}>{type.label}</Option>
                     ))}
                   </Select>
                 </Form.Item>
               </Col>
+              
               <Col xs={24} md={8}>
-                <Form.Item name="date_range" label="日期范围">
-                  <RangePicker style={{ width: '100%' }} />
+                <Form.Item 
+                  name="text_match_mode" 
+                  label={
+                    <span>
+                      文本匹配模式
+                      <Tooltip title="选择是仅匹配标题、仅匹配描述还是两者都匹配">
+                        <QuestionCircleOutlined style={{ marginLeft: 4 }} />
+                      </Tooltip>
+                    </span>
+                  }
+                >
+                  <Select>
+                    {textMatchModes.map(mode => (
+                      <Option key={mode.value} value={mode.value}>{mode.label}</Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+              
+              <Col xs={24} md={8}>
+                <Form.Item 
+                  name="vector_match_mode" 
+                  label={
+                    <span>
+                      向量匹配模式
+                      <Tooltip title="选择使用标题向量、描述向量还是二者结合的向量进行搜索">
+                        <QuestionCircleOutlined style={{ marginLeft: 4 }} />
+                      </Tooltip>
+                    </span>
+                  }
+                >
+                  <Select>
+                    {vectorMatchModes.map(mode => (
+                      <Option key={mode.value} value={mode.value}>{mode.label}</Option>
+                    ))}
+                  </Select>
                 </Form.Item>
               </Col>
             </Row>
+
+            <Form.Item name="date_range" label="日期范围">
+              <RangePicker style={{ width: '100%' }} />
+            </Form.Item>
 
             <Form.Item name="tags" label="标签过滤">
               <Select
@@ -374,7 +571,7 @@ const SearchPage: React.FC = () => {
   // 渲染图片搜索面板
   const renderImageSearch = () => (
     <div className="image-search-panel">
-      <Form form={form}>
+      <Form form={form} initialValues={{ image_search_type: 'image' }}>
         <div className="upload-wrapper" style={{ marginBottom: 16 }}>
           <Dragger
             name="image"
@@ -404,7 +601,28 @@ const SearchPage: React.FC = () => {
           </Dragger>
         </div>
 
-        <div style={{ textAlign: 'right', marginBottom: 16 }}>
+        {/* 添加简要搜索模式显示 - 使用监听的表单值和状态 */}
+        <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <Space size="small">
+              <span style={{ color: '#666' }}>当前模式:</span>
+              <AntdTag color="purple">
+                {imageMatchModes.find(m => m.value === watchImageSearchType)?.label || '图片向量'}
+              </AntdTag>
+              {selectedImageMatchModes.length > 0 && (
+                <AntdTag color="magenta">
+                  匹配: {selectedImageMatchModes.map(mode => 
+                    imageMatchModes.find(m => m.value === mode)?.label
+                  ).join('+')}
+                </AntdTag>
+              )}
+              {selectedImageMatchModes.length > 1 && (
+                <Tooltip title="多模式权重可在高级选项中设置">
+                  <InfoCircleOutlined style={{ color: '#1890ff' }} />
+                </Tooltip>
+              )}
+            </Space>
+          </div>
           <Button type="link" onClick={toggleAdvanced}>
             {showAdvanced ? '收起高级选项' : '显示高级选项'}
           </Button>
@@ -412,6 +630,75 @@ const SearchPage: React.FC = () => {
 
         {showAdvanced && (
           <div className="advanced-options">
+            <Form.Item 
+              name="image_search_type" 
+              label={
+                <span>
+                  搜索类型
+                  <Tooltip title="选择使用图像向量、标题向量、描述向量还是综合向量进行搜索">
+                    <QuestionCircleOutlined style={{ marginLeft: 4 }} />
+                  </Tooltip>
+                </span>
+              }
+            >
+              <Select>
+                {imageMatchModes.map(mode => (
+                  <Option key={mode.value} value={mode.value}>{mode.label}</Option>
+                ))}
+              </Select>
+            </Form.Item>
+
+            <Form.Item 
+              label={
+                <span>
+                  匹配模式组合
+                  <Tooltip title="选择多种匹配模式并设置权重，结果将根据组合得分排序">
+                    <QuestionCircleOutlined style={{ marginLeft: 4 }} />
+                  </Tooltip>
+                </span>
+              }
+            >
+              <Select
+                mode="multiple"
+                placeholder="选择匹配模式组合"
+                style={{ width: '100%' }}
+                value={selectedImageMatchModes}
+                onChange={handleMatchModesChange}
+              >
+                {imageMatchModes.map(mode => (
+                  <Option key={mode.value} value={mode.value}>{mode.label}</Option>
+                ))}
+              </Select>
+            </Form.Item>
+
+            {selectedImageMatchModes.length > 1 && (
+              <div className="weights-sliders">
+                <Divider orientation="left">匹配模式权重设置</Divider>
+                {selectedImageMatchModes.map(mode => (
+                  <Form.Item 
+                    key={mode} 
+                    label={
+                      <span>
+                        {imageMatchModes.find(m => m.value === mode)?.label || mode} 权重
+                        <AntdTag color="blue" style={{ marginLeft: 8 }}>
+                          {modeWeights[mode]?.toFixed(2) || 0}
+                        </AntdTag>
+                      </span>
+                    }
+                  >
+                    <Slider
+                      min={0.01}
+                      max={1}
+                      step={0.01}
+                      value={modeWeights[mode] || 0}
+                      onChange={(value) => updateModeWeight(mode, value)}
+                      tooltip={{ formatter: (value) => value?.toFixed(2) }}
+                    />
+                  </Form.Item>
+                ))}
+              </div>
+            )}
+
             <Form.Item name="date_range" label="日期范围">
               <RangePicker style={{ width: '100%' }} />
             </Form.Item>
@@ -469,8 +756,15 @@ const SearchPage: React.FC = () => {
 
     return (
       <div className="search-results">
-        <div style={{ marginBottom: 16 }}>
-          共找到 <strong>{total}</strong> 个结果
+        <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
+          <div>
+            共找到 <strong>{total}</strong> 个结果
+          </div>
+          {searchTime > 0 && (
+            <div>
+              搜索用时: <strong>{searchTime}</strong> 毫秒
+            </div>
+          )}
         </div>
         
         <Row gutter={[16, 16]}>

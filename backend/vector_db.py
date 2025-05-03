@@ -117,6 +117,54 @@ class VectorIndex(abc.ABC):
             print(f"{self.index_type}搜索失败: {e}")
             return []
     
+    def search_by_vector(self, query_vector: np.ndarray, limit: int = 20) -> List[Dict[str, Any]]:
+        """使用向量直接搜索相似向量
+        
+        参数:
+            query_vector: 查询向量
+            limit: 返回结果数量上限
+        """
+        if self.index is None or self.index.ntotal == 0:
+            return []
+        
+        # 确保向量格式正确
+        if not isinstance(query_vector, np.ndarray):
+            query_vector = np.array(query_vector)
+        
+        if query_vector.dtype != np.float32:
+            query_vector = query_vector.astype(np.float32)
+        
+        # 确保向量是二维的 [1, dim]
+        if len(query_vector.shape) == 1:
+            query_vector = query_vector.reshape(1, -1)
+            
+        # 执行搜索
+        try:
+            D, I = self.index.search(query_vector, min(limit, self.index.ntotal))
+            
+            # 转换结果
+            results = []
+            for i, (distance, idx) in enumerate(zip(D[0], I[0])):
+                # 查找对应的UUID
+                uuid = None
+                for u, ids in self.uuid_map.items():
+                    if ids.get(f"{self.index_type}_id") == idx:
+                        uuid = u
+                        break
+                
+                if uuid:
+                    results.append({
+                        "uuid": uuid,
+                        "similarity": float(distance),
+                        "index": int(idx)
+                    })
+            
+            return results
+        
+        except Exception as e:
+            print(f"{self.index_type}向量搜索失败: {e}")
+            return []
+    
     def search_by_id(self, idx: int, limit: int = 20) -> List[Dict[str, Any]]:
         """通过内部索引ID搜索相似向量"""
         if self.index is None or self.index.ntotal == 0:
@@ -329,6 +377,35 @@ def search_by_image(image_path: str, limit: int = 20) -> List[Dict[str, Any]]:
     if image_index is None:
         init_indices()
     return image_index.search(image_path, limit)
+
+
+def search_by_vector(query_vector: np.ndarray, index_type: str = "image", limit: int = 20) -> List[Dict[str, Any]]:
+    """根据向量类型搜索相似向量
+    
+    参数:
+        query_vector: 查询向量
+        index_type: 要搜索的索引类型，可选值: "title", "description", "image"
+        limit: 返回结果数量上限
+    
+    返回:
+        List[Dict[str, Any]]: 相似结果列表
+    """
+    global title_index, description_index, image_index
+    
+    if index_type == "title":
+        if title_index is None:
+            init_indices()
+        return title_index.search_by_vector(query_vector, limit)
+    
+    elif index_type == "description":
+        if description_index is None:
+            init_indices()
+        return description_index.search_by_vector(query_vector, limit)
+    
+    else:  # 默认为image
+        if image_index is None:
+            init_indices()
+        return image_index.search_by_vector(query_vector, limit)
 
 
 def search_by_uuid(uuid: str, limit: int = 20, search_type: str = "image") -> List[Dict[str, Any]]:

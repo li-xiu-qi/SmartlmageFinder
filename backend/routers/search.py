@@ -1,6 +1,7 @@
-from fastapi import APIRouter, HTTPException, Query, Path, UploadFile, File, Form
-from typing import List, Optional, Dict, Any
+from fastapi import APIRouter, HTTPException, Query, Path, UploadFile, File, Form, Body
+from typing import List, Optional, Dict, Any, Union
 from ..schemas import ResponseModel, TextSearchQuery
+from enum import Enum
 import os
 import shutil
 from datetime import datetime
@@ -32,47 +33,114 @@ if settings.AI_ENABLED:
 else:
     print("AI功能已在配置中禁用，向量搜索不可用")
 
+# 定义搜索类型枚举类
+class SearchType(str, Enum):
+    """定义搜索类型"""
+    TEXT = "text"  # 传统文本匹配
+    VECTOR = "vector"  # 向量搜索
+    HYBRID = "hybrid"  # 混合搜索
+
+class TextMatchMode(str, Enum):
+    """文本匹配模式"""
+    TITLE = "title"  # 只匹配标题
+    DESCRIPTION = "description"  # 只匹配描述
+    COMBINED = "combined"  # 标题+描述综合匹配
+
+class VectorMatchMode(str, Enum):
+    """向量匹配模式"""
+    TITLE = "title"  # 标题向量
+    DESCRIPTION = "description"  # 描述向量
+    COMBINED = "combined"  # 标题+描述向量综合
+    IMAGE = "image"  # 图片向量
+
+class ImageVectorMatchMode(str, Enum):
+    """图片向量匹配模式"""
+    IMAGE = "image"  # 纯图片向量
+    TITLE = "title"  # 图片对标题向量
+    DESCRIPTION = "description"  # 图片对描述向量
+    COMBINED = "combined"  # 综合匹配
+
 @router.get("/text", response_model=ResponseModel)
 async def text_search(
     q: str = Query(..., description="搜索查询文本"),
-    mode: str = Query("hybrid", description="搜索模式: vector、text或hybrid"),
-    vector_type: str = Query("mixed", description="向量类型: title、description或mixed"),
+    search_type: SearchType = Query(SearchType.HYBRID, description="搜索类型: text(传统文本匹配)、vector(向量搜索)或hybrid(混合搜索)"),
+    text_match_mode: TextMatchMode = Query(TextMatchMode.COMBINED, description="文本匹配模式: title(标题)、description(描述)或combined(标题+描述)"),
+    vector_match_mode: VectorMatchMode = Query(VectorMatchMode.COMBINED, description="向量匹配模式: title(标题向量)、description(描述向量)或combined(标题+描述向量)"),
     limit: int = Query(20, ge=1, le=1000, description="返回结果数量"),
     start_date: Optional[str] = Query(None, description="开始日期过滤"),
     end_date: Optional[str] = Query(None, description="结束日期过滤"),
     tags: Optional[str] = Query(None, description="标签过滤，逗号分隔")
 ):
-    """使用文本查询相似图片"""
+    """
+    使用文本查询相似图片
+    
+    - 当search_type=text时: 使用传统文本匹配，根据text_match_mode匹配标题、描述或两者
+    - 当search_type=vector时: 使用向量搜索，根据vector_match_mode匹配标题向量、描述向量或两者
+    - 当search_type=hybrid时: 结合传统文本匹配和向量搜索
+    """
     # 处理标签过滤
     tag_list = None
     if tags:
         tag_list = [tag.strip() for tag in tags.split(",")]
     
     start_time = time.time()
+    results = []
     
-    # 根据模式执行搜索
-    if mode == "text" or (mode == "vector" and not vector_search_available) or (mode == "hybrid" and not vector_search_available):
+    # 1. 非向量检索部分 (传统文本匹配)
+    if search_type == SearchType.TEXT or (search_type != SearchType.TEXT and not vector_search_available):
         # 使用纯文本搜索
-        results = db.search_by_text(
-            query=q,
-            mode="text",
-            limit=limit,
-            start_date=start_date,
-            end_date=end_date,
-            tags=tag_list
-        )
-    elif mode == "vector" and vector_search_available:
-        # 使用纯向量搜索
-        # 根据向量类型选择不同的搜索方法
-        if vector_type == "title":
+        text_results = []
+        
+        # 根据文本匹配模式执行不同的搜索
+        if text_match_mode == TextMatchMode.TITLE:
+            # 仅匹配标题
+            text_results = db.search_by_text(
+                query=q,
+                mode="title_only",  # 需要在db.py中实现此模式
+                limit=limit,
+                start_date=start_date,
+                end_date=end_date,
+                tags=tag_list
+            )
+        elif text_match_mode == TextMatchMode.DESCRIPTION:
+            # 仅匹配描述
+            text_results = db.search_by_text(
+                query=q,
+                mode="description_only",  # 需要在db.py中实现此模式
+                limit=limit,
+                start_date=start_date,
+                end_date=end_date,
+                tags=tag_list
+            )
+        else:  # 默认为COMBINED
+            # 匹配标题和描述
+            text_results = db.search_by_text(
+                query=q,
+                mode="text",  # 传统模式
+                limit=limit,
+                start_date=start_date,
+                end_date=end_date,
+                tags=tag_list
+            )
+        
+        results = text_results
+    
+    # 2. 向量检索部分
+    elif search_type == SearchType.VECTOR and vector_search_available:
+        vector_results = []
+        
+        # 根据向量匹配模式执行不同的搜索
+        if vector_match_mode == VectorMatchMode.TITLE:
+            # 仅使用标题向量
             vector_results = vector_db.search_by_title(q, limit=limit*2)
-        elif vector_type == "description":
+        elif vector_match_mode == VectorMatchMode.DESCRIPTION:
+            # 仅使用描述向量
             vector_results = vector_db.search_by_description(q, limit=limit*2)
-        else:  # mixed - 默认或不识别的类型
+        else:  # 默认为COMBINED
+            # 使用混合向量搜索 (标题+描述)
             vector_results = vector_db.search_by_text(q, limit=limit*2)
-            
+        
         # 获取向量搜索结果的详细信息并应用过滤
-        results = []
         for vec_result in vector_results:
             # 获取图片详细信息
             img = db.get_image_by_uuid(vec_result["uuid"])
@@ -93,28 +161,55 @@ async def text_search(
                     img["score"] = float(vec_result["similarity"])
                     results.append(img)
         
-        # 限制结果数量
-        results = results[:limit]
+    # 3. 混合检索部分
     else:  # hybrid模式，结合文本和向量搜索
         # 获取文本搜索结果
-        text_results = db.search_by_text(
-            query=q,
-            mode="text",
-            limit=limit*2,
-            start_date=start_date,
-            end_date=end_date,
-            tags=tag_list
-        )
+        text_results = []
         
-        # 如果向量搜索可用，获取向量搜索结果
+        # 根据文本匹配模式执行不同的搜索
+        if text_match_mode == TextMatchMode.TITLE:
+            # 仅匹配标题
+            text_results = db.search_by_text(
+                query=q,
+                mode="title_only",
+                limit=limit*2,
+                start_date=start_date,
+                end_date=end_date,
+                tags=tag_list
+            )
+        elif text_match_mode == TextMatchMode.DESCRIPTION:
+            # 仅匹配描述
+            text_results = db.search_by_text(
+                query=q,
+                mode="description_only",
+                limit=limit*2,
+                start_date=start_date,
+                end_date=end_date,
+                tags=tag_list
+            )
+        else:  # 默认为COMBINED
+            # 匹配标题和描述
+            text_results = db.search_by_text(
+                query=q,
+                mode="text",
+                limit=limit*2,
+                start_date=start_date,
+                end_date=end_date,
+                tags=tag_list
+            )
+        
+        # 获取向量搜索结果
         vector_results = []
         if vector_search_available:
-            # 根据向量类型选择不同的搜索方法
-            if vector_type == "title":
+            # 根据向量匹配模式执行不同的搜索
+            if vector_match_mode == VectorMatchMode.TITLE:
+                # 仅使用标题向量
                 vector_results = vector_db.search_by_title(q, limit=limit*2)
-            elif vector_type == "description":
+            elif vector_match_mode == VectorMatchMode.DESCRIPTION:
+                # 仅使用描述向量
                 vector_results = vector_db.search_by_description(q, limit=limit*2)
-            else:  # mixed - 默认或不识别的类型
+            else:  # 默认为COMBINED
+                # 使用混合向量搜索
                 vector_results = vector_db.search_by_text(q, limit=limit*2)
         
         # 合并结果，使用两种搜索的得分
@@ -155,9 +250,10 @@ async def text_search(
         
         # 转换为列表并按混合分数排序
         results = list(all_results.values())
-        results.sort(key=lambda x: x["score"], reverse=True)
-        # 限制结果数量
-        results = results[:limit]
+    
+    # 结果排序和限制数量
+    results.sort(key=lambda x: x.get("score", 0), reverse=True)
+    results = results[:limit]
     
     # 计算处理时间
     end_time = time.time()
@@ -171,7 +267,7 @@ async def text_search(
             "title": result["title"],
             "description": result.get("description", ""),
             "filepath": result["filepath"],
-            "score": float(result["score"]),  # 确保score是浮点数
+            "score": float(result.get("score", 0.0)),  # 确保score是浮点数
             "tags": result["tags"]
         })
     
@@ -179,8 +275,9 @@ async def text_search(
         data={"results": formatted_results},
         metadata={
             "query": q,
-            "mode": mode,
-            "vector_type": vector_type,
+            "search_type": search_type,
+            "text_match_mode": text_match_mode,
+            "vector_match_mode": vector_match_mode,
             "total": len(formatted_results),
             "time_ms": processing_time
         }
@@ -189,12 +286,25 @@ async def text_search(
 @router.post("/image", response_model=ResponseModel)
 async def image_search(
     image: UploadFile = File(..., description="要搜索的参考图片文件"),
-    limit: int = Query(20, ge=1, le=100, description="返回结果数量"),
-    start_date: Optional[str] = Query(None, description="开始日期过滤"),
-    end_date: Optional[str] = Query(None, description="结束日期过滤"),
-    tags: Optional[str] = Query(None, description="标签过滤，逗号分隔")
+    search_type: VectorMatchMode = Form(VectorMatchMode.IMAGE, description="搜索类型: image(图像向量)、title(标题向量)、description(描述向量)或combined(综合)"),
+    match_modes: List[ImageVectorMatchMode] = Form([ImageVectorMatchMode.IMAGE], description="匹配模式: image(图像), title(标题), description(描述), combined(综合)"),
+    weights: Optional[str] = Form(None, description="各个匹配模式的权重，格式为逗号分隔的浮点数，与match_modes对应"),
+    limit: int = Form(20, ge=1, le=100, description="返回结果数量"),
+    start_date: Optional[str] = Form(None, description="开始日期过滤"),
+    end_date: Optional[str] = Form(None, description="结束日期过滤"),
+    tags: Optional[str] = Form(None, description="标签过滤，逗号分隔")
 ):
-    """上传图片搜索相似图片"""
+    """
+    上传图片搜索相似图片
+    
+    支持多种搜索模式:
+    - 图片向量对图片向量
+    - 图片向量对标题向量
+    - 图片向量对描述向量
+    - 图片向量对综合向量 (图片+标题+描述)
+    
+    可以通过match_modes指定一个或多个匹配模式，并通过weights指定每种模式的权重
+    """
     # 检查向量搜索是否可用
     if not vector_search_available:
         return ResponseModel.error(
@@ -214,6 +324,23 @@ async def image_search(
     if tags:
         tag_list = [tag.strip() for tag in tags.split(",")]
     
+    # 处理权重
+    mode_weights = {}
+    if weights:
+        weight_values = [float(w.strip()) for w in weights.split(",")]
+        if len(weight_values) != len(match_modes):
+            return ResponseModel.error(
+                code="INVALID_PARAM",
+                message="权重数量必须与匹配模式数量一致"
+            )
+        for mode, weight in zip(match_modes, weight_values):
+            mode_weights[mode] = weight
+    else:
+        # 默认权重均匀分布
+        weight_value = 1.0 / len(match_modes)
+        for mode in match_modes:
+            mode_weights[mode] = weight_value
+    
     temp_path = None
     try:
         # 创建临时文件
@@ -226,14 +353,90 @@ async def image_search(
         
         start_time = time.time()
         
-        # 使用向量索引进行图像搜索
-        vector_results = vector_db.search_by_image(temp_path, limit=limit*2)
+        # 存储所有搜索结果
+        all_results = {}
+        
+        # 对每种匹配模式执行搜索
+        for mode in match_modes:
+            # 基于匹配模式执行不同的向量搜索
+            vector_results = []
             
-        # 获取向量搜索结果的详细信息并应用过滤
-        results = []
-        for vec_result in vector_results:
+            if mode == ImageVectorMatchMode.IMAGE:
+                # 图片向量对图片向量搜索
+                vector_results = vector_db.search_by_image(temp_path, limit=limit*2)
+            elif mode == ImageVectorMatchMode.TITLE:
+                # 图片向量对标题向量搜索
+                # 需要先将图片编码为向量，然后搜索标题向量
+                img = PILImage.open(temp_path)
+                query_vector = encode_image(img)
+                vector_results = vector_db.search_by_vector(query_vector, index_type="title", limit=limit*2)
+            elif mode == ImageVectorMatchMode.DESCRIPTION:
+                # 图片向量对描述向量搜索
+                img = PILImage.open(temp_path)
+                query_vector = encode_image(img)
+                vector_results = vector_db.search_by_vector(query_vector, index_type="description", limit=limit*2)
+            elif mode == ImageVectorMatchMode.COMBINED:
+                # 图片向量对综合向量搜索 (需要综合计算多个向量索引的结果)
+                img = PILImage.open(temp_path)
+                query_vector = encode_image(img)
+                
+                # 获取多种向量的搜索结果
+                image_results = vector_db.search_by_vector(query_vector, index_type="image", limit=limit*2)
+                title_results = vector_db.search_by_vector(query_vector, index_type="title", limit=limit*2)
+                desc_results = vector_db.search_by_vector(query_vector, index_type="description", limit=limit*2)
+                
+                # 合并结果
+                combined_results = {}
+                
+                # 处理图像结果
+                for result in image_results:
+                    uuid = result["uuid"]
+                    combined_results[uuid] = {"uuid": uuid, "similarity": float(result["similarity"]) * 0.6}
+                
+                # 处理标题结果
+                for result in title_results:
+                    uuid = result["uuid"]
+                    if uuid in combined_results:
+                        combined_results[uuid]["similarity"] += float(result["similarity"]) * 0.2
+                    else:
+                        combined_results[uuid] = {"uuid": uuid, "similarity": float(result["similarity"]) * 0.2}
+                
+                # 处理描述结果
+                for result in desc_results:
+                    uuid = result["uuid"]
+                    if uuid in combined_results:
+                        combined_results[uuid]["similarity"] += float(result["similarity"]) * 0.2
+                    else:
+                        combined_results[uuid] = {"uuid": uuid, "similarity": float(result["similarity"]) * 0.2}
+                
+                # 转换为列表
+                vector_results = list(combined_results.values())
+            
+            # 为每个结果添加当前搜索模式的权重
+            for result in vector_results:
+                uuid = result["uuid"]
+                
+                if uuid not in all_results:
+                    all_results[uuid] = {
+                        "uuid": uuid,
+                        "weighted_similarity": float(result["similarity"]) * mode_weights[mode],
+                        "similarity_components": {str(mode): float(result["similarity"])}
+                    }
+                else:
+                    all_results[uuid]["weighted_similarity"] += float(result["similarity"]) * mode_weights[mode]
+                    all_results[uuid]["similarity_components"][str(mode)] = float(result["similarity"])
+        
+        # 将结果转换为列表
+        result_list = list(all_results.values())
+        
+        # 按加权相似度排序
+        result_list.sort(key=lambda x: x["weighted_similarity"], reverse=True)
+        
+        # 获取详细图片信息
+        formatted_results = []
+        for result in result_list[:limit*2]:  # 获取两倍结果用于过滤
             # 获取图片详细信息
-            img = db.get_image_by_uuid(vec_result["uuid"])
+            img = db.get_image_by_uuid(result["uuid"])
             if img:
                 # 应用过滤条件
                 include = True
@@ -248,23 +451,20 @@ async def image_search(
                     
                 if include:
                     # 添加相似度得分
-                    img["score"] = float(vec_result["similarity"])
-                    results.append(img)
+                    img["score"] = result["weighted_similarity"]
+                    img["similarity_components"] = result["similarity_components"]
+                    formatted_results.append({
+                        "uuid": img["uuid"],
+                        "title": img["title"],
+                        "description": img.get("description", ""),
+                        "filepath": img["filepath"],
+                        "score": float(img["score"]),
+                        "similarity_components": img["similarity_components"],
+                        "tags": img["tags"]
+                    })
         
         # 限制结果数量
-        results = results[:limit]
-        
-        # 格式化结果
-        formatted_results = []
-        for result in results:
-            formatted_results.append({
-                "uuid": result["uuid"],
-                "title": result["title"],
-                "description": result.get("description", ""),
-                "filepath": result["filepath"],
-                "score": float(result["score"]),  # 确保score是浮点数
-                "tags": result["tags"]
-            })
+        formatted_results = formatted_results[:limit]
         
         end_time = time.time()
         processing_time = int((end_time - start_time) * 1000)  # 毫秒
@@ -272,7 +472,9 @@ async def image_search(
         return ResponseModel.success(
             data={"results": formatted_results},
             metadata={
-                "mode": "vector",
+                "search_type": search_type,
+                "match_modes": [str(mode) for mode in match_modes],
+                "weights": mode_weights,
                 "total": len(formatted_results),
                 "time_ms": processing_time
             }
@@ -297,13 +499,24 @@ async def image_search(
 @router.get("/similar/{uuid}", response_model=ResponseModel)
 async def similar_image_search(
     uuid: str = Path(..., description="参考图片的UUID"),
+    match_modes: List[VectorMatchMode] = Query([VectorMatchMode.IMAGE], description="匹配模式: image(图像), title(标题), description(描述), combined(综合)"),
+    weights: Optional[str] = Query(None, description="各个匹配模式的权重，格式为逗号分隔的浮点数，与match_modes对应"),
     limit: int = Query(20, ge=1, le=100, description="返回结果数量"),
     start_date: Optional[str] = Query(None, description="开始日期过滤"),
     end_date: Optional[str] = Query(None, description="结束日期过滤"),
-    tags: Optional[str] = Query(None, description="标签过滤，逗号分隔"),
-    search_type: str = Query("image", description="搜索类型: title、description或image")
+    tags: Optional[str] = Query(None, description="标签过滤，逗号分隔")
 ):
-    """根据系统中已存在的图片UUID搜索相似图片"""
+    """
+    根据系统中已存在的图片UUID搜索相似图片
+    
+    支持多种匹配模式:
+    - 图片向量: 使用图片的视觉特征向量进行匹配
+    - 标题向量: 使用图片标题的语义向量进行匹配
+    - 描述向量: 使用图片描述的语义向量进行匹配
+    - 综合模式: 结合上述多种向量的匹配结果
+    
+    可以通过match_modes指定一个或多个匹配模式，并通过weights指定每种模式的权重
+    """
     # 检查向量搜索是否可用
     if not vector_search_available:
         return ResponseModel.error(
@@ -324,23 +537,113 @@ async def similar_image_search(
     if tags:
         tag_list = [tag.strip() for tag in tags.split(",")]
     
+    # 处理权重
+    mode_weights = {}
+    if weights:
+        weight_values = [float(w.strip()) for w in weights.split(",")]
+        if len(weight_values) != len(match_modes):
+            return ResponseModel.error(
+                code="INVALID_PARAM",
+                message="权重数量必须与匹配模式数量一致"
+            )
+        for mode, weight in zip(match_modes, weight_values):
+            mode_weights[mode] = weight
+    else:
+        # 默认权重均匀分布
+        weight_value = 1.0 / len(match_modes)
+        for mode in match_modes:
+            mode_weights[mode] = weight_value
+    
     start_time = time.time()
     
     try:
-        # 使用向量索引搜索相似内容
-        vector_results = vector_db.search_by_uuid(uuid, limit=limit*2, search_type=search_type)
+        # 存储所有搜索结果
+        all_results = {}
         
-        if not vector_results:
+        # 对每种匹配模式执行搜索
+        for mode in match_modes:
+            # 基于匹配模式执行不同的向量搜索
+            vector_results = []
+            
+            if mode == VectorMatchMode.IMAGE:
+                # 使用图片向量
+                vector_results = vector_db.search_by_uuid(uuid, limit=limit*2, search_type="image")
+            elif mode == VectorMatchMode.TITLE:
+                # 使用标题向量
+                vector_results = vector_db.search_by_uuid(uuid, limit=limit*2, search_type="title")
+            elif mode == VectorMatchMode.DESCRIPTION:
+                # 使用描述向量
+                vector_results = vector_db.search_by_uuid(uuid, limit=limit*2, search_type="description")
+            elif mode == VectorMatchMode.COMBINED:
+                # 使用综合向量 (需要综合计算多个向量索引的结果)
+                # 获取多种向量的搜索结果
+                image_results = vector_db.search_by_uuid(uuid, limit=limit*2, search_type="image")
+                title_results = vector_db.search_by_uuid(uuid, limit=limit*2, search_type="title")
+                desc_results = vector_db.search_by_uuid(uuid, limit=limit*2, search_type="description")
+                
+                # 合并结果
+                combined_results = {}
+                
+                # 处理图像结果
+                for result in image_results:
+                    result_uuid = result["uuid"]
+                    combined_results[result_uuid] = {"uuid": result_uuid, "similarity": float(result["similarity"]) * 0.6}
+                
+                # 处理标题结果
+                for result in title_results:
+                    result_uuid = result["uuid"]
+                    if result_uuid in combined_results:
+                        combined_results[result_uuid]["similarity"] += float(result["similarity"]) * 0.2
+                    else:
+                        combined_results[result_uuid] = {"uuid": result_uuid, "similarity": float(result["similarity"]) * 0.2}
+                
+                # 处理描述结果
+                for result in desc_results:
+                    result_uuid = result["uuid"]
+                    if result_uuid in combined_results:
+                        combined_results[result_uuid]["similarity"] += float(result["similarity"]) * 0.2
+                    else:
+                        combined_results[result_uuid] = {"uuid": result_uuid, "similarity": float(result["similarity"]) * 0.2}
+                
+                # 转换为列表
+                vector_results = list(combined_results.values())
+            
+            # 检查是否有结果
+            if not vector_results:
+                continue
+                
+            # 为每个结果添加当前搜索模式的权重
+            for result in vector_results:
+                result_uuid = result["uuid"]
+                
+                if result_uuid not in all_results:
+                    all_results[result_uuid] = {
+                        "uuid": result_uuid,
+                        "weighted_similarity": float(result["similarity"]) * mode_weights[mode],
+                        "similarity_components": {str(mode): float(result["similarity"])}
+                    }
+                else:
+                    all_results[result_uuid]["weighted_similarity"] += float(result["similarity"]) * mode_weights[mode]
+                    all_results[result_uuid]["similarity_components"][str(mode)] = float(result["similarity"])
+        
+        # 检查是否有任何结果
+        if not all_results:
             return ResponseModel.error(
                 code="NO_VECTOR",
-                message=f"未找到图片{search_type}向量索引，请先建立索引"
+                message="未找到任何向量索引或相似结果，请确认图片已建立索引"
             )
         
-        # 获取向量搜索结果的详细信息并应用过滤
-        results = []
-        for vec_result in vector_results:
+        # 将结果转换为列表
+        result_list = list(all_results.values())
+        
+        # 按加权相似度排序
+        result_list.sort(key=lambda x: x["weighted_similarity"], reverse=True)
+        
+        # 获取详细图片信息
+        formatted_results = []
+        for result in result_list[:limit*2]:  # 获取两倍结果用于过滤
             # 获取图片详细信息
-            img = db.get_image_by_uuid(vec_result["uuid"])
+            img = db.get_image_by_uuid(result["uuid"])
             if img:
                 # 应用过滤条件
                 include = True
@@ -355,20 +658,17 @@ async def similar_image_search(
                     
                 if include:
                     # 添加相似度得分
-                    img["score"] = float(vec_result["similarity"])
-                    results.append(img)
-        
-        # 格式化结果
-        formatted_results = []
-        for result in results:
-            formatted_results.append({
-                "uuid": result["uuid"],
-                "title": result["title"],
-                "description": result.get("description", ""),
-                "filepath": result["filepath"],
-                "score": float(result["score"]),
-                "tags": result["tags"]
-            })
+                    img["score"] = result["weighted_similarity"]
+                    img["similarity_components"] = result["similarity_components"]
+                    formatted_results.append({
+                        "uuid": img["uuid"],
+                        "title": img["title"],
+                        "description": img.get("description", ""),
+                        "filepath": img["filepath"],
+                        "score": float(img["score"]),
+                        "similarity_components": img["similarity_components"],
+                        "tags": img["tags"]
+                    })
         
         # 限制结果数量
         formatted_results = formatted_results[:limit]
@@ -380,13 +680,17 @@ async def similar_image_search(
             data={"results": formatted_results},
             metadata={
                 "reference_uuid": uuid,
-                "search_type": search_type,
+                "match_modes": [str(mode) for mode in match_modes],
+                "weights": mode_weights,
                 "total": len(formatted_results),
                 "time_ms": processing_time
             }
         )
             
     except Exception as e:
+        print(f"相似图片搜索处理出错: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return ResponseModel.error(
             code="SYSTEM_ERROR",
             message=f"系统错误: {str(e)}"

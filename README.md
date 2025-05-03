@@ -73,6 +73,12 @@ npm run dev
 
 ## 文档
 
+### 修改前端发送给后端的地址在vite.config.ts下面
+
+![frontend_to_backend](assets/images/frontend_to_backend.png)
+
+### 修改后端端口的地址在config.py里面进行修改
+![backend_point](assets/images/backend_point.png)
 更多详细信息，请参阅 [docs/](./docs/) 目录下的文档。
 
 ## 许可证

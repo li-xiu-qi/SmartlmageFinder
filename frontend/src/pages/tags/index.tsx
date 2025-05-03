@@ -14,11 +14,11 @@ import {
   Row,
   Col
 } from 'antd';
-import { 
-  EditOutlined, 
-  DeleteOutlined, 
-  PlusOutlined, 
-  SearchOutlined, 
+import {
+  EditOutlined,
+  DeleteOutlined,
+  PlusOutlined,
+  SearchOutlined,
   TagsOutlined,
   PictureOutlined
 } from '@ant-design/icons';
@@ -56,7 +56,7 @@ const TagsPage: React.FC = () => {
   };
 
   // 根据搜索条件过滤标签
-  const filteredTags = tags.filter(tag => 
+  const filteredTags = tags.filter(tag =>
     tag.name.toLowerCase().includes(searchValue.toLowerCase())
   );
 
@@ -85,8 +85,8 @@ const TagsPage: React.FC = () => {
       key: 'action',
       render: (_, record: TagType) => (
         <Space size="middle">
-          <Button 
-            type="primary" 
+          <Button
+            type="primary"
             icon={<PictureOutlined />}
             size="small"
             onClick={() => navigate(`/images?tags=${record.name}`)}
@@ -140,9 +140,9 @@ const TagsPage: React.FC = () => {
                 <div style={{ padding: '16px 0' }}>
                   {filteredTags.map(tag => (
                     <Link to={`/images?tags=${tag.name}`} key={tag.name}>
-                      <Tag 
-                        color={getTagColor(tag.count)} 
-                        style={{ 
+                      <Tag
+                        color={getTagColor(tag.count)}
+                        style={{
                           fontSize: getTagFontSize(tag.count),
                           padding: '4px 8px',
                           margin: '0 8px 8px 0',
@@ -158,9 +158,9 @@ const TagsPage: React.FC = () => {
 
               {/* 标签表格 */}
               <Card title="标签列表">
-                <Table 
-                  columns={columns} 
-                  dataSource={filteredTags} 
+                <Table
+                  columns={columns}
+                  dataSource={filteredTags}
                   rowKey="name"
                   pagination={{
                     pageSize: 10,

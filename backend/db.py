@@ -484,30 +484,169 @@ def search_by_text(query: str,
                   start_date: Optional[str] = None,
                   end_date: Optional[str] = None,
                   tags: Optional[List[str]] = None) -> List[Dict[str, Any]]:
-    """文本搜索，支持普通文本、向量和混合模式"""
+    """文本搜索，支持普通文本、向量和混合模式，以及不同的文本匹配模式"""
     # 根据模式选择搜索方式
     if mode == "vector":
         return vector_text_search(query, limit, start_date, end_date, tags)
     elif mode == "hybrid":
         return hybrid_text_search(query, limit, start_date, end_date, tags)
+    elif mode == "title_only":
+        return title_only_search(query, limit, start_date, end_date, tags)
+    elif mode == "description_only":
+        return description_only_search(query, limit, start_date, end_date, tags)
     else:
+        # 默认文本匹配模式 (标题+描述)
         return simple_text_search(query, limit, start_date, end_date, tags)
 
-def simple_text_search(query: str, 
-                      limit: int = 20,
-                      start_date: Optional[str] = None,
-                      end_date: Optional[str] = None,
-                      tags: Optional[List[str]] = None) -> List[Dict[str, Any]]:
-    """基本文本搜索（不使用向量）"""
+def title_only_search(query: str, 
+                     limit: int = 20,
+                     start_date: Optional[str] = None,
+                     end_date: Optional[str] = None,
+                     tags: Optional[List[str]] = None) -> List[Dict[str, Any]]:
+    """仅匹配标题的文本搜索"""
     conn = get_db_connection()
     conn.row_factory = dict_factory
     cursor = conn.cursor()
     
     search_term = f"%{query}%"
     conditions = [
-        "title LIKE ? OR description LIKE ? OR tags LIKE ?"
+        "title LIKE ?"
     ]
-    params = [search_term, search_term, search_term]
+    params = [search_term]
+    
+    # 添加时间过滤
+    if start_date:
+        conditions.append("created_at >= ?")
+        params.append(start_date)
+    
+    if end_date:
+        conditions.append("created_at <= ?")
+        params.append(end_date)
+    
+    # 添加标签过滤
+    if tags and len(tags) > 0:
+        tag_conditions = []
+        for tag in tags:
+            tag_conditions.append("tags LIKE ?")
+            params.append(f'%"{tag}"%')
+        conditions.append("(" + " OR ".join(tag_conditions) + ")")
+    
+    query_sql = f"""
+    SELECT *,
+           (CASE 
+             WHEN title LIKE ? THEN 1
+             ELSE 0
+           END) as relevance
+    FROM images
+    WHERE {" AND ".join(conditions)}
+    ORDER BY relevance DESC
+    LIMIT ?
+    """
+    
+    # 添加相关性计算参数
+    params.extend([search_term, limit])
+    
+    cursor.execute(query_sql, params)
+    results = cursor.fetchall()
+    
+    # 处理JSON字段并计算分数
+    for result in results:
+        if result['tags']:
+            try:
+                result['tags'] = json.loads(result['tags'])
+            except:
+                result['tags'] = []
+        else:
+            result['tags'] = []
+        
+        # 计算标准化分数
+        result['score'] = 1.0 if result['relevance'] > 0 else 0.0
+    
+    conn.close()
+    return results
+
+def description_only_search(query: str, 
+                           limit: int = 20,
+                           start_date: Optional[str] = None,
+                           end_date: Optional[str] = None,
+                           tags: Optional[List[str]] = None) -> List[Dict[str, Any]]:
+    """仅匹配描述的文本搜索"""
+    conn = get_db_connection()
+    conn.row_factory = dict_factory
+    cursor = conn.cursor()
+    
+    search_term = f"%{query}%"
+    conditions = [
+        "description LIKE ?"
+    ]
+    params = [search_term]
+    
+    # 添加时间过滤
+    if start_date:
+        conditions.append("created_at >= ?")
+        params.append(start_date)
+    
+    if end_date:
+        conditions.append("created_at <= ?")
+        params.append(end_date)
+    
+    # 添加标签过滤
+    if tags and len(tags) > 0:
+        tag_conditions = []
+        for tag in tags:
+            tag_conditions.append("tags LIKE ?")
+            params.append(f'%"{tag}"%')
+        conditions.append("(" + " OR ".join(tag_conditions) + ")")
+    
+    query_sql = f"""
+    SELECT *,
+           (CASE 
+             WHEN description LIKE ? THEN 1
+             ELSE 0
+           END) as relevance
+    FROM images
+    WHERE {" AND ".join(conditions)}
+    ORDER BY relevance DESC
+    LIMIT ?
+    """
+    
+    # 添加相关性计算参数
+    params.extend([search_term, limit])
+    
+    cursor.execute(query_sql, params)
+    results = cursor.fetchall()
+    
+    # 处理JSON字段并计算分数
+    for result in results:
+        if result['tags']:
+            try:
+                result['tags'] = json.loads(result['tags'])
+            except:
+                result['tags'] = []
+        else:
+            result['tags'] = []
+        
+        # 计算标准化分数
+        result['score'] = 1.0 if result['relevance'] > 0 else 0.0
+    
+    conn.close()
+    return results
+
+def simple_text_search(query: str, 
+                      limit: int = 20,
+                      start_date: Optional[str] = None,
+                      end_date: Optional[str] = None,
+                      tags: Optional[List[str]] = None) -> List[Dict[str, Any]]:
+    """基本文本搜索（不使用向量）匹配标题和描述"""
+    conn = get_db_connection()
+    conn.row_factory = dict_factory
+    cursor = conn.cursor()
+    
+    search_term = f"%{query}%"
+    conditions = [
+        "title LIKE ? OR description LIKE ?"
+    ]
+    params = [search_term, search_term]
     
     # 添加时间过滤
     if start_date:
@@ -531,7 +670,6 @@ def simple_text_search(query: str,
            (CASE 
              WHEN title LIKE ? THEN 3
              WHEN description LIKE ? THEN 2
-             WHEN tags LIKE ? THEN 1
              ELSE 0
            END) as relevance
     FROM images
@@ -541,7 +679,7 @@ def simple_text_search(query: str,
     """
     
     # 添加相关性计算参数
-    params.extend([search_term, search_term, search_term, limit])
+    params.extend([search_term, search_term, limit])
     
     cursor.execute(query_sql, params)
     results = cursor.fetchall()
