@@ -1,7 +1,7 @@
 # SmartImageFinder
 
 一个基于多模态向量模型及视觉多模态模型构建的图片搜索引擎管理系统，实现精准的以文搜文，文搜图、以图搜图多种智能检索方式。
-
+![image_manager](assets/images/image_manager.png)
 ## 功能特点
 
 - 基于文本的语义搜索

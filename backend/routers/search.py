@@ -202,17 +202,28 @@ async def image_search(
             message="向量搜索功能不可用，请检查模型配置"
         )
     
+    # 检查文件是否有效
+    if not image or not image.filename:
+        return ResponseModel.error(
+            code="INVALID_FILE",
+            message="未收到有效的图片文件"
+        )
+    
     # 处理标签过滤
     tag_list = None
     if tags:
         tag_list = [tag.strip() for tag in tags.split(",")]
     
-    # 将上传的图片保存到临时文件
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as temp_file:
-        shutil.copyfileobj(image.file, temp_file)
-        temp_path = temp_file.name
-    
+    temp_path = None
     try:
+        # 创建临时文件
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as temp_file:
+            temp_path = temp_file.name
+            # 复制上传的文件内容
+            contents = await image.read()
+            temp_file.write(contents)
+            await image.seek(0)  # 重置文件指针，以防后续需要再次读取
+        
         start_time = time.time()
         
         # 使用向量索引进行图像搜索
@@ -268,14 +279,20 @@ async def image_search(
         )
             
     except Exception as e:
+        print(f"图片搜索处理出错: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return ResponseModel.error(
             code="PROCESSING_ERROR",
             message=f"图片处理出错: {str(e)}"
         )
     finally:
         # 删除临时文件
-        if os.path.exists(temp_path):
-            os.unlink(temp_path)
+        if temp_path and os.path.exists(temp_path):
+            try:
+                os.unlink(temp_path)
+            except Exception as e:
+                print(f"删除临时文件失败: {str(e)}")
 
 @router.get("/similar/{uuid}", response_model=ResponseModel)
 async def similar_image_search(

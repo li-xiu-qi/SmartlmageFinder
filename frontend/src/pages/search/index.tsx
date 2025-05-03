@@ -68,6 +68,7 @@ const SearchPage: React.FC = () => {
   const [total, setTotal] = useState(0);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [form] = Form.useForm();
+  const [fileList, setFileList] = useState<UploadFile[]>([]);
 
   // 初始化表单值
   useEffect(() => {
@@ -167,6 +168,71 @@ const SearchPage: React.FC = () => {
     }
   };
 
+  // 处理文件上传前的检查
+  const beforeImageUpload = (file: RcFile) => {
+    const isImage = file.type.startsWith('image/');
+    if (!isImage) {
+      message.error('只能上传图片文件!');
+      return false;
+    }
+    
+    const isLt10M = file.size / 1024 / 1024 < 10;
+    if (!isLt10M) {
+      message.error('图片大小不能超过10MB!');
+      return false;
+    }
+    
+    // 这里设置为false阻止默认上传行为，我们将手动处理上传
+    return false;
+  };
+
+  // 处理文件列表变化
+  const handleFileChange = (info: any) => {
+    // info.fileList是文件列表，这里我们只处理单个文件
+    const { file, fileList } = info;
+    
+    if (!file) return;
+    
+    // 更新文件列表状态，控制UI显示
+    setFileList(fileList.slice(-1));
+    
+    if (file.status !== 'removed') {
+      // 检查文件类型
+      if (!file.type || !file.type.startsWith('image/')) {
+        message.error('只能上传图片文件!');
+        return;
+      }
+  
+      // 检查文件大小
+      if (file.size && file.size / 1024 / 1024 > 10) {
+        message.error('图片大小不能超过10MB!');
+        return;
+      }
+  
+      // 保存文件对象 - 同时处理两种可能的文件对象格式
+      const fileObj = file.originFileObj || file;
+      if (fileObj) {
+        setSearchImage(fileObj as RcFile);
+        console.log('设置搜索图片:', fileObj);
+        
+        // 生成预览图
+        const reader = new FileReader();
+        reader.readAsDataURL(fileObj);
+        reader.onload = () => {
+          setImageUrl(reader.result as string);
+        };
+      }
+    }
+  };
+
+  // 移除图片
+  const handleImageRemove = () => {
+    setSearchImage(null);
+    setImageUrl('');
+    setFileList([]);
+    return true;
+  };
+
   // 执行图片搜索
   const handleImageSearch = async () => {
     try {
@@ -207,48 +273,6 @@ const SearchPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  // 图片上传前的处理
-  const handleImageUploadChange = (info: any) => {
-    if (info.file.status === 'error') {
-      message.error(`${info.file.name} 文件上传失败`);
-      return;
-    }
-    
-    if (info.file.status === 'removed') {
-      setSearchImage(null);
-      setImageUrl('');
-      return;
-    }
-
-    const isImage = info.file.type?.startsWith('image/');
-    if (!isImage) {
-      message.error('只能上传图片文件!');
-      return;
-    }
-    
-    const isLt10M = info.file.size / 1024 / 1024 < 10;
-    if (!isLt10M) {
-      message.error('图片大小不能超过10MB!');
-      return;
-    }
-    
-    setSearchImage(info.file.originFileObj);
-    
-    // 生成预览图
-    const reader = new FileReader();
-    reader.readAsDataURL(info.file.originFileObj);
-    reader.onload = () => {
-      setImageUrl(reader.result as string);
-    };
-  };
-
-  // 移除图片
-  const handleImageRemove = () => {
-    setSearchImage(null);
-    setImageUrl('');
-    return true;
   };
 
   // 切换高级选项显示
@@ -354,10 +378,14 @@ const SearchPage: React.FC = () => {
         <div className="upload-wrapper" style={{ marginBottom: 16 }}>
           <Dragger
             name="image"
+            fileList={fileList}
             multiple={false}
-            showUploadList={false}
-            onChange={handleImageUploadChange}
-            beforeUpload={() => false}
+            showUploadList={true}
+            beforeUpload={beforeImageUpload}
+            onChange={handleFileChange}
+            onRemove={handleImageRemove}
+            listType="picture-card"
+            accept="image/*"
             style={{ marginBottom: 16 }}
           >
             {imageUrl ? (
@@ -374,16 +402,6 @@ const SearchPage: React.FC = () => {
               </>
             )}
           </Dragger>
-
-          {imageUrl && (
-            <Button 
-              icon={<DeleteOutlined />} 
-              style={{ marginTop: 8 }}
-              onClick={handleImageRemove}
-            >
-              移除图片
-            </Button>
-          )}
         </div>
 
         <div style={{ textAlign: 'right', marginBottom: 16 }}>

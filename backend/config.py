@@ -34,7 +34,7 @@ class Settings(BaseSettings):
     UPLOAD_DIR:str = "./data/images"
     
     # 向量设置
-    VECTOR_DIM: str = 1024
+    VECTOR_DIM: int = 1024
 
     # 索引文件路径
     # FAISS索引文件路径
