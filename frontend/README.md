@@ -1,54 +1,84 @@
-# React + TypeScript + Vite
+# SmartImageFinder 前端
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+SmartImageFinder是一个智能图像管理和搜索系统，本仓库包含系统的前端部分，基于React、TypeScript和Vite构建。
 
-Currently, two official plugins are available:
+## 功能特点
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- 基于文本的图像搜索
+- 基于图像的相似图片搜索
+- 标签管理与分类
+- 图片上传与编辑
+- 多模态AI分析与标注
+- 系统配置管理
 
-## Expanding the ESLint configuration
+## 技术栈
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **框架**: React 18
+- **语言**: TypeScript
+- **构建工具**: Vite
+- **UI组件**: Ant Design 5
+- **样式**: Less
+- **路由**: React Router 6
+- **HTTP客户端**: Axios
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+## 快速开始
+
+### 安装依赖
+
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 开发模式
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
+```bash
+npm run dev
 ```
+
+### 构建生产版本
+
+```bash
+npm run build
+```
+
+### 预览生产版本
+
+```bash
+npm run preview
+```
+
+## 项目结构
+
+```
+src/
+  ├── assets/         # 静态资源
+  ├── components/     # 公共组件
+  ├── hooks/          # 自定义React Hooks
+  ├── layouts/        # 布局组件
+  ├── pages/          # 页面组件
+  │   ├── home/       # 首页
+  │   ├── images/     # 图片管理
+  │   ├── search/     # 搜索页面
+  │   ├── settings/   # 系统设置
+  │   ├── tags/       # 标签管理
+  │   └── upload/     # 上传页面
+  ├── services/       # API服务
+  ├── types/          # TypeScript类型定义
+  └── utils/          # 工具函数
+```
+
+## 后端API
+
+前端通过 `services/api.ts` 模块与后端API交互，主要包括以下几类接口：
+
+- 图片管理: 上传、获取、更新、删除
+- 搜索: 文本搜索、图像搜索
+- 标签管理: 获取标签、添加标签、删除标签
+- 系统配置: 获取配置、更新配置、清除缓存
+
+## 开发说明
+
+- 项目使用ESLint进行代码质量控制
+- 使用Less进行样式开发
+- 布局基于Ant Design的Layout组件
+- 图片展示使用虚拟列表优化性能
