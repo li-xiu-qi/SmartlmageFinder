@@ -19,7 +19,9 @@ init_indices()
 
 # 创建FastAPI应用
 app = FastAPI(
-   
+    title="SmartImageFinder API",
+    description="SmartImageFinder API for image search and analysis",
+    version="1.0.0",
 )
 
 # 配置CORS
