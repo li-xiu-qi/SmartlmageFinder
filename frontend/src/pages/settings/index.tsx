@@ -6,35 +6,28 @@ import {
   InputNumber,
   Select,
   Button,
-  Switch,
   message,
-  Tabs,
   Divider,
   Typography,
   Space,
   Spin,
   Alert,
   Row,
-  Col
+  Col,
+  Modal
 } from 'antd';
 import { SaveOutlined, ClearOutlined, ReloadOutlined, SettingOutlined } from '@ant-design/icons';
 import { systemService } from '@/services/api';
 
 const { Title, Text } = Typography;
-const { TabPane } = Tabs;
 const { Option } = Select;
 
-// 模拟的系统配置
+// 系统配置接口
 interface SystemSettings {
-  general: {
-    pageSize: number;
-    theme: string;
-    language: string;
-  };
   storage: {
     rootDirectory: string;
     cacheDirectory: string;
-    maxFileSize: number;
+    maxCacheSize: number;
   };
   api: {
     apiKey: string;
@@ -44,8 +37,6 @@ interface SystemSettings {
   model: {
     vectorModel: string;
     visionModel: string;
-    batchSize: number;
-    enableCache: boolean;
   };
 }
 
@@ -55,51 +46,45 @@ const SettingsPage: React.FC = () => {
   const [saveLoading, setSaveLoading] = useState(false);
   const [clearCacheLoading, setClearCacheLoading] = useState(false);
   const [systemStatus, setSystemStatus] = useState<any>(null);
+  const [availableVisionModels, setAvailableVisionModels] = useState<string[]>([]);
   
-  // 模拟的初始配置
-  const defaultSettings: SystemSettings = {
-    general: {
-      pageSize: 20,
-      theme: 'light',
-      language: 'zh-CN',
-    },
-    storage: {
-      rootDirectory: 'C:/SmartImageFinder/data',
-      cacheDirectory: 'C:/SmartImageFinder/cache',
-      maxFileSize: 50,
-    },
-    api: {
-      apiKey: '', // 敏感信息，不显示
-      baseUrl: 'http://localhost:8000',
-      timeout: 30000,
-    },
-    model: {
-      vectorModel: 'jina-clip-v2',
-      visionModel: 'Qwen2.5-VL-32B-Instruct',
-      batchSize: 16,
-      enableCache: true,
-    },
-  };
-
   // 加载系统配置和状态
   useEffect(() => {
     const fetchSystemInfo = async () => {
       try {
         setLoading(true);
-        // 获取系统状态，在真实项目中会从后端获取
-        const response = await systemService.getSystemStatus();
+        // 获取系统状态
+        const statusResponse = await systemService.getSystemStatus();
         
-        if (response.status === 'success' && response.data) {
-          setSystemStatus(response.data);
+        if (statusResponse.status === 'success' && statusResponse.data) {
+          setSystemStatus(statusResponse.data);
           
-          // 在真实项目中，这里会加载配置数据
-          // 这里使用模拟数据填充表单
-          form.setFieldsValue({
-            general: defaultSettings.general,
-            storage: defaultSettings.storage,
-            api: defaultSettings.api,
-            model: defaultSettings.model,
-          });
+          // 获取可用的视觉模型列表
+          if (statusResponse.data.components?.multimodal_api?.available_models) {
+            setAvailableVisionModels(statusResponse.data.components.multimodal_api.available_models);
+          }
+          
+          // 获取系统配置
+          const configResponse = await systemService.getSystemConfig();
+          
+          if (configResponse.status === 'success' && configResponse.data) {
+            // 设置表单值
+            form.setFieldsValue({
+              storage: {
+                rootDirectory: configResponse.data.storage.rootDirectory,
+                cacheDirectory: configResponse.data.storage.cacheDirectory,
+                maxCacheSize: configResponse.data.storage.maxCacheSize || 1.5
+              },
+              api: {
+                apiKey: configResponse.data.api.apiKey,
+                baseUrl: configResponse.data.api.baseUrl,
+                timeout: configResponse.data.api.timeout
+              },
+              model: {
+                visionModel: configResponse.data.model.visionModel
+              }
+            });
+          }
         }
       } catch (error) {
         console.error('获取系统信息失败:', error);
@@ -114,19 +99,30 @@ const SettingsPage: React.FC = () => {
 
   // 保存设置
   const handleSaveSettings = async (values: any) => {
-    try {
-      setSaveLoading(true);
-      // 模拟保存配置到后端
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      message.success('设置保存成功');
-      console.log('保存的设置:', values);
-    } catch (error) {
-      console.error('保存设置失败:', error);
-      message.error('保存设置失败');
-    } finally {
-      setSaveLoading(false);
-    }
+    // 显示确认对话框
+    Modal.confirm({
+      title: '确认保存设置',
+      content: '保存的设置将直接写入配置文件，应用需要重启后部分设置才能生效。确定要保存吗？',
+      onOk: async () => {
+        try {
+          setSaveLoading(true);
+          
+          // 调用API保存配置
+          const response = await systemService.updateConfig(values);
+          
+          if (response.status === 'success') {
+            message.success('设置保存成功');
+          } else {
+            message.error(response.error?.message || '保存设置失败');
+          }
+        } catch (error: any) {
+          console.error('保存设置失败:', error);
+          message.error(`保存设置失败: ${error.message || '未知错误'}`);
+        } finally {
+          setSaveLoading(false);
+        }
+      }
+    });
   };
 
   // 清除缓存
@@ -157,13 +153,13 @@ const SettingsPage: React.FC = () => {
             <Card size="small" title="系统">
               <p><strong>版本:</strong> {systemStatus.system.version}</p>
               <p><strong>状态:</strong> {systemStatus.system.status}</p>
-              <p><strong>运行时间:</strong> {Math.floor(systemStatus.system.uptime / 3600)} 小时</p>
+              <p><strong>平台:</strong> {systemStatus.system.platform}</p>
             </Card>
           </Col>
           <Col xs={24} sm={8}>
             <Card size="small" title="组件">
               <p><strong>模型:</strong> {systemStatus.components.model.name}</p>
-              <p><strong>数据库:</strong> {systemStatus.components.database.type} {systemStatus.components.database.version}</p>
+              <p><strong>数据库:</strong> {systemStatus.components.database.type} ({systemStatus.components.database.status})</p>
               <p><strong>多模态API:</strong> {systemStatus.components.multimodal_api.model}</p>
             </Card>
           </Col>
@@ -171,6 +167,7 @@ const SettingsPage: React.FC = () => {
             <Card size="small" title="存储">
               <p><strong>图片总数:</strong> {systemStatus.storage.total_images}</p>
               <p><strong>存储大小:</strong> {systemStatus.storage.total_size_mb} MB</p>
+              <p><strong>缓存状态:</strong> {systemStatus.cache?.enabled ? '已启用' : '已禁用'}</p>
             </Card>
           </Col>
         </Row>
@@ -197,42 +194,9 @@ const SettingsPage: React.FC = () => {
           layout="vertical"
           onFinish={handleSaveSettings}
         >
-          <Tabs defaultActiveKey="general">
-            <TabPane tab="常规设置" key="general">
-              <Card>
-                <Form.Item 
-                  label="每页图片数量" 
-                  name={['general', 'pageSize']}
-                  rules={[{ required: true, message: '请输入每页图片数量' }]}
-                >
-                  <InputNumber min={10} max={100} />
-                </Form.Item>
-
-                <Form.Item 
-                  label="主题" 
-                  name={['general', 'theme']}
-                >
-                  <Select>
-                    <Option value="light">浅色</Option>
-                    <Option value="dark">深色</Option>
-                    <Option value="system">跟随系统</Option>
-                  </Select>
-                </Form.Item>
-
-                <Form.Item 
-                  label="语言" 
-                  name={['general', 'language']}
-                >
-                  <Select>
-                    <Option value="zh-CN">中文（简体）</Option>
-                    <Option value="en-US">English (US)</Option>
-                  </Select>
-                </Form.Item>
-              </Card>
-            </TabPane>
-
-            <TabPane tab="存储设置" key="storage">
-              <Card>
+          <Card title="存储设置" style={{ marginBottom: 16 }}>
+            <Row gutter={24}>
+              <Col span={12}>
                 <Form.Item 
                   label="存储根目录" 
                   name={['storage', 'rootDirectory']}
@@ -240,7 +204,8 @@ const SettingsPage: React.FC = () => {
                 >
                   <Input placeholder="例如: C:/SmartImageFinder/data" />
                 </Form.Item>
-
+              </Col>
+              <Col span={12}>
                 <Form.Item 
                   label="缓存目录" 
                   name={['storage', 'cacheDirectory']}
@@ -248,16 +213,21 @@ const SettingsPage: React.FC = () => {
                 >
                   <Input placeholder="例如: C:/SmartImageFinder/cache" />
                 </Form.Item>
-
+              </Col>
+            </Row>
+            <Row gutter={24}>
+              <Col span={12}>
                 <Form.Item 
-                  label="最大文件大小 (MB)" 
-                  name={['storage', 'maxFileSize']}
-                  rules={[{ required: true, message: '请输入最大文件大小' }]}
+                  label="最大缓存大小 (GB)" 
+                  name={['storage', 'maxCacheSize']}
+                  rules={[{ required: true, message: '请输入最大缓存大小' }]}
+                  tooltip="设置系统缓存的最大占用空间，默认为1.5GB"
                 >
-                  <InputNumber min={1} max={1000} />
+                  <InputNumber min={0.5} max={10} step={0.5} style={{ width: '100%' }} />
                 </Form.Item>
-
-                <div style={{ marginTop: 16 }}>
+              </Col>
+              <Col span={12}>
+                <div style={{ marginTop: 29 }}>
                   <Button 
                     type="primary" 
                     danger 
@@ -271,82 +241,63 @@ const SettingsPage: React.FC = () => {
                     清除系统缓存，包括向量缓存和图片分析缓存
                   </Text>
                 </div>
-              </Card>
-            </TabPane>
+              </Col>
+            </Row>
+          </Card>
 
-            <TabPane tab="API设置" key="api">
-              <Card>
-                <Alert
-                  message="API密钥是敏感信息，请妥善保管"
-                  type="warning"
-                  showIcon
-                  style={{ marginBottom: 16 }}
-                />
-
+          <Card title="API设置" style={{ marginBottom: 16 }}>
+            <Alert
+              message="API密钥是敏感信息，请妥善保管"
+              type="warning"
+              showIcon
+              style={{ marginBottom: 16 }}
+            />
+            <Row gutter={24}>
+              <Col span={12}>
                 <Form.Item 
                   label="API密钥" 
                   name={['api', 'apiKey']}
                 >
                   <Input.Password placeholder="输入OpenAI API密钥" />
                 </Form.Item>
-
+              </Col>
+              <Col span={12}>
                 <Form.Item 
                   label="API基础URL" 
                   name={['api', 'baseUrl']}
                 >
                   <Input placeholder="例如: http://localhost:8000" />
                 </Form.Item>
-
+              </Col>
+            </Row>
+            <Row>
+              <Col span={12}>
                 <Form.Item 
                   label="超时时间 (毫秒)" 
                   name={['api', 'timeout']}
                 >
-                  <InputNumber min={1000} max={60000} step={1000} />
+                  <InputNumber min={1000} max={60000} step={1000} style={{ width: '100%' }} />
                 </Form.Item>
-              </Card>
-            </TabPane>
+              </Col>
+            </Row>
+          </Card>
 
-            <TabPane tab="模型设置" key="model">
-              <Card>
-                <Form.Item 
-                  label="向量模型" 
-                  name={['model', 'vectorModel']}
-                >
-                  <Select>
-                    <Option value="jina-clip-v2">jina-clip-v2</Option>
-                    <Option value="openai-clip">openai-clip</Option>
-                    <Option value="clip-vit-b32">clip-vit-b32</Option>
-                  </Select>
-                </Form.Item>
-
+          <Card title="模型设置" style={{ marginBottom: 16 }}>
+            <Row>
+              <Col span={24}>
                 <Form.Item 
                   label="视觉模型" 
                   name={['model', 'visionModel']}
                 >
                   <Select>
-                    <Option value="Qwen2.5-VL-32B-Instruct">Qwen2.5-VL-32B-Instruct</Option>
-                    <Option value="gpt-4-vision-preview">gpt-4-vision-preview</Option>
-                    <Option value="gemini-pro-vision">gemini-pro-vision</Option>
+                    {availableVisionModels.map(model => (
+                      <Option key={model} value={model}>{model}</Option>
+                    ))}
                   </Select>
                 </Form.Item>
-
-                <Form.Item 
-                  label="批处理大小" 
-                  name={['model', 'batchSize']}
-                >
-                  <InputNumber min={1} max={64} />
-                </Form.Item>
-
-                <Form.Item 
-                  label="启用模型缓存" 
-                  name={['model', 'enableCache']} 
-                  valuePropName="checked"
-                >
-                  <Switch />
-                </Form.Item>
-              </Card>
-            </TabPane>
-          </Tabs>
+              </Col>
+            </Row>
+          </Card>
 
           <div style={{ marginTop: 16, textAlign: 'center' }}>
             <Space>

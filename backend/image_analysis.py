@@ -160,14 +160,14 @@ class ImageAnalysis:
             prompt: 自定义提示文本，如果不提供则使用默认提示
         """
         # 优先使用传入的API密钥，否则从设置中读取
-        self.api_key = api_key or settings.OPENAI_API_KEY or os.getenv("OPENAI_API_KEY")
+        self.api_key = api_key or settings.OPENAI_API_KEY
         
         # 确保有可用的API密钥
         if not self.api_key:
             logger.warning("未提供API密钥，多模态功能将无法使用")
             
-        # 设置基础URL
-        self.base_url = base_url or settings.OPENAI_API_BASE
+        # 设置基础URL，确保有默认值
+        self.base_url = base_url or settings.OPENAI_API_BASE or "https://api.openai.com/v1"
         
         # 初始化API客户端
         self.client = OpenAI(
@@ -197,6 +197,9 @@ class ImageAnalysis:
         try:
             # 确定要检查的模型名称
             model_to_check = model_name or settings.VISION_MODEL
+            if not model_to_check:
+                logger.warning("未指定模型名称且配置中无默认模型")
+                return False
             
             # 获取可用模型列表
             available_models = self.get_available_models()
@@ -221,12 +224,18 @@ class ImageAnalysis:
             return []
             
         try:
-            # 直接返回配置文件中定义的可用模型列表
-            return settings.AVAILABLE_VISION_MODELS
+            # 获取并返回配置中定义的可用模型列表
+            models = settings.AVAILABLE_VISION_MODELS
+            if not models:
+                logger.warning("配置中未定义可用视觉模型列表")
+                # 设置默认可用模型
+                return ["gpt-4-vision-preview"]
+            return models
             
         except Exception as e:
             logger.error(f"获取可用模型列表失败: {str(e)}")
-            return []
+            # 返回默认模型列表作为备选
+            return ["gpt-4-vision-preview"]
 
     def analyze_image(
         self,

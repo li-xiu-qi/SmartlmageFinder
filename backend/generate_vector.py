@@ -46,13 +46,8 @@ def get_image_cache_key(image_input: Union[Image.Image, List[Image.Image], str, 
         raise TypeError(f"不支持的图像输入类型: {type(image_input)}")
 
 def load_model():
-    """加载设置中指定的SentenceTransformer模型。如果AI功能被禁用，返回None。"""
+    """加载设置中指定的SentenceTransformer模型"""
     global model
-    
-    # 检查AI功能是否启用
-    if not settings.AI_ENABLED:
-        print("AI功能已在配置中禁用，不加载模型")
-        return None
         
     if model is None:
         print(f"正在加载模型: {settings.MODEL_PATH}")
@@ -68,11 +63,8 @@ def load_model():
             raise
 
 def get_model() -> SentenceTransformer:
-    """返回加载的模型实例，如果需要就加载模型。如果AI功能被禁用，抛出异常。"""
-    # 检查AI功能是否启用
-    if not settings.AI_ENABLED:
-        raise RuntimeError("AI功能已在配置中禁用")
-        
+    """返回加载的模型实例，如果需要就加载模型"""
+    global model
     if model is None:
         load_model()
     if model is None: # 再次检查，以防加载失败
@@ -81,17 +73,12 @@ def get_model() -> SentenceTransformer:
 
 def encode_text(text: Union[str, List[str]], cache_dir=None) -> np.ndarray:
     """将文本或文本列表编码成向量。"""
-    if not settings.USE_CACHE:
-        # 如果禁用缓存，直接计算向量
-        model_instance = get_model()
-        return model_instance.encode(text, normalize_embeddings=True)
-    
     # 使用缓存
     cache_dir = cache_dir or settings.TEXT_VECTOR_CACHE_DIR
     
     # 先尝试从缓存获取
     cache_key = get_text_cache_key(text)
-    cache_instance = diskcache.Cache(directory=cache_dir)
+    cache_instance = diskcache.Cache(directory=cache_dir,size_limit=settings.MAX_CACHE_SIZE_GB * 2**30)
     
     embeddings = cache_instance.get(cache_key)
     if embeddings is not None:
@@ -108,26 +95,17 @@ def encode_text(text: Union[str, List[str]], cache_dir=None) -> np.ndarray:
 
 def encode_image(image_input: Union[Image.Image, List[Image.Image], str, List[str]], cache_dir=None) -> np.ndarray:
     """将图像(PIL Image、路径)或图像列表编码成向量。"""
-    if not settings.USE_CACHE:
-        # 如果禁用缓存，直接计算向量
-        model_instance = get_model()
-        if isinstance(image_input, (Image.Image, str)):
-            images_to_encode = [image_input]
-            embeddings = model_instance.encode(images_to_encode, normalize_embeddings=True)
-            return embeddings[0]
-        else:
-            return model_instance.encode(image_input, normalize_embeddings=True)
-    
     # 使用缓存
     cache_dir = cache_dir or settings.IMAGE_VECTOR_CACHE_DIR
     
     # 先尝试从缓存获取
     try:
         cache_key = get_image_cache_key(image_input)
-        cache_instance = diskcache.Cache(directory=cache_dir)
+        cache_instance = diskcache.Cache(directory=cache_dir,size_limit=settings.MAX_CACHE_SIZE_GB)
         
         embeddings = cache_instance.get(cache_key)
         if embeddings is not None:
+            print(f"图像向量从缓存获取: {cache_key}")
             return embeddings
 
     except Exception as e:

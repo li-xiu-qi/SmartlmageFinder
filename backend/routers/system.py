@@ -1,5 +1,5 @@
-from fastapi import APIRouter, Query, Path
-from typing import List, Dict, Any, Set
+from fastapi import APIRouter, Query, Path, Body
+from typing import List, Dict, Any, Set, Optional
 from ..schemas import ResponseModel
 from .. import db
 from ..config import settings
@@ -236,15 +236,71 @@ async def clear_cache(cache_types: Set[str]):
 async def get_system_config():
     """获取系统配置信息"""
     config = {
-        "ai_enabled": settings.AI_ENABLED,
-        "model_path": settings.MODEL_PATH,
-        "upload_dir": settings.UPLOAD_DIR,
-        "vector_dimension": settings.VECTOR_DIM,
-        "use_cache": settings.USE_CACHE,
-        "vision_model": settings.VISION_MODEL,
-        "available_vision_models": settings.AVAILABLE_VISION_MODELS,
-        "host": settings.HOST,
-        "port": settings.PORT
+        "api": {
+            "apiKey": settings.OPENAI_API_KEY,
+            "baseUrl": settings.OPENAI_API_BASE,
+            "timeout": 30000  # 默认超时时间
+        },
+        "storage": {
+            "rootDirectory": settings.UPLOAD_DIR,
+            "cacheDirectory": settings.TEXT_VECTOR_CACHE_DIR,
+            "maxCacheSize": settings.MAX_CACHE_SIZE_GB / (2 ** 30)  # 转换为GB单位
+        },
+        "model": {
+            "vectorModel": os.path.basename(settings.MODEL_PATH),
+            "visionModel": settings.VISION_MODEL
+        }
     }
     
     return ResponseModel.success(data=config)
+
+@router.post("/update-config", response_model=ResponseModel)
+async def update_system_config(config: Dict[str, Any] = Body(...)):
+    """更新系统配置"""
+    try:
+        # 提取配置数据
+        storage_config = config.get("storage", {})
+        api_config = config.get("api", {})
+        model_config = config.get("model", {})
+        
+        # 更新存储配置
+        if "rootDirectory" in storage_config:
+            settings.UPLOAD_DIR = storage_config["rootDirectory"]
+        if "cacheDirectory" in storage_config:
+            # 更新两个缓存目录的基础路径
+            cache_base = os.path.dirname(storage_config["cacheDirectory"])
+            settings.TEXT_VECTOR_CACHE_DIR = os.path.join(cache_base, "text_vector_cache")
+            settings.IMAGE_VECTOR_CACHE_DIR = os.path.join(cache_base, "image_vector_cache")
+        if "maxFileSize" in storage_config:
+            # 这个值将在前端控制，后端不存储
+            pass
+        if "maxCacheSize" in storage_config:
+            settings.MAX_CACHE_SIZE_GB = float(storage_config["maxCacheSize"])
+        
+        # 更新API配置
+        if "apiKey" in api_config:
+            settings.OPENAI_API_KEY = api_config["apiKey"]
+        if "baseUrl" in api_config:
+            settings.OPENAI_API_BASE = api_config["baseUrl"]
+        
+        # 更新模型配置
+        if "visionModel" in model_config:
+            settings.VISION_MODEL = model_config["visionModel"]
+        
+        # 保存配置到文件
+        success = settings.save()
+        
+        if success:
+            # 确保目录存在
+            settings._ensure_directories()
+            return ResponseModel.success(data={"message": "配置已更新并保存到文件"})
+        else:
+            return ResponseModel.error(
+                code="CONFIG_SAVE_FAILED",
+                message="配置更新失败，无法写入配置文件"
+            )
+    except Exception as e:
+        return ResponseModel.error(
+            code="UPDATE_CONFIG_ERROR",
+            message=f"更新配置时出错: {str(e)}"
+        )

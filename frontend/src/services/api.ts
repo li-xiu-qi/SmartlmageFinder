@@ -232,8 +232,18 @@ export const systemService = {
     return api.get('/system/status');
   },
 
+  // 获取系统配置
+  getSystemConfig: (): Promise<ApiResponse<any>> => {
+    return api.get('/system/config');
+  },
+
+  // 更新系统配置
+  updateConfig: (config: any): Promise<ApiResponse<any>> => {
+    return api.post('/system/update-config', config);
+  },
+
   // 清除缓存
-  clearCache: (cacheTypes: ('vector' | 'image_analysis' | 'all')[]): Promise<ApiResponse<{ message: string, details: Record<string, any> }>> => {
+  clearCache: (cacheTypes: string[]): Promise<ApiResponse<any>> => {
     return api.post('/system/clear-cache', { cache_types: cacheTypes });
   },
 };

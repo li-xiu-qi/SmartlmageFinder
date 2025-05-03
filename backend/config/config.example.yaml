@@ -1,0 +1,20 @@
+AI_ENABLED: true
+AVAILABLE_VISION_MODELS:
+- Qwen/Qwen2.5-VL-32B-Instruct
+- Pro/Qwen/Qwen2.5-VL-7B-Instruct
+DB_PATH: ./data/db/smartimagefinder.db
+DESCRIPTION_INDEX_PATH: ./data/faiss/description_vectors.faiss
+HOST: 0.0.0.0
+IMAGE_INDEX_PATH: ./data/faiss/image_vectors.faiss
+IMAGE_VECTOR_CACHE_DIR: ./data/caches/image_vector_cache
+MODEL_PATH: C:\Users\k\Desktop\BaiduSyncdisk\baidu_sync_documents\hf_models\jina-clip-v2
+OPENAI_API_BASE: https://api.siliconflow.cn/v1
+OPENAI_API_KEY: sk-eci
+PORT: 1000
+TEXT_VECTOR_CACHE_DIR: ./data/caches/text_vector_cache
+TITLE_INDEX_PATH: ./data/faiss/title_vectors.faiss
+UPLOAD_DIR: ./data/images
+USE_CACHE: true
+UUID_MAP_PATH: ./data/faiss/uuid_map.pickle
+VECTOR_DIM: 1024
+VISION_MODEL: Qwen/Qwen2.5-VL-32B-Instruct
