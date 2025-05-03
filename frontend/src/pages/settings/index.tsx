@@ -238,7 +238,7 @@ const SettingsPage: React.FC = () => {
                     清除缓存
                   </Button>
                   <Text type="secondary" style={{ marginLeft: 8 }}>
-                    清除系统缓存，包括向量缓存和图片分析缓存
+                    清除系统缓存，包括向量缓存
                   </Text>
                 </div>
               </Col>

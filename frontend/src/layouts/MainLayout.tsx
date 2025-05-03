@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Layout, Menu, theme, Input, Badge, Avatar, Dropdown, Button } from 'antd';
+import { Layout, Menu, theme, Input, Badge, Avatar, Dropdown, Button, message } from 'antd';
 import { 
   HomeOutlined, 
   PictureOutlined, 
@@ -20,6 +20,7 @@ const { Search } = Input;
 const MainLayout: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [systemStatus, setSystemStatus] = useState<{status?: string; model?: string}>({});
+  const [clearingCache, setClearingCache] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { token } = theme.useToken();
@@ -76,6 +77,25 @@ const MainLayout: React.FC = () => {
         ? 'red' 
         : 'orange';
 
+  // 清除缓存
+  const handleClearCache = async () => {
+    try {
+      setClearingCache(true);
+      const response = await systemService.clearCache(['all']);
+      
+      if (response.status === 'success') {
+        message.success('缓存已成功清除');
+      } else {
+        message.error(response.error?.message || '清除缓存失败');
+      }
+    } catch (error: any) {
+      console.error('清除缓存失败:', error);
+      message.error(`清除缓存失败: ${error.message || '未知错误'}`);
+    } finally {
+      setClearingCache(false);
+    }
+  };
+
   // 设置下拉菜单项
   const settingsMenu = {
     items: [
@@ -86,15 +106,9 @@ const MainLayout: React.FC = () => {
       },
       {
         key: '2',
-        label: '清除缓存',
-        onClick: async () => {
-          try {
-            await systemService.clearCache(['all']);
-            // 可以添加一个消息提醒
-          } catch (error) {
-            console.error('清除缓存失败:', error);
-          }
-        },
+        label: clearingCache ? '正在清除缓存...' : '清除缓存',
+        onClick: handleClearCache,
+        disabled: clearingCache,
       },
     ],
   };
