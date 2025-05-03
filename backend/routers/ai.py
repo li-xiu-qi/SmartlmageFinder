@@ -23,7 +23,7 @@ ai_available = False
 
 if settings.AI_ENABLED:
     try:
-        image_analyzer = ImageAnalysis(api_key=os.getenv("OPENAI_API_KEY"))
+        image_analyzer = ImageAnalysis(api_key=settings.OPENAI_API_KEY, base_url=settings.OPENAI_API_BASE)
         ai_available = image_analyzer is not None
         print("AI图像分析服务初始化成功")
     except Exception as e:
@@ -67,7 +67,8 @@ async def generate_content(
         # 调用图像分析
         analysis_result = image_analyzer.analyze_image(
             local_image_path=image_path,
-            detail="low" if generate_options.detail == "low" else "high"
+            detail="low" if generate_options.detail == "low" else "high",
+            model=settings.VISION_MODEL,
         )
         
         # 处理生成结果
@@ -226,7 +227,9 @@ async def analyze_uploaded_image(
         start_time = time.time()
         result = image_analyzer.analyze_image(
             local_image_path=temp_path,
-            detail="low" if detail == "low" else "high"
+            detail="low" if detail == "low" else "high",
+                        model=settings.VISION_MODEL,
+
         )
         end_time = time.time()
         
@@ -302,7 +305,8 @@ async def process_batch_generation(task_id: str, uuids: List[str], options: Gene
             if image_analyzer:
                 analysis_result = image_analyzer.analyze_image(
                     local_image_path=image_path,
-                    detail="low" if options.detail == "low" else "high"
+                    detail="low" if options.detail == "low" else "high",
+                        model=settings.VISION_MODEL,
                 )
                 
                 # 处理生成结果
@@ -388,7 +392,8 @@ async def analyze_image(uuid: str = Path(..., description="图片的UUID")):
     try:
         start_time = time.time()
         
-        result = image_analyzer.analyze_image(local_image_path=image_path)
+        result = image_analyzer.analyze_image(local_image_path=image_path,
+                        model=settings.VISION_MODEL,)
         
         if "error" in result:
             return ResponseModel.error(
@@ -481,7 +486,8 @@ async def batch_analyze_images(uuids: List[str]):
                 continue
             
             # 分析图片
-            result = image_analyzer.analyze_image(local_image_path=image_path)
+            result = image_analyzer.analyze_image(local_image_path=image_path,
+                        model=settings.VISION_MODEL,)
             
             if "error" in result:
                 failed.append({

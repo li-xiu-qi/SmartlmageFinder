@@ -59,7 +59,7 @@ def load_model():
         try:
             model = SentenceTransformer(
                 settings.MODEL_PATH,
-                trust_remote_code=settings.TRUST_REMOTE_CODE
+                trust_remote_code=True,  # 信任远程代码
             )
             print("模型加载成功。")
         except Exception as e:

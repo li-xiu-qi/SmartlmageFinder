@@ -50,7 +50,6 @@ class Settings:
         
         # AI功能设置
         self.AI_ENABLED = True  # 是否启用AI功能（向量搜索、图像分析等）
-        self.TRUST_REMOTE_CODE = True  # 是否信任远程代码（加载模型时使用）
         
         # OpenAI API设置
         self.OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")

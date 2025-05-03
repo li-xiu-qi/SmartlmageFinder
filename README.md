@@ -78,7 +78,12 @@ npm run dev
 ![frontend_to_backend](assets/images/frontend_to_backend.png)
 
 ### 修改后端端口的地址在config.py里面进行修改
+
 ![backend_point](assets/images/backend_point.png)
+
+### 多模态模型配置可以在环境变量配置，或者在config.py文件下进行配置
+
+![vision_model](assets/images/vision_model.png)
 更多详细信息，请参阅 [docs/](./docs/) 目录下的文档。
 
 ## 许可证
