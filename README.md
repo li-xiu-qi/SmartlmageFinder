@@ -1,5 +1,5 @@
 # SmartImageFinder
-
+![home](assets/images/home.png)
 一个基于多模态向量模型及视觉多模态模型构建的图片搜索引擎管理系统，实现精准的以文搜文，文搜图、以图搜图多种智能检索方式。
 ![image_manager](assets/images/image_manager.png)
 
@@ -13,6 +13,10 @@
 - 自动生成图片标题、描述和标签
 - 支持按标签和元数据筛选图片
 - 适用于本地存储的图片集合管理
+图片上传
+![image_upload](assets/images/image_upload.png)
+图片上传时编辑
+![image_upload_edit](assets/images/image_upload_edit.png)
 
 ## 技术栈
 
