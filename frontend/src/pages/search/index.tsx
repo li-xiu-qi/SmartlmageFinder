@@ -315,23 +315,25 @@ const SearchPage: React.FC = () => {
       const values = form.getFieldsValue();
       setLoading(true);
       
-      // 构建搜索参数
+      // 创建正确的FormData实例
       const formData = new FormData();
+      // 添加文件对象，而不是FormData对象本身
       formData.append('image', searchImage);
+      
+      // 添加其他参数
       formData.append('search_type', values.image_search_type || 'image');
       
-      // 添加匹配模式
+      // 添加匹配模式 - 确保每个模式是单独添加的
       if (selectedImageMatchModes.length > 0) {
-        // 在formData中需要为每个匹配模式添加一个条目
         selectedImageMatchModes.forEach(mode => {
           formData.append('match_modes', mode);
         });
-        
-        // 添加权重
-        if (Object.keys(modeWeights).length > 0) {
-          const weightString = formatWeights(modeWeights, selectedImageMatchModes);
-          formData.append('weights', weightString);
-        }
+      }
+      
+      // 添加权重
+      if (Object.keys(modeWeights).length > 0 && selectedImageMatchModes.length > 0) {
+        const weightString = formatWeights(modeWeights, selectedImageMatchModes);
+        formData.append('weights', weightString);
       }
       
       // 添加结果限制

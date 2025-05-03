@@ -42,6 +42,7 @@ export interface ImageDetail extends Image {
 // 图片搜索结果类型
 export interface ImageSearchResult extends Image {
   score: number;
+  similarity_components?: Record<string, number>;
 }
 
 // 图片列表查询参数
@@ -59,18 +60,39 @@ export interface ImageListParams {
 // 搜索查询参数
 export interface SearchParams {
   q?: string;
-  mode?: 'vector' | 'text' | 'hybrid';
-  field?: 'title' | 'description' | 'all';
+  search_type?: 'text' | 'vector' | 'hybrid';
+  text_match_mode?: 'title' | 'description' | 'combined';
+  vector_match_mode?: 'title' | 'description' | 'combined';
   limit?: number;
-  filter?: Record<string, any>;
   start_date?: string;
   end_date?: string;
-  tags?: string[];
+  tags?: string[] | string;
+}
+
+// 图片搜索参数
+export interface ImageSearchParams {
+  search_type?: 'image' | 'title' | 'description' | 'combined';
+  match_modes?: Array<'image' | 'title' | 'description' | 'combined'>;
+  weights?: string;
+  limit?: number;
+  start_date?: string;
+  end_date?: string;
+  tags?: string[] | string;
+}
+
+// 相似图片搜索参数
+export interface SimilarSearchParams {
+  match_modes?: Array<'image' | 'title' | 'description' | 'combined'>;
+  weights?: string;
+  limit?: number;
+  start_date?: string;
+  end_date?: string;
+  tags?: string[] | string;
 }
 
 // 图片上传响应
 export interface UploadResponse {
-  uploaded: UploadedImage[];
+  uploaded: UploadedImage[]; 
   failed: FailedUpload[];
 }
 

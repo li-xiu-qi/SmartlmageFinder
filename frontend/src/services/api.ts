@@ -128,25 +128,21 @@ export const imageService = {
 
 export const searchService = {
   // 文本搜索图片
-  searchByText: (params: SearchParams): Promise<ApiResponse<{ results: ImageDetail[] }>> => {
+  searchByText: (params: SearchParams): Promise<ApiResponse<{ results: ImageSearchResult[] }>> => {
     return api.get('/search/text', { params });
   },
 
   // 图片搜索图片
-  searchByImage: (image: File, params?: Omit<SearchParams, 'q'>): Promise<ApiResponse<{ results: ImageDetail[] }>> => {
-    const formData = new FormData();
-    formData.append('image', image);
-    
-    const config: AxiosRequestConfig = { headers: { 'Content-Type': 'multipart/form-data' } };
-    if (params) {
-      config.params = params;
-    }
-    
-    return api.post('/search/image', formData, config);
+  searchByImage: (formData: FormData): Promise<ApiResponse<{ results: ImageSearchResult[] }>> => {
+    return api.post('/search/image', formData, {
+      headers: { 
+        'Content-Type': 'multipart/form-data' 
+      }
+    });
   },
 
   // 相似图片搜索
-  searchSimilar: (uuid: string, params?: { limit?: number; search_type?: 'image' | 'title' | 'description'; start_date?: string; end_date?: string; tags?: string[] | string; }): Promise<ApiResponse<{ results: ImageDetail[] }>> => {
+  searchSimilar: (uuid: string, params?: SimilarSearchParams): Promise<ApiResponse<{ results: ImageSearchResult[] }>> => {
     return api.get(`/search/similar/${uuid}`, { params });
   },
 };
