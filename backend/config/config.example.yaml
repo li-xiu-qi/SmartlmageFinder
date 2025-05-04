@@ -9,7 +9,7 @@ PORT: 1000
 IMAGE_INDEX_PATH: ./data/faiss/image_vectors.faiss
 IMAGE_VECTOR_CACHE_DIR: ./data/caches/image_vector_cache
 MAX_CACHE_SIZE_GB: 1.5
-MODEL_PATH: C:\Users\k\Desktop\BaiduSyncdisk\baidu_sync_documents\hf_models\jina-clip-v2
+MODEL_PATH: jina-clip-v2 # 推荐自己下载模型并把路径放在这里
 OPENAI_API_BASE: https://api.siliconflow.cn/v1
 OPENAI_API_KEY: sk-
 TEXT_VECTOR_CACHE_DIR: ./data/caches/text_vector_cache

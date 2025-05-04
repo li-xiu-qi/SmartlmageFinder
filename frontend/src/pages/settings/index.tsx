@@ -127,19 +127,30 @@ const SettingsPage: React.FC = () => {
 
   // 清除缓存
   const handleClearCache = async () => {
-    try {
-      setClearCacheLoading(true);
-      const response = await systemService.clearCache(['all']);
-      
-      if (response.status === 'success') {
-        message.success('缓存清除成功');
-      }
-    } catch (error) {
-      console.error('清除缓存失败:', error);
-      message.error('清除缓存失败');
-    } finally {
-      setClearCacheLoading(false);
-    }
+    Modal.confirm({
+      title: '确认清除缓存',
+      content: '清除缓存将删除所有向量缓存数据，可能会导致下次搜索速度变慢。确定要继续吗？',
+      okText: '确认清除',
+      cancelText: '取消',
+      okButtonProps: { danger: true },
+      onOk: async () => {
+        try {
+          setClearCacheLoading(true);
+          const response = await systemService.clearCache(['all']);
+          
+          if (response.status === 'success') {
+            message.success('缓存清除成功');
+          } else {
+            message.error(response.error?.message || '清除缓存失败');
+          }
+        } catch (error) {
+          console.error('清除缓存失败:', error);
+          message.error('清除缓存失败');
+        } finally {
+          setClearCacheLoading(false);
+        }
+      },
+    });
   };
 
   // 渲染系统状态

@@ -244,6 +244,8 @@ export const systemService = {
 
   // 清除缓存
   clearCache: (cacheTypes: string[]): Promise<ApiResponse<any>> => {
+    // 后端期望 cache_types 是一个集合，但JSON序列化会把Set变成空对象
+    // 所以直接传递字符串数组，后端会处理
     return api.post('/system/clear-cache', { cache_types: cacheTypes });
   },
 };

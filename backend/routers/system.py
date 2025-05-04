@@ -155,14 +155,18 @@ async def get_system_status():
     return ResponseModel.success(data=system_status)
 
 @router.post("/clear-cache", response_model=ResponseModel)
-async def clear_cache(cache_types: Set[str]):
+async def clear_cache(cache_types: Dict[str, List[str]] = Body(...)):
     """清除系统缓存"""
     # 获取当前缓存状态
     cache_info = get_cache_stats()
     
+    # 从请求体中提取cache_types参数
+    types_list = cache_types.get("cache_types", [])
+    cache_types_set = set(types_list)
+    
     # 验证缓存类型
     valid_cache_types = {"text_vector", "image_vector", "all"}
-    invalid_types = cache_types - valid_cache_types
+    invalid_types = cache_types_set - valid_cache_types
     
     if invalid_types:
         return ResponseModel.error(
@@ -171,8 +175,8 @@ async def clear_cache(cache_types: Set[str]):
         )
     
     # 使用"all"包含所有类型
-    if "all" in cache_types:
-        cache_types = {"text_vector", "image_vector"}
+    if "all" in cache_types_set:
+        cache_types_set = {"text_vector", "image_vector"}
     
     # 处理结果
     result = {
@@ -180,7 +184,7 @@ async def clear_cache(cache_types: Set[str]):
         "details": {}
     }
     
-    if "text_vector" in cache_types:
+    if "text_vector" in cache_types_set:
         # 清理文本向量缓存
         cache_db_path = os.path.join(settings.TEXT_VECTOR_CACHE_DIR, "cache.db")
         if os.path.exists(cache_db_path):
@@ -210,7 +214,7 @@ async def clear_cache(cache_types: Set[str]):
                 "error": "缓存数据库不存在"
             }
     
-    if "image_vector" in cache_types:
+    if "image_vector" in cache_types_set:
         # 清理图像向量缓存
         cache_db_path = os.path.join(settings.IMAGE_VECTOR_CACHE_DIR, "cache.db")
         if os.path.exists(cache_db_path):
@@ -298,7 +302,7 @@ async def update_system_config(config: Dict[str, Any] = Body(...)):
         # 保存配置到文件
         success = settings.save()
         
-        if success:
+        if (success):
             # 确保目录存在
             settings._ensure_directories()
             return ResponseModel.success(data={"message": "配置已更新并保存到文件"})

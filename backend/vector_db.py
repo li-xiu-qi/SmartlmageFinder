@@ -276,28 +276,36 @@ def init_indices():
     """初始化所有向量索引"""
     global uuid_map, title_index, description_index, image_index
     
+    # 如果所有索引都已初始化，则直接返回
+    if title_index is not None and description_index is not None and image_index is not None:
+        return
+    
     # 加载UUID映射
-    if os.path.exists(settings.UUID_MAP_PATH):
-        try:
-            with open(settings.UUID_MAP_PATH, 'rb') as f:
-                uuid_map = pickle.load(f)
-            print(f"已加载UUID映射，包含{len(uuid_map)}个条目")
-        except Exception as e:
-            print(f"加载UUID映射失败: {e}")
+    if not uuid_map:  # 只在uuid_map为空时加载
+        if os.path.exists(settings.UUID_MAP_PATH):
+            try:
+                with open(settings.UUID_MAP_PATH, 'rb') as f:
+                    uuid_map = pickle.load(f)
+                print(f"已加载UUID映射，包含{len(uuid_map)}个条目")
+            except Exception as e:
+                print(f"加载UUID映射失败: {e}")
+                uuid_map = {}
+        else:
             uuid_map = {}
-    else:
-        uuid_map = {}
-        print("创建了新的UUID映射")
+            print("创建了新的UUID映射")
     
-    # 初始化各个索引
-    title_index = TextVectorIndex(settings.TITLE_INDEX_PATH, "title", uuid_map)
-    title_index.init_index()
+    # 初始化各个索引（如果尚未初始化）
+    if title_index is None:
+        title_index = TextVectorIndex(settings.TITLE_INDEX_PATH, "title", uuid_map)
+        title_index.init_index()
     
-    description_index = TextVectorIndex(settings.DESCRIPTION_INDEX_PATH, "description", uuid_map)
-    description_index.init_index()
+    if description_index is None:
+        description_index = TextVectorIndex(settings.DESCRIPTION_INDEX_PATH, "description", uuid_map)
+        description_index.init_index()
     
-    image_index = ImageVectorIndex(settings.IMAGE_INDEX_PATH, uuid_map)
-    image_index.init_index()
+    if image_index is None:
+        image_index = ImageVectorIndex(settings.IMAGE_INDEX_PATH, uuid_map)
+        image_index.init_index()
 
 
 def save_indices():

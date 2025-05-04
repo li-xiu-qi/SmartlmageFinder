@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Layout, Menu, theme, Input, Badge, Avatar, Dropdown, Button, message } from 'antd';
+import { Layout, Menu, theme, Input, Badge, Avatar, Dropdown, Button, message, Modal } from 'antd';
 import { 
   HomeOutlined, 
   PictureOutlined, 
@@ -77,21 +77,30 @@ const MainLayout: React.FC = () => {
 
   // 清除缓存
   const handleClearCache = async () => {
-    try {
-      setClearingCache(true);
-      const response = await systemService.clearCache(['all']);
-      
-      if (response.status === 'success') {
-        message.success('缓存已成功清除');
-      } else {
-        message.error(response.error?.message || '清除缓存失败');
-      }
-    } catch (error: any) {
-      console.error('清除缓存失败:', error);
-      message.error(`清除缓存失败: ${error.message || '未知错误'}`);
-    } finally {
-      setClearingCache(false);
-    }
+    Modal.confirm({
+      title: '确认清除缓存',
+      content: '清除缓存将删除所有向量缓存数据，可能会导致下次搜索速度变慢。确定要继续吗？',
+      okText: '确认清除',
+      cancelText: '取消',
+      okButtonProps: { danger: true },
+      onOk: async () => {
+        try {
+          setClearingCache(true);
+          const response = await systemService.clearCache(['all']);
+          
+          if (response.status === 'success') {
+            message.success('缓存已成功清除');
+          } else {
+            message.error(response.error?.message || '清除缓存失败');
+          }
+        } catch (error: any) {
+          console.error('清除缓存失败:', error);
+          message.error(`清除缓存失败: ${error.message || '未知错误'}`);
+        } finally {
+          setClearingCache(false);
+        }
+      },
+    });
   };
 
   // 设置下拉菜单项
