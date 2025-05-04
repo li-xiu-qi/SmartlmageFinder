@@ -8,7 +8,8 @@ import {
   SettingOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
-  TagsOutlined
+  TagsOutlined,
+  ExclamationCircleFilled
 } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { systemService } from '@/services/api';
@@ -21,6 +22,8 @@ const MainLayout: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [systemStatus, setSystemStatus] = useState<{status?: string}>({});
   const [clearingCache, setClearingCache] = useState(false);
+  const [confirmModalVisible, setConfirmModalVisible] = useState(false);
+  
   const navigate = useNavigate();
   const location = useLocation();
   const { token } = theme.useToken();
@@ -75,32 +78,34 @@ const MainLayout: React.FC = () => {
         ? 'red' 
         : 'orange';
 
-  // 清除缓存
-  const handleClearCache = async () => {
-    Modal.confirm({
-      title: '确认清除缓存',
-      content: '清除缓存将删除所有向量缓存数据，可能会导致下次搜索速度变慢。确定要继续吗？',
-      okText: '确认清除',
-      cancelText: '取消',
-      okButtonProps: { danger: true },
-      onOk: async () => {
-        try {
-          setClearingCache(true);
-          const response = await systemService.clearCache(['all']);
-          
-          if (response.status === 'success') {
-            message.success('缓存已成功清除');
-          } else {
-            message.error(response.error?.message || '清除缓存失败');
-          }
-        } catch (error: any) {
-          console.error('清除缓存失败:', error);
-          message.error(`清除缓存失败: ${error.message || '未知错误'}`);
-        } finally {
-          setClearingCache(false);
-        }
-      },
-    });
+  // 处理清除缓存确认
+  const showClearCacheConfirm = () => {
+    setConfirmModalVisible(true);
+  };
+
+  // 确认清除缓存
+  const handleConfirmClearCache = async () => {
+    try {
+      setClearingCache(true);
+      const response = await systemService.clearCache(['all']);
+      
+      if (response.status === 'success') {
+        message.success('缓存已成功清除');
+      } else {
+        message.error(response.error?.message || '清除缓存失败');
+      }
+    } catch (error: any) {
+      console.error('清除缓存失败:', error);
+      message.error(`清除缓存失败: ${error.message || '未知错误'}`);
+    } finally {
+      setClearingCache(false);
+      setConfirmModalVisible(false);
+    }
+  };
+
+  // 取消清除缓存
+  const handleCancelClearCache = () => {
+    setConfirmModalVisible(false);
   };
 
   // 设置下拉菜单项
@@ -114,7 +119,7 @@ const MainLayout: React.FC = () => {
       {
         key: '2',
         label: clearingCache ? '正在清除缓存...' : '清除缓存',
-        onClick: handleClearCache,
+        onClick: showClearCacheConfirm,
         disabled: clearingCache,
       },
     ],
@@ -227,6 +232,25 @@ const MainLayout: React.FC = () => {
           </Content>
         </Layout>
       </Layout>
+
+      {/* 清除缓存确认对话框 */}
+      <Modal
+        title={
+          <span>
+            <ExclamationCircleFilled style={{ color: '#faad14', marginRight: 8 }} />
+            确认清除缓存
+          </span>
+        }
+        open={confirmModalVisible}
+        onOk={handleConfirmClearCache}
+        onCancel={handleCancelClearCache}
+        confirmLoading={clearingCache}
+        okText="确认清除"
+        cancelText="取消"
+        okButtonProps={{ danger: true }}
+      >
+        <p>清除缓存将删除所有向量缓存数据，可能会导致下次搜索速度变慢。确定要继续吗？</p>
+      </Modal>
     </Layout>
   );
 };

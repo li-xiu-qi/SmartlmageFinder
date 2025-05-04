@@ -1,7 +1,7 @@
 from sentence_transformers import SentenceTransformer
 from PIL import Image
 import numpy as np
-from typing import List, Union
+from typing import List, Union, Dict, Any
 import os
 import diskcache
 import hashlib
@@ -136,3 +136,22 @@ def encode_image(image_input: Union[Image.Image, List[Image.Image], str, List[st
     if isinstance(image_input, (Image.Image, str)):
         return embeddings[0]
     return embeddings
+
+def clear_cache(cache_dir: str) -> int:
+    """清除特定目录下的向量缓存
+    
+    Args:
+        cache_dir: 缓存目录路径
+    
+    Returns:
+        清除的缓存条目数量
+    """
+    if not os.path.exists(cache_dir):
+        return 0
+    
+    try:
+        cache = diskcache.Cache(directory=cache_dir)
+        return cache.clear()  # 返回清除的条目数
+    except Exception as e:
+        print(f"清除缓存时出错: {str(e)}")
+        return 0

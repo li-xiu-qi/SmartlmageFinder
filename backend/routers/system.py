@@ -3,6 +3,7 @@ from typing import List, Dict, Any, Set, Optional
 from ..schemas import ResponseModel
 from .. import db
 from ..config import settings
+from ..generate_vector import clear_cache  # 导入简化的清除缓存函数
 import os
 import time
 import sqlite3
@@ -155,7 +156,7 @@ async def get_system_status():
     return ResponseModel.success(data=system_status)
 
 @router.post("/clear-cache", response_model=ResponseModel)
-async def clear_cache(cache_types: Dict[str, List[str]] = Body(...)):
+async def clear_system_cache(cache_types: Dict[str, List[str]] = Body(...)):
     """清除系统缓存"""
     # 获取当前缓存状态
     cache_info = get_cache_stats()
@@ -186,18 +187,14 @@ async def clear_cache(cache_types: Dict[str, List[str]] = Body(...)):
     
     if "text_vector" in cache_types_set:
         # 清理文本向量缓存
-        cache_db_path = os.path.join(settings.TEXT_VECTOR_CACHE_DIR, "cache.db")
-        if os.path.exists(cache_db_path):
+        if os.path.exists(settings.TEXT_VECTOR_CACHE_DIR):
             try:
                 entries = cache_info["text_vector_cache"]["entries"]
                 size_mb = cache_info["text_vector_cache"]["size_mb"]
                 
-                conn = sqlite3.connect(cache_db_path)
-                cursor = conn.cursor()
-                cursor.execute("DELETE FROM cache")
-                conn.commit()
-                conn.close()
-                
+                # 调用简化版的clear_cache函数
+                removed_count = clear_cache(settings.TEXT_VECTOR_CACHE_DIR)
+                print(f"清除文本向量缓存: {removed_count} 条缓存被删除")
                 result["details"]["text_vector_cache"] = {
                     "cleared": True,
                     "entries_removed": entries,
@@ -211,22 +208,18 @@ async def clear_cache(cache_types: Dict[str, List[str]] = Body(...)):
         else:
             result["details"]["text_vector_cache"] = {
                 "cleared": False,
-                "error": "缓存数据库不存在"
+                "error": "缓存目录不存在"
             }
     
     if "image_vector" in cache_types_set:
         # 清理图像向量缓存
-        cache_db_path = os.path.join(settings.IMAGE_VECTOR_CACHE_DIR, "cache.db")
-        if os.path.exists(cache_db_path):
+        if os.path.exists(settings.IMAGE_VECTOR_CACHE_DIR):
             try:
                 entries = cache_info["image_vector_cache"]["entries"]
                 size_mb = cache_info["image_vector_cache"]["size_mb"]
                 
-                conn = sqlite3.connect(cache_db_path)
-                cursor = conn.cursor()
-                cursor.execute("DELETE FROM cache")
-                conn.commit()
-                conn.close()
+                # 调用简化版的clear_cache函数
+                removed_count = clear_cache(settings.IMAGE_VECTOR_CACHE_DIR)
                 
                 result["details"]["image_vector_cache"] = {
                     "cleared": True,
@@ -241,7 +234,7 @@ async def clear_cache(cache_types: Dict[str, List[str]] = Body(...)):
         else:
             result["details"]["image_vector_cache"] = {
                 "cleared": False,
-                "error": "缓存数据库不存在"
+                "error": "缓存目录不存在"
             }
     
     return ResponseModel.success(data=result)
