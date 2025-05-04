@@ -239,37 +239,6 @@ class VectorIndex(abc.ABC):
             import traceback
             traceback.print_exc()
             return []
-            
-    def _calculate_similarity_between_indices(self, idx1: int, idx2: int) -> float:
-        """计算两个索引之间的相似度
-        
-        这是一个备用方法，使用ID查找时，不直接访问底层向量
-        而是相互搜索各自在对方检索结果中的位置和分数
-        """
-        try:
-            # 创建一个小型查询，仅搜索一个结果
-            D, I = self.index.search(np.zeros((1, self.index.d), dtype=np.float32), 1)
-            
-            # 模拟索引1搜索结果中是否包含索引2
-            D1, I1 = self.index.search_from_id(idx1, self.index.ntotal)
-            idx2_pos = -1
-            for i, item in enumerate(I1[0]):
-                if item == idx2:
-                    idx2_pos = i
-                    break
-                    
-            # 如果找到了，返回相似度得分
-            if idx2_pos >= 0:
-                return float(D1[0][idx2_pos])
-            
-            # 否则，索引1和索引2之间没有直接相似度
-            # 使用替代方法：计算相对于整个数据集的平均相似度
-            return 0.5  # 默认中等相似度
-            
-        except Exception as e:
-            # 如果计算过程失败，返回低相似度
-            print(f"相似度计算失败: {e}")
-            return 0.3  # 降低的相似度值
     
     def _get_vector(self, data) -> np.ndarray:
         """从数据中获取向量表示
@@ -396,6 +365,8 @@ def add_title_vector(uuid: str, title: str):
     global title_index
     if title_index is None:
         init_indices()
+    if not title or not title.strip():
+        return None
     return title_index.add_vector(uuid, title)
 
 
@@ -404,6 +375,8 @@ def add_description_vector(uuid: str, description: str):
     global description_index
     if description_index is None:
         init_indices()
+    if not description or not description.strip():
+        return None
     return description_index.add_vector(uuid, description)
 
 
@@ -516,16 +489,8 @@ def search_by_uuid(uuid: str, limit: int = 20, search_type: str = "image") -> Li
     return []
 
 
-# 兼容旧代码的函数
-def add_text_vector(uuid: str, text: str):
-    """将文本向量添加到索引 (标题和描述都添加相同的向量，兼容旧代码)"""
-    add_title_vector(uuid, text)
-    add_description_vector(uuid, text)
-    return True
-
-
 def search_by_text(query_text: str, limit: int = 20) -> List[Dict[str, Any]]:
-    """通过文本查询标题和描述向量索引，并合并结果 (兼容旧代码)"""
+    """通过文本查询标题和描述向量索引，并合并结果"""
     # 分别查询标题和描述
     title_results = search_by_title(query_text, limit)
     desc_results = search_by_description(query_text, limit)
@@ -535,15 +500,23 @@ def search_by_text(query_text: str, limit: int = 20) -> List[Dict[str, Any]]:
     
     for result in title_results:
         uuid = result["uuid"]
-        all_results[uuid] = result
+        all_results[uuid] = {
+            "uuid": uuid,
+            "similarity": result["similarity"] * 0.7,  # 标题权重更高
+            "index": result["index"]
+        }
     
     for result in desc_results:
         uuid = result["uuid"]
         if uuid in all_results:
-            # 如果在标题结果中已存在，取最高分数
-            all_results[uuid]["similarity"] = max(all_results[uuid]["similarity"], result["similarity"])
+            # 如果在标题结果中已存在，加权合并
+            all_results[uuid]["similarity"] += result["similarity"] * 0.3  # 描述权重较低
         else:
-            all_results[uuid] = result
+            all_results[uuid] = {
+                "uuid": uuid,
+                "similarity": result["similarity"] * 0.3,  # 仅描述匹配时权重较低
+                "index": result["index"]
+            }
     
     # 转换为列表并按相似度排序
     merged_results = list(all_results.values())

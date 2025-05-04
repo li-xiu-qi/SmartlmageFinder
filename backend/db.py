@@ -7,13 +7,15 @@ import os
 
 # 导入向量数据库模块
 from .vector_db import (
-    add_text_vector, add_image_vector, delete_vectors, save_indices,
+    add_title_vector, add_description_vector, add_image_vector, 
+    delete_vectors, save_indices,
     search_by_text as vector_search_by_text,
     search_by_image as vector_search_by_image,
     search_by_uuid as vector_search_by_uuid
 )
 
 from .config import settings
+from backend import vector_db
 
 def get_db_connection():
     """获取数据库连接"""
@@ -208,21 +210,18 @@ def create_image(image_data: Dict[str, Any]) -> Dict[str, Any]:
     
     # 创建成功后，添加向量到索引
     try:
-        # 添加文本向量 (如果有标题或描述)
-        text_content = ""
+        # 分别添加标题和描述向量
         if image_data.get('title'):
-            text_content += image_data['title'] + " "
-        if image_data.get('description'):
-            text_content += image_data['description']
+            add_title_vector(image_uuid, image_data['title'])
             
-        if text_content.strip():
-            add_text_vector(image_uuid, text_content)
+        if image_data.get('description'):
+            add_description_vector(image_uuid, image_data['description'])
             
         # 添加图像向量
         if os.path.exists(image_data['filepath']):
             add_image_vector(image_uuid, image_data['filepath'])
             
-        # 定期保存索引 (这里简化处理，实际应用中可能需要更复杂的策略)
+        # 定期保存索引
         save_indices()
     except Exception as e:
         print(f"向量索引更新失败: {e}")
@@ -245,10 +244,17 @@ def update_image(uuid: str, update_data: Dict[str, Any]) -> Optional[Dict[str, A
     update_fields = []
     params = []
     
+    title_updated = False
+    description_updated = False
+    
     for field in ['title', 'description']:
         if field in update_data and update_data[field] is not None:
             update_fields.append(f"{field} = ?")
             params.append(update_data[field])
+            if field == 'title':
+                title_updated = True
+            elif field == 'description':
+                description_updated = True
     
     # 处理标签
     if 'tags' in update_data and update_data['tags'] is not None:
@@ -277,21 +283,31 @@ def update_image(uuid: str, update_data: Dict[str, Any]) -> Optional[Dict[str, A
     
     # 如果标题或描述有更新，需要更新文本向量
     try:
-        if 'title' in update_data or 'description' in update_data:
+        if title_updated or description_updated:
             updated_image = get_image_by_uuid(uuid)
-            text_content = ""
-            if updated_image.get('title'):
-                text_content += updated_image['title'] + " "
-            if updated_image.get('description'):
-                text_content += updated_image['description']
+            
+            # 注意：这里修改为分别更新标题和描述向量
+            if title_updated:
+                # 删除旧的标题向量
+                delete_vectors(uuid)  # 目前这个函数会删除所有向量，后面需要优化
+                # 添加新的标题向量
+                if updated_image.get('title'):
+                    add_title_vector(uuid, updated_image['title'])
+            
+            if description_updated:
+                # 如果标题没有更新，这里会再次删除所有向量，但这是临时解决方案
+                if not title_updated:
+                    delete_vectors(uuid)
+                # 添加新的描述向量
+                if updated_image.get('description'):
+                    add_description_vector(uuid, updated_image['description'])
+            
+            # 重新添加图像向量
+            if os.path.exists(updated_image['filepath']):
+                add_image_vector(uuid, updated_image['filepath'])
                 
-            if text_content.strip():
-                # 先删除旧向量（实际是标记为已删除）
-                delete_vectors(uuid)
-                # 添加新的文本向量
-                add_text_vector(uuid, text_content)
-                # 保存索引
-                save_indices()
+            # 保存索引
+            save_indices()
     except Exception as e:
         print(f"更新文本向量失败: {e}")
     
@@ -706,15 +722,15 @@ def vector_text_search(query: str,
                       end_date: Optional[str] = None,
                       tags: Optional[List[str]] = None) -> List[Dict[str, Any]]:
     """基于向量的文本搜索"""
-    # 使用FAISS进行向量搜索
-    vector_results = vector_search_by_text(query, limit * 2)  # 获取2倍数量的结果以便应用过滤
+    # 使用FAISS进行向量搜索 - 使用新的搜索方式，分别搜索标题和描述
+    vector_results = vector_db.search_by_text(query, limit * 2)  # 获取2倍数量的结果以便应用过滤
     
     if not vector_results:
         return []  # 如果没有向量搜索结果，直接返回空列表
     
     # 提取结果中的UUID
     uuids = [result['uuid'] for result in vector_results]
-    uuid_to_score = {result['uuid']: result['score'] for result in vector_results}
+    uuid_to_score = {result['uuid']: result['similarity'] for result in vector_results}
     
     # 从数据库查询详细信息并应用过滤
     conn = get_db_connection()
@@ -781,8 +797,28 @@ def hybrid_text_search(query: str,
     text_results = simple_text_search(query, limit * 2, start_date, end_date, tags)
     text_uuids = set(result['uuid'] for result in text_results)
     
-    # 获取向量搜索结果
-    vector_results = vector_text_search(query, limit * 2, start_date, end_date, tags)
+    # 获取向量搜索结果 - 标题和描述分开搜索
+    title_vector_results = vector_db.search_by_title(query, limit * 2)
+    desc_vector_results = vector_db.search_by_description(query, limit * 2)
+    
+    # 合并向量结果
+    vector_results = []
+    uuid_to_vector_score = {}
+    
+    for result in title_vector_results:
+        uuid = result['uuid']
+        uuid_to_vector_score[uuid] = result['similarity'] * 0.7  # 标题权重较高
+        
+    for result in desc_vector_results:
+        uuid = result['uuid']
+        if uuid in uuid_to_vector_score:
+            uuid_to_vector_score[uuid] += result['similarity'] * 0.3  # 描述权重较低
+        else:
+            uuid_to_vector_score[uuid] = result['similarity'] * 0.3
+    
+    for uuid, score in uuid_to_vector_score.items():
+        vector_results.append({'uuid': uuid, 'score': score})
+        
     vector_uuids = set(result['uuid'] for result in vector_results)
     
     # 创建UUID到分数的映射
