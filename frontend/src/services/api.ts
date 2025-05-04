@@ -143,7 +143,16 @@ export const searchService = {
 
   // 相似图片搜索
   searchSimilar: (uuid: string, params?: SimilarSearchParams): Promise<ApiResponse<{ results: ImageSearchResult[] }>> => {
-    return api.get(`/search/similar/${uuid}`, { params });
+    // 确保params对象存在
+    const queryParams = params || {};
+    
+    // 如果存在search_type参数且没有match_modes参数，将search_type转为match_modes数组
+    if (queryParams.search_type && !queryParams.match_modes) {
+      queryParams.match_modes = [queryParams.search_type];
+      delete queryParams.search_type; // 移除search_type参数，避免后端混淆
+    }
+    
+    return api.get(`/search/similar/${uuid}`, { params: queryParams });
   },
 };
 

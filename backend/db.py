@@ -918,17 +918,27 @@ def search_similar_to_uuid(uuid: str,
                           limit: int = 20,
                           start_date: Optional[str] = None,
                           end_date: Optional[str] = None,
-                          tags: Optional[List[str]] = None) -> List[Dict[str, Any]]:
-    """通过UUID搜索相似图片"""
+                          tags: Optional[List[str]] = None,
+                          search_type: str = "image") -> List[Dict[str, Any]]:
+    """通过UUID搜索相似图片
+    
+    参数:
+        uuid: 要搜索的UUID
+        limit: 返回结果数量上限
+        start_date: 开始日期过滤
+        end_date: 结束日期过滤
+        tags: 标签过滤列表
+        search_type: 搜索类型，可用值："image", "title", "description", "combined"
+    """
     # 使用FAISS进行向量搜索
-    vector_results = vector_search_by_uuid(uuid, limit * 2)  # 获取2倍数量的结果以便应用过滤
+    vector_results = vector_search_by_uuid(uuid, limit * 2, search_type)  # 获取2倍数量的结果以便应用过滤
     
     if not vector_results:
         return []  # 如果没有向量搜索结果，直接返回空列表
     
-    # 提取结果中的UUID
+    # 提取结果中的UUID，注意vector_db中返回的是similarity字段而不是score
     uuids = [result['uuid'] for result in vector_results]
-    uuid_to_score = {result['uuid']: result['score'] for result in vector_results}
+    uuid_to_score = {result['uuid']: result['similarity'] for result in vector_results}
     
     # 从数据库查询详细信息并应用过滤
     conn = get_db_connection()
@@ -964,6 +974,9 @@ def search_similar_to_uuid(uuid: str,
     # 处理JSON字段，添加分数，并保持向量搜索排序
     results = []
     for image in images:
+        if image['uuid'] == uuid:
+            continue  # 跳过原始图片
+            
         if image['tags']:
             try:
                 image['tags'] = json.loads(image['tags'])
@@ -974,7 +987,16 @@ def search_similar_to_uuid(uuid: str,
         
         # 添加向量相似度分数
         image['score'] = uuid_to_score.get(image['uuid'], 0.0)
-        results.append(image)
+        
+        # 添加格式化的输出字段，与前端期望的结构保持一致
+        results.append({
+            "uuid": image['uuid'],
+            "title": image['title'],
+            "description": image.get('description', ''),
+            "filepath": image['filepath'],
+            "score": float(image['score']),
+            "tags": image['tags']
+        })
     
     # 按相似度分数排序
     results.sort(key=lambda x: x['score'], reverse=True)

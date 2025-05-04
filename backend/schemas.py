@@ -1,7 +1,35 @@
 from typing import Any, Dict, Generic, List, Optional, TypeVar, Union
 from pydantic import BaseModel, Field
+from enum import Enum
 
 T = TypeVar('T')
+
+# 定义搜索相关的枚举类
+class SearchType(str, Enum):
+    """定义搜索类型"""
+    TEXT = "text"  # 传统文本匹配
+    VECTOR = "vector"  # 向量搜索
+    HYBRID = "hybrid"  # 混合搜索
+
+class TextMatchMode(str, Enum):
+    """文本匹配模式"""
+    TITLE = "title"  # 只匹配标题
+    DESCRIPTION = "description"  # 只匹配描述
+    COMBINED = "combined"  # 标题+描述综合匹配
+
+class VectorMatchMode(str, Enum):
+    """向量匹配模式"""
+    TITLE = "title"  # 标题向量
+    DESCRIPTION = "description"  # 描述向量
+    COMBINED = "combined"  # 标题+描述向量综合
+    IMAGE = "image"  # 图片向量
+
+class ImageVectorMatchMode(str, Enum):
+    """图片向量匹配模式"""
+    IMAGE = "image"  # 纯图片向量
+    TITLE = "title"  # 图片对标题向量
+    DESCRIPTION = "description"  # 图片对描述向量
+    COMBINED = "combined"  # 综合匹配
 
 class MetadataModel(BaseModel):
     """API响应的元数据部分"""

@@ -68,9 +68,10 @@ const ImageDetailView: React.FC<ImageDetailViewProps> = ({ image, onUpdate, onDe
       setLoading(true);
       setShowSimilarModal(true);
       
+      // 使用match_modes参数代替search_type以符合后端API要求
       const response = await searchService.searchSimilar(image.uuid, { 
         limit: 12,
-        search_type: searchType 
+        match_modes: [searchType] // 将单个值改为数组形式发送
       });
       
       if (response.status === 'success' && response.data) {
@@ -287,6 +288,16 @@ const ImageDetailView: React.FC<ImageDetailViewProps> = ({ image, onUpdate, onDe
                   description={
                     <>
                       <div>相似度: {Math.round(img.score * 100)}%</div>
+                      {(img.score_components || img.similarity_components) && (
+                        <div style={{ fontSize: '12px', color: '#888', marginTop: 2 }}>
+                          {Object.entries(img.score_components || img.similarity_components || {}).map(([mode, score]) => (
+                            <div key={mode}>
+                              {mode === 'image' ? '图像' : mode === 'title' ? '标题' : mode === 'description' ? '描述' : mode}: 
+                              {Math.round(score * 100)}%
+                            </div>
+                          ))}
+                        </div>
+                      )}
                       <div style={{ marginTop: 4 }}>
                         {img.tags.slice(0, 2).map(tag => (
                           <Tag key={tag} style={{ marginRight: 4 }}>{tag}</Tag>

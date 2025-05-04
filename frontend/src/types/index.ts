@@ -43,6 +43,7 @@ export interface ImageDetail extends Image {
 export interface ImageSearchResult extends Image {
   score: number;
   similarity_components?: Record<string, number>;
+  score_components?: Record<string, number>; // 不同匹配模式的得分组件
 }
 
 // 图片列表查询参数
@@ -80,14 +81,15 @@ export interface ImageSearchParams {
   tags?: string[] | string;
 }
 
-// 相似图片搜索参数
+// 相似搜索参数类型
 export interface SimilarSearchParams {
-  match_modes?: Array<'image' | 'title' | 'description' | 'combined'>;
-  weights?: string;
   limit?: number;
+  search_type?: string;  // 兼容旧版API
+  match_modes?: string[]; // 新版API使用这个
   start_date?: string;
   end_date?: string;
-  tags?: string[] | string;
+  tags?: string;
+  weights?: string;  // 各匹配模式的权重
 }
 
 // 图片上传响应

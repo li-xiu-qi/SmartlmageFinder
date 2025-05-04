@@ -1,7 +1,6 @@
 from fastapi import APIRouter, HTTPException, Query, Path, UploadFile, File, Form, Body
 from typing import List, Optional, Dict, Any, Union
-from ..schemas import ResponseModel, TextSearchQuery
-from enum import Enum
+from ..schemas import ResponseModel, TextSearchQuery, SearchType, TextMatchMode, VectorMatchMode, ImageVectorMatchMode
 import os
 import shutil
 from datetime import datetime
@@ -32,33 +31,6 @@ if settings.AI_ENABLED:
         print(f"向量搜索模型加载失败: {e}")
 else:
     print("AI功能已在配置中禁用，向量搜索不可用")
-
-# 定义搜索类型枚举类
-class SearchType(str, Enum):
-    """定义搜索类型"""
-    TEXT = "text"  # 传统文本匹配
-    VECTOR = "vector"  # 向量搜索
-    HYBRID = "hybrid"  # 混合搜索
-
-class TextMatchMode(str, Enum):
-    """文本匹配模式"""
-    TITLE = "title"  # 只匹配标题
-    DESCRIPTION = "description"  # 只匹配描述
-    COMBINED = "combined"  # 标题+描述综合匹配
-
-class VectorMatchMode(str, Enum):
-    """向量匹配模式"""
-    TITLE = "title"  # 标题向量
-    DESCRIPTION = "description"  # 描述向量
-    COMBINED = "combined"  # 标题+描述向量综合
-    IMAGE = "image"  # 图片向量
-
-class ImageVectorMatchMode(str, Enum):
-    """图片向量匹配模式"""
-    IMAGE = "image"  # 纯图片向量
-    TITLE = "title"  # 图片对标题向量
-    DESCRIPTION = "description"  # 图片对描述向量
-    COMBINED = "combined"  # 综合匹配
 
 @router.get("/text", response_model=ResponseModel)
 async def text_search(
@@ -499,8 +471,7 @@ async def image_search(
 @router.get("/similar/{uuid}", response_model=ResponseModel)
 async def similar_image_search(
     uuid: str = Path(..., description="参考图片的UUID"),
-    match_modes: List[VectorMatchMode] = Query([VectorMatchMode.IMAGE], description="匹配模式: image(图像), title(标题), description(描述), combined(综合)"),
-    weights: Optional[str] = Query(None, description="各个匹配模式的权重，格式为逗号分隔的浮点数，与match_modes对应"),
+    match_modes: List[VectorMatchMode] = Query([VectorMatchMode.IMAGE],alias="match_modes[]", description="匹配模式: image(图像), title(标题), description(描述), combined(综合)"), # 因为前端请求的值是以match_modes[]的形式传递的，所以这里需要使用alias来指定参数名
     limit: int = Query(20, ge=1, le=100, description="返回结果数量"),
     start_date: Optional[str] = Query(None, description="开始日期过滤"),
     end_date: Optional[str] = Query(None, description="结束日期过滤"),
@@ -515,21 +486,32 @@ async def similar_image_search(
     - 描述向量: 使用图片描述的语义向量进行匹配
     - 综合模式: 结合上述多种向量的匹配结果
     
-    可以通过match_modes指定一个或多个匹配模式，并通过weights指定每种模式的权重
+    可以通过match_modes指定一个或多个匹配模式
     """
+    print(f"开始搜索相似图片，UUID: {uuid}, 匹配模式: {match_modes}, 限制数量: {limit}")
     # 检查向量搜索是否可用
     if not vector_search_available:
-        return ResponseModel.error(
-            code="SERVICE_UNAVAILABLE",
-            message="向量搜索功能不可用，请检查模型配置"
+        return ResponseModel(
+            status="error",
+            error={
+                "code": "SERVICE_UNAVAILABLE",
+                "message": "向量搜索功能不可用，请检查模型配置"
+            },
+            data=None,
+            metadata={}
         )
     
     # 检查图片是否存在
     image = db.get_image_by_uuid(uuid)
     if not image:
-        return ResponseModel.error(
-            code="NOT_FOUND",
-            message="参考图片不存在"
+        return ResponseModel(
+            status="error",
+            error={
+                "code": "NOT_FOUND",
+                "message": "参考图片不存在"
+            },
+            data=None,
+            metadata={}
         )
     
     # 处理标签过滤
@@ -537,152 +519,90 @@ async def similar_image_search(
     if tags:
         tag_list = [tag.strip() for tag in tags.split(",")]
     
-    # 处理权重
-    mode_weights = {}
-    if weights:
-        weight_values = [float(w.strip()) for w in weights.split(",")]
-        if len(weight_values) != len(match_modes):
-            return ResponseModel.error(
-                code="INVALID_PARAM",
-                message="权重数量必须与匹配模式数量一致"
-            )
-        for mode, weight in zip(match_modes, weight_values):
-            mode_weights[mode] = weight
-    else:
-        # 默认权重均匀分布
-        weight_value = 1.0 / len(match_modes)
-        for mode in match_modes:
-            mode_weights[mode] = weight_value
-    
     start_time = time.time()
     
     try:
-        # 存储所有搜索结果
+        # 处理多种匹配模式
         all_results = {}
+        mode_weights = {}
+        total_weight = 0.0
         
-        # 对每种匹配模式执行搜索
+        # 设置权重 - 根据匹配模式设置合理的默认值
         for mode in match_modes:
-            # 基于匹配模式执行不同的向量搜索
-            vector_results = []
-            
             if mode == VectorMatchMode.IMAGE:
-                # 使用图片向量
-                vector_results = vector_db.search_by_uuid(uuid, limit=limit*2, search_type="image")
+                mode_weights[mode] = 0.7  # 图像匹配权重最高
             elif mode == VectorMatchMode.TITLE:
-                # 使用标题向量
-                vector_results = vector_db.search_by_uuid(uuid, limit=limit*2, search_type="title")
+                mode_weights[mode] = 0.15  # 标题匹配权重中等
             elif mode == VectorMatchMode.DESCRIPTION:
-                # 使用描述向量
-                vector_results = vector_db.search_by_uuid(uuid, limit=limit*2, search_type="description")
-            elif mode == VectorMatchMode.COMBINED:
-                # 使用综合向量 (需要综合计算多个向量索引的结果)
-                # 获取多种向量的搜索结果
-                image_results = vector_db.search_by_uuid(uuid, limit=limit*2, search_type="image")
-                title_results = vector_db.search_by_uuid(uuid, limit=limit*2, search_type="title")
-                desc_results = vector_db.search_by_uuid(uuid, limit=limit*2, search_type="description")
-                
-                # 合并结果
-                combined_results = {}
-                
-                # 处理图像结果
-                for result in image_results:
-                    result_uuid = result["uuid"]
-                    combined_results[result_uuid] = {"uuid": result_uuid, "similarity": float(result["similarity"]) * 0.6}
-                
-                # 处理标题结果
-                for result in title_results:
-                    result_uuid = result["uuid"]
-                    if result_uuid in combined_results:
-                        combined_results[result_uuid]["similarity"] += float(result["similarity"]) * 0.2
-                    else:
-                        combined_results[result_uuid] = {"uuid": result_uuid, "similarity": float(result["similarity"]) * 0.2}
-                
-                # 处理描述结果
-                for result in desc_results:
-                    result_uuid = result["uuid"]
-                    if result_uuid in combined_results:
-                        combined_results[result_uuid]["similarity"] += float(result["similarity"]) * 0.2
-                    else:
-                        combined_results[result_uuid] = {"uuid": result_uuid, "similarity": float(result["similarity"]) * 0.2}
-                
-                # 转换为列表
-                vector_results = list(combined_results.values())
+                mode_weights[mode] = 0.15  # 描述匹配权重中等
+            else:  # COMBINED或其他
+                mode_weights[mode] = 0.4  # 综合模式权重适中
+            total_weight += mode_weights[mode]
+        
+        # 权重归一化
+        if total_weight > 0:
+            for mode in mode_weights:
+                mode_weights[mode] = mode_weights[mode] / total_weight
+        
+        # 对每种模式执行搜索
+        for mode in match_modes:
+            search_type_str = str(mode)  # 转换为字符串以匹配函数参数
             
-            # 检查是否有结果
-            if not vector_results:
-                continue
-                
-            # 为每个结果添加当前搜索模式的权重
-            for result in vector_results:
-                result_uuid = result["uuid"]
-                
-                if result_uuid not in all_results:
-                    all_results[result_uuid] = {
-                        "uuid": result_uuid,
-                        "weighted_similarity": float(result["similarity"]) * mode_weights[mode],
-                        "similarity_components": {str(mode): float(result["similarity"])}
-                    }
-                else:
-                    all_results[result_uuid]["weighted_similarity"] += float(result["similarity"]) * mode_weights[mode]
-                    all_results[result_uuid]["similarity_components"][str(mode)] = float(result["similarity"])
-        
-        # 检查是否有任何结果
-        if not all_results:
-            return ResponseModel.error(
-                code="NO_VECTOR",
-                message="未找到任何向量索引或相似结果，请确认图片已建立索引"
+            # 查询相似结果
+            results = db.search_similar_to_uuid(
+                uuid=uuid,
+                search_type=search_type_str,
+                limit=limit*2,  # 获取更多结果以便过滤和合并
+                start_date=start_date,
+                end_date=end_date,
+                tags=tag_list
             )
+            
+            # 添加权重并合并结果
+            for result in results:
+                if result['uuid'] not in all_results:
+                    # 首次添加这个结果
+                    result['weighted_score'] = result['score'] * mode_weights[mode]
+                    result['score_components'] = {str(mode): result['score']}
+                    all_results[result['uuid']] = result
+                else:
+                    # 更新已有结果的加权分数
+                    all_results[result['uuid']]['weighted_score'] += result['score'] * mode_weights[mode]
+                    all_results[result['uuid']]['score_components'][str(mode)] = result['score']
         
-        # 将结果转换为列表
-        result_list = list(all_results.values())
+        # 将合并结果转为列表
+        merged_results = list(all_results.values())
         
-        # 按加权相似度排序
-        result_list.sort(key=lambda x: x["weighted_similarity"], reverse=True)
-        
-        # 获取详细图片信息
-        formatted_results = []
-        for result in result_list[:limit*2]:  # 获取两倍结果用于过滤
-            # 获取图片详细信息
-            img = db.get_image_by_uuid(result["uuid"])
-            if img:
-                # 应用过滤条件
-                include = True
-                # 日期过滤
-                if start_date and img["created_at"] < start_date:
-                    include = False
-                if end_date and img["created_at"] > end_date:
-                    include = False
-                # 标签过滤
-                if tag_list and not any(tag in img["tags"] for tag in tag_list):
-                    include = False
-                    
-                if include:
-                    # 添加相似度得分
-                    img["score"] = result["weighted_similarity"]
-                    img["similarity_components"] = result["similarity_components"]
-                    formatted_results.append({
-                        "uuid": img["uuid"],
-                        "title": img["title"],
-                        "description": img.get("description", ""),
-                        "filepath": img["filepath"],
-                        "score": float(img["score"]),
-                        "similarity_components": img["similarity_components"],
-                        "tags": img["tags"]
-                    })
+        # 排序并更新最终得分
+        for result in merged_results:
+            result['score'] = result['weighted_score']  # 用加权分数替换原有分数
+            
+        merged_results.sort(key=lambda x: x['score'], reverse=True)
         
         # 限制结果数量
-        formatted_results = formatted_results[:limit]
+        merged_results = merged_results[:limit]
+        
+        if not merged_results:
+            return ResponseModel(
+                status="error",
+                error={
+                    "code": "NO_RESULTS",
+                    "message": "未找到相似图片"
+                },
+                data=None,
+                metadata={}
+            )
         
         end_time = time.time()
         processing_time = int((end_time - start_time) * 1000)  # 毫秒
         
         return ResponseModel.success(
-            data={"results": formatted_results},
+            data={"results": merged_results},
             metadata={
                 "reference_uuid": uuid,
                 "match_modes": [str(mode) for mode in match_modes],
-                "weights": mode_weights,
-                "total": len(formatted_results),
+                "mode_weights": {str(k): v for k, v in mode_weights.items()},
+                "total": len(merged_results),
                 "time_ms": processing_time
             }
         )
@@ -691,7 +611,13 @@ async def similar_image_search(
         print(f"相似图片搜索处理出错: {str(e)}")
         import traceback
         traceback.print_exc()
-        return ResponseModel.error(
-            code="SYSTEM_ERROR",
-            message=f"系统错误: {str(e)}"
+        
+        return ResponseModel(
+            status="error",
+            error={
+                "code": "SYSTEM_ERROR",
+                "message": f"系统错误: {str(e)}"
+            },
+            data=None,
+            metadata={}
         )
