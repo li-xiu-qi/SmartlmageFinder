@@ -41,10 +41,10 @@ graph TD
 
 `VectorIndex` 是一个抽象基类，为所有类型的向量索引提供通用功能：
 
-- 索引初始化和加载
-- 向量添加
-- 向量搜索（多种搜索模式）
-- 索引持久化
+* 索引初始化和加载
+* 向量添加
+* 向量搜索（多种搜索模式）
+* 索引持久化
 
 ```python
 class VectorIndex(abc.ABC):
@@ -91,6 +91,7 @@ class VectorIndex(abc.ABC):
 系统实现了两种专用索引类，继承自基类并添加特定功能：
 
 #### TextVectorIndex
+
 ```python
 class TextVectorIndex(VectorIndex):
     """文本向量索引类"""
@@ -100,6 +101,7 @@ class TextVectorIndex(VectorIndex):
 ```
 
 #### ImageVectorIndex
+
 ```python
 class ImageVectorIndex(VectorIndex):
     """图像向量索引类"""
@@ -135,6 +137,7 @@ uuid_map = {
 ## 索引管理流程
 
 ### 初始化
+
 ```mermaid
 sequenceDiagram
     participant System as 系统启动
@@ -173,6 +176,7 @@ sequenceDiagram
 ```
 
 ### 添加向量
+
 ```mermaid
 sequenceDiagram
     participant Client as 客户端
@@ -193,6 +197,7 @@ sequenceDiagram
 ```
 
 ### 搜索流程
+
 ```mermaid
 sequenceDiagram
     participant Client as 客户端
@@ -220,107 +225,3 @@ sequenceDiagram
     DB->>Map: 将索引ID转换为UUID
     DB-->>Client: 返回搜索结果(UUID列表及相似度分数)
 ```
-
-## 性能优化
-
-向量数据库模块实现了多种性能优化策略：
-
-1. **延迟加载**: 索引仅在首次需要时初始化，减少启动时间
-2. **内积相似度**: 使用内积相似度计算，对于归一化向量等同于余弦相似度，但计算效率更高
-3. **UUID映射缓存**: 使用内存中的UUID映射表加速ID转换
-4. **批量保存**: 提供单独的保存机制，避免每次添加向量都写入磁盘
-5. **异常处理**: 健壮的错误处理机制，确保索引操作失败不会导致整个系统崩溃
-
-## API 接口
-
-向量数据库模块提供以下主要接口：
-
-### 初始化和持久化
-
-```python
-def init_indices()
-```
-初始化所有向量索引和UUID映射
-
-```python
-def save_indices()
-```
-将所有索引和UUID映射保存到磁盘
-
-### 向量管理
-
-```python
-def add_title_vector(uuid: str, title: str)
-```
-将标题向量添加到索引
-
-```python
-def add_description_vector(uuid: str, description: str)
-```
-将描述向量添加到索引
-
-```python
-def add_image_vector(uuid: str, image_path: str)
-```
-将图像向量添加到索引
-
-```python
-def delete_vectors(uuid: str)
-```
-从所有索引中标记删除指定UUID的向量
-
-### 搜索功能
-
-```python
-def search_by_title(query_text: str, limit: int = 20)
-```
-通过标题文本查询向量索引
-
-```python
-def search_by_description(query_text: str, limit: int = 20)
-```
-通过描述文本查询向量索引
-
-```python
-def search_by_image(image_path: str, limit: int = 20)
-```
-通过图像路径查询向量索引
-
-```python
-def search_by_vector(query_vector: np.ndarray, index_type: str = "image", limit: int = 20)
-```
-根据向量类型搜索相似向量
-
-```python
-def search_by_uuid(uuid: str, limit: int = 20, search_type: str = "image")
-```
-通过UUID查找相似内容
-
-```python
-def search_by_text(query_text: str, limit: int = 20)
-```
-通过文本查询标题和描述向量索引，并合并结果
-
-## 配置依赖
-
-向量数据库模块依赖于以下配置项:
-
-| 配置项 | 说明 | 默认值 |
-|--------|------|--------|
-| TITLE_INDEX_PATH | 标题向量索引文件路径 | ./data/faiss/title_vectors.faiss |
-| DESCRIPTION_INDEX_PATH | 描述向量索引文件路径 | ./data/faiss/description_vectors.faiss |
-| IMAGE_INDEX_PATH | 图像向量索引文件路径 | ./data/faiss/image_vectors.faiss |
-| UUID_MAP_PATH | UUID映射文件路径 | ./data/faiss/uuid_map.pickle |
-| VECTOR_DIM | 向量维度 | 1024 |
-
-## 限制与注意事项
-
-1. **删除操作**: 当前实现中，删除操作仅从UUID映射中移除条目，而不真正从索引中删除向量。定期重建索引可解决此问题。
-
-2. **大规模索引**: FAISS的IndexFlatIP适合中小规模数据集(数万条记录)。对于更大规模数据，应考虑使用FAISS的近似最近邻索引类型。
-
-3. **内存占用**: 所有索引都加载到内存中，可能导致较大内存占用。未来可考虑按需加载策略。
-
-4. **原子性**: 当前实现不保证操作的原子性，系统崩溃可能导致索引和UUID映射不同步。
-
-5. **并发控制**: 当前未实现细粒度的并发控制，在高并发环境下可能需要添加锁机制。
