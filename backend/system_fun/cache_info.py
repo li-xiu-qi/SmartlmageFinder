@@ -3,7 +3,6 @@ import sqlite3
 from pydantic import BaseModel, Field
 from typing import Dict, Optional
 from ..config import settings
-from ..utils.generate_vector import clear_cache as utils_clear_cache
 
 
 class CacheStats(BaseModel):

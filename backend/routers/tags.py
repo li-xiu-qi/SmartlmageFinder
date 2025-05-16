@@ -4,10 +4,10 @@ from pydantic import BaseModel, Field
 import json
 
 from backend import db_func
-from ..global_schemas import ResponseModel
-from ..db_func.core import get_db
-from ..db_func.tags_func import get_all_tags, get_tags_count, update_image_tags
-from ..db_func.images_func.get import get_image_by_id, get_images_by_tag, get_images_by_ids
+from backend.db_func.core import get_db
+from backend.db_func.images_func.get import get_images_by_tag, get_images_by_ids, get_image_by_id
+from backend.db_func.tags_func.get_tags import get_tags_count, get_all_tags
+from backend.global_schemas import ResponseModel
 
 
 # 定义请求模型
@@ -133,33 +133,3 @@ async def get_images_by_multiple_tags(
     )
 
 
-@router.put("/image/{image_id}", response_model=ResponseModel)
-async def update_image_tags_endpoint(
-    image_id: int = Path(..., description="图片ID"),
-    update_data: UpdateTagsRequest = Body(..., description="要更新的标签数据"),
-    conn = Depends(get_db)
-):
-    """更新图片的标签列表"""
-    image = get_image_by_id(conn, image_id)
-    if not image:
-        return ResponseModel.error(
-            code="NOT_FOUND",
-            message=f"ID为 {image_id} 的图片不存在",
-            http_code=404
-        )
-    
-    success = update_image_tags(conn, image_id, update_data.tags)
-    if not success:
-        return ResponseModel.error(
-            code="UPDATE_FAILED",
-            message="标签更新失败",
-            http_code=500
-        )
-    
-    updated_image = get_image_by_id(conn, image_id)
-    
-    return ResponseModel.success(
-        data=updated_image,
-        message="成功更新图片标签",
-        metadata={"image_id": image_id}
-    )

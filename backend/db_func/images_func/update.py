@@ -5,7 +5,8 @@ import sqlite3
 from typing import Dict, Any, List
 from datetime import datetime
 
-from ..vector_func import add_title_vector, add_description_vector
+from backend.db_func.vector_func.add_text_vectors import add_description_vector, add_title_vector
+
 from ..vector_func.delete_vectors import delete_vector_by_type
 from .utils import python_to_json_for_db
 
