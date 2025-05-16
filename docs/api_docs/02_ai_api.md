@@ -80,7 +80,7 @@ AI功能依赖于以下配置参数：
 - **路径参数**:
   - `image_id`: (必需) 要分析的图片ID
 - **表单参数**:
-  - `detail`: (可选) 分析详细程度，可选 "low"（默认）或 "high"
+  - `detail`: (可选) 分析图片的分辨率，可选 "low"（默认）或 "high"
 
 **成功响应**:
 ```json
@@ -129,12 +129,6 @@ AI功能依赖于以下配置参数：
 | AI_PROCESSING_ERROR | 500 | AI处理过程中发生错误 |
 | IMAGE_ANALYSIS_ERROR | 400 | 图片分析错误，如图片不存在或文件损坏 |
 
-## 详细程度参数
-
-系统支持两种不同的分析详细程度：
-
-- **low**（默认）：提供基本的分析，包含简短的标题、简洁的描述和约5-7个标签，处理速度较快，成本较低。
-- **high**：提供更详细的分析，包含更具描述性的标题、详细的描述（可包含色彩、构图和主题分析）和约10-15个标签，处理时间较长，成本较高。
 
 ## 实现细节
 
@@ -156,63 +150,6 @@ AI功能依赖于以下配置参数：
 5. 返回分析结果（标题、描述、标签）
 6. 清理临时文件（如有）
 
-## 使用示例
-
-### 前端上传图片分析
-
-```javascript
-// 使用表单数据上传图片和参数
-const formData = new FormData();
-formData.append('file', imageFile); // 从文件输入或拖放获取
-formData.append('detail', 'high');  // 请求详细分析
-
-// 发送请求
-try {
-  const response = await fetch('/api/ai/analyze-upload-image', {
-    method: 'POST',
-    body: formData,
-  });
-  
-  const result = await response.json();
-  
-  if (result.status === 'success') {
-    // 显示分析结果
-    displayTitle(result.data.title);
-    displayDescription(result.data.description);
-    displayTags(result.data.tags);
-    
-    // 可选：显示处理时间
-    console.log(`处理时间: ${result.metadata.time_ms}ms`);
-  } else {
-    // 显示错误
-    showError(result.error.message);
-  }
-} catch (error) {
-  showError('请求失败，请稍后重试');
-}
-```
-
-### 分析已有图片
-
-```javascript
-// 分析数据库中已有图片
-async function analyzeExistingImage(imageId) {
-  const formData = new FormData();
-  formData.append('detail', 'low'); // 使用基本分析级别
-  
-  try {
-    const response = await fetch(`/api/ai/analyze-image-id/${imageId}`, {
-      method: 'POST',
-      body: formData,
-    });
-    
-    return await response.json();
-  } catch (error) {
-    console.error('分析图片失败:', error);
-    throw error;
-  }
-}
-```
 
 ## 注意事项
 

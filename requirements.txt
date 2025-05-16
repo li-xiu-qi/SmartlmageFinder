@@ -11,7 +11,7 @@ einops
 timm
 
 # 向量数据库 - 指定最新版本
-faiss-cpu==1.10.0  # 2025年4月最新稳定版本
+sqlite-vec==1.10.0  # 2025年4月最新稳定版本
 # 缓存
 diskcache
 

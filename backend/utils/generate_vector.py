@@ -31,7 +31,7 @@ def load_model():
         if embedding_dimension is None:
             embedding_dimension = settings.get_config().EMBEDDING_DIMENSION
             print(f"未能自动获取向量维度，使用默认值: {embedding_dimension}")
-
+    return model
 
 def get_model() -> SentenceTransformer:
     """返回加载的模型实例，如果需要就加载模型"""
@@ -115,5 +115,3 @@ def encode_image(
     if isinstance(image_input, (Image.Image, str)):
         return embeddings[0]
     return embeddings
-
-

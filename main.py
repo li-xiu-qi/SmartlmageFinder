@@ -6,16 +6,18 @@ import time
 import uvicorn
 import os
 
-from backend.routers import images, search, tags, metadata, ai, system
+from backend.routers import ai_router, images, search, tags,system
 from backend.config import settings  # 导入配置
-from backend.db import init_db  # 导入数据库初始化函数
-from backend.vector_db import init_indices  # 导入向量索引初始化函数
+from backend.db_func.core import init_db  # 导入数据库初始化函数
+from backend.db_func.connection_pool import initialize_connection_pool  # 导入连接池初始化函数
 
 # 初始化数据库
 init_db()
 
-# 初始化向量索引
-init_indices()
+# 初始化数据库连接池
+db_path = settings.get_config().DB_PATH
+initialize_connection_pool(db_path, max_connections=20)  # 设置最大连接数为20
+
 
 # 创建FastAPI应用
 app = FastAPI(
@@ -43,15 +45,14 @@ app.add_middleware(
 
 
 # 挂载静态文件目录
-app.mount("/static/images", StaticFiles(directory=settings.UPLOAD_DIR), name="images")
+app.mount("/static/images", StaticFiles(directory=settings.get_config().UPLOAD_DIR), name="images")
 
 # 包含路由模块
-app.include_router(images.router, prefix="/api/v1", tags=["images"])
-app.include_router(search.router, prefix="/api/v1", tags=["search"])
-app.include_router(tags.router, prefix="/api/v1", tags=["tags"])
-app.include_router(metadata.router, prefix="/api/v1", tags=["metadata"])
-app.include_router(ai.router, prefix="/api/v1", tags=["ai"])
-app.include_router(system.router, prefix="/api/v1", tags=["system"])
+app.include_router(images.router, prefix="/api", tags=["images"])
+app.include_router(search.router, prefix="/api", tags=["search"])
+app.include_router(tags.router, prefix="/api", tags=["tags"])
+app.include_router(ai_router.router, prefix="/api", tags=["ai"])
+app.include_router(system.router, prefix="/api", tags=["system"])
 
 # 请求处理时间中间件
 @app.middleware("http")
@@ -110,4 +111,5 @@ async def root():
 
 if __name__ == "__main__":
     # 启动FastAPI应用
-    uvicorn.run("main:app", host=settings.HOST, port=settings.PORT, log_level="info",reload=True)
+    uvicorn.run("main:app", host=settings.get_config().HOST, port=settings.get_config().PORT, log_level="info",reload=True)
+    

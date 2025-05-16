@@ -9,9 +9,21 @@ import os
 from datetime import datetime
 from contextlib import contextmanager
 
+from backend.db_func.connection_pool import get_db_connection_from_pool
+
 # 导入配置
 from ..config import settings
 from ..utils.generate_vector import get_embedding_dimension
+
+def dict_factory(cursor, row):
+    """
+    SQLite Row转换为字典的工厂函数
+    将查询结果每行转换为字典格式，便于JSON序列化
+    """
+    d = {}
+    for idx, col in enumerate(cursor.description):
+        d[col[0]] = row[idx]
+    return d
 
 def format_datetime(dt):
     """将datetime对象格式化为标准格式字符串"""
@@ -26,7 +38,9 @@ def get_db_connection():
     """获取数据库连接，使用上下文管理器确保连接正确关闭"""
     conn = None
     try:
-        conn = sqlite3.connect(settings.get_config().DB_PATH)
+        # 添加 check_same_thread=False 允许在多线程环境中使用同一连接
+        # 注意：这需要在应用代码中确保线程安全
+        conn = sqlite3.connect(settings.get_config().DB_PATH, check_same_thread=False)
         conn.row_factory = sqlite3.Row
         yield conn
     finally:
@@ -34,8 +48,18 @@ def get_db_connection():
             conn.close()
 
 def get_db():
-    with get_db_connection() as conn:
-        yield conn
+    """
+    FastAPI 依赖项，用于获取数据库连接
+    优先使用连接池，如果连接池未初始化则使用单连接模式
+    """
+    try:
+        # 尝试从连接池获取连接
+        with get_db_connection_from_pool() as conn:
+            yield conn
+    except RuntimeError:
+        # 连接池未初始化，使用单连接模式
+        with get_db_connection() as conn:
+            yield conn
 
 def init_db():
     """初始化数据库表结构"""

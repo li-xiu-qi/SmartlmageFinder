@@ -35,7 +35,7 @@ class ResponseModel(BaseModel, Generic[T]):
     metadata: Dict[str, Any] = Field({}, description="附加元数据")
     timestamp: datetime = Field(default_factory=datetime.now, description="响应时间戳")
     request_id: str = Field(default_factory=lambda: str(uuid.uuid4()), description="请求ID，用于跟踪")
-
+    
     @classmethod
     def success(
         cls, data: Any = None, message: str = "操作成功", 
@@ -44,6 +44,9 @@ class ResponseModel(BaseModel, Generic[T]):
     ) -> "ResponseModel":
         if metadata is None:
             metadata = {}
+        # 如果没有提供 request_id，则使用默认的生成函数
+        if request_id is None:
+            request_id = str(uuid.uuid4())
         return cls(
             status=StatusEnum.SUCCESS,
             code=code,
@@ -53,13 +56,16 @@ class ResponseModel(BaseModel, Generic[T]):
             metadata=metadata,
             request_id=request_id
         )
-
+    
     @classmethod
     def error(
         cls, code: str, message: str, http_code: int = 400,
         details: Dict[str, Any] = None, request_id: str = None
     ) -> "ResponseModel":
         error = ErrorModel(code=code, message=message, details=details)
+        # 如果没有提供 request_id，则使用默认的生成函数
+        if request_id is None:
+            request_id = str(uuid.uuid4())
         return cls(
             status=StatusEnum.ERROR,
             code=http_code,
@@ -74,7 +80,8 @@ class ResponseModel(BaseModel, Generic[T]):
     def paginated_response(
         cls, data: Any, page: int, page_size: int, 
         total_items: int, message: str = "获取数据成功",
-        additional_metadata: Dict[str, Any] = None
+        additional_metadata: Dict[str, Any] = None,
+        request_id: str = None
     ) -> "ResponseModel":
         total_pages = (total_items + page_size - 1) // page_size if page_size > 0 else 0
         pagination = PaginationMetadata(
@@ -88,7 +95,7 @@ class ResponseModel(BaseModel, Generic[T]):
         if additional_metadata:
             metadata.update(additional_metadata)
             
-        return cls.success(data=data, message=message, metadata=metadata)
+        return cls.success(data=data, message=message, metadata=metadata, request_id=request_id)
     
     @classmethod
     def paginated_error(
@@ -105,6 +112,9 @@ class ResponseModel(BaseModel, Generic[T]):
         )
         
         error = ErrorModel(code=error_code, message=message, details=details)
+        # 如果没有提供 request_id，则使用默认的生成函数
+        if request_id is None:
+            request_id = str(uuid.uuid4())
         return cls(
             status=StatusEnum.ERROR,
             code=http_code,

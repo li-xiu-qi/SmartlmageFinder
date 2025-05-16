@@ -11,12 +11,14 @@ SmartImageFinder 系统提供了一套完整的标签管理 API，用于获取�
 获取系统中所有已使用标签及其使用频率，按使用频率排序。
 
 **请求**:
+
 - **方法**: GET
 - **URL**: `/api/tags/`
 - **参数**:
   - `limit`: (可选) 返回标签数量，默认 50，范围 1-200
 
 **成功响应**:
+
 ```json
 {
   "status": "success",
@@ -51,6 +53,7 @@ SmartImageFinder 系统提供了一套完整的标签管理 API，用于获取�
 搜索符合关键字的标签，主要用于前端的标签自动完成功能。
 
 **请求**:
+
 - **方法**: GET
 - **URL**: `/api/tags/search`
 - **参数**:
@@ -58,11 +61,13 @@ SmartImageFinder 系统提供了一套完整的标签管理 API，用于获取�
   - `limit`: (可选) 返回标签数量，默认 20，范围 1-100
 
 **示例请求**:
+
 ```
 GET /api/tags/search?query=风景&limit=10
 ```
 
 **成功响应**:
+
 ```json
 {
   "status": "success",
@@ -89,6 +94,7 @@ GET /api/tags/search?query=风景&limit=10
 获取包含指定标签的所有图片，支持分页。
 
 **请求**:
+
 - **方法**: GET
 - **URL**: `/api/tags/by-tag/{tag}`
 - **路径参数**:
@@ -98,11 +104,13 @@ GET /api/tags/search?query=风景&limit=10
   - `page_size`: (可选) 每页数量，默认 20，范围 1-100
 
 **示例请求**:
+
 ```
 GET /api/tags/by-tag/风景?page=1&page_size=10
 ```
 
 **成功响应**:
+
 ```json
 {
   "status": "success",
@@ -146,6 +154,7 @@ GET /api/tags/by-tag/风景?page=1&page_size=10
 获取同时包含多个指定标签的图片，支持两种匹配模式：任一标签匹配（OR）或所有标签都匹配（AND）。
 
 **请求**:
+
 - **方法**: GET
 - **URL**: `/api/tags/by-multiple-tags`
 - **参数**:
@@ -157,11 +166,13 @@ GET /api/tags/by-tag/风景?page=1&page_size=10
   - `page_size`: (可选) 每页数量，默认 20，范围 1-100
 
 **示例请求**:
+
 ```
 GET /api/tags/by-multiple-tags?tags=风景,自然,山水&mode=and&page=1&page_size=10
 ```
 
 **成功响应**:
+
 ```json
 {
   "status": "success",
@@ -202,6 +213,7 @@ GET /api/tags/by-multiple-tags?tags=风景,自然,山水&mode=and&page=1&page_si
 ```
 
 **错误响应** (无效的标签列表):
+
 ```json
 {
   "status": "error",
@@ -216,71 +228,6 @@ GET /api/tags/by-multiple-tags?tags=风景,自然,山水&mode=and&page=1&page_si
   "metadata": {},
   "timestamp": "2025-05-16T10:34:15.123456",
   "request_id": "550e8400-e29b-41d4-a716-446655440004"
-}
-```
-
-### 5. 更新图片标签
-
-更新指定图片的标签列表。
-
-**请求**:
-- **方法**: PUT
-- **URL**: `/api/tags/image/{image_id}`
-- **路径参数**:
-  - `image_id`: (必需) 图片ID
-- **内容类型**: `application/json`
-- **请求体**:
-```json
-{
-  "tags": ["风景", "自然", "山水", "湖泊", "阳光"]
-}
-```
-
-**成功响应**:
-```json
-{
-  "status": "success",
-  "code": 200,
-  "message": "成功更新图片标签",
-  "data": {
-    "id": 42,
-    "filename": "mountains.jpg",
-    "filepath": "/path/to/mountains.jpg",
-    "title": "高山湖泊风景",
-    "description": "这是一张拍摄于阿尔卑斯山的美丽山水风景照片，展示了湖泊和山脉的壮丽景色。",
-    "file_size": 1542000,
-    "file_type": "image/jpeg",
-    "width": 1920,
-    "height": 1080,
-    "created_at": "2023-05-15 10:30:00",
-    "updated_at": "2023-05-16 15:45:22",
-    "metadata": {"camera": "Canon EOS R5", "exposure": "1/250"},
-    "tags": ["风景", "自然", "山水", "湖泊", "阳光"]
-  },
-  "metadata": {
-    "image_id": 42
-  },
-  "error": null,
-  "timestamp": "2025-05-16T15:45:22.123456",
-  "request_id": "550e8400-e29b-41d4-a716-446655440005"
-}
-```
-
-**错误响应** (图片不存在):
-```json
-{
-  "status": "error",
-  "code": 404,
-  "message": "ID为 999 的图片不存在",
-  "data": null,
-  "error": {
-    "code": "NOT_FOUND",
-    "message": "ID为 999 的图片不存在",
-    "details": null
-  },
-  "metadata": {},
-  "timestamp": "2025-05-16T15:46:00.123456",
-  "request_id": "550e8400-e29b-41d4-a716-446655440006"
 }
 ```
 
@@ -305,5 +252,3 @@ GET /api/tags/by-multiple-tags?tags=风景,自然,山水&mode=and&page=1&page_si
 |---------|------------|------|
 | INVALID_TAGS | 400 | 提供的标签列表无效或为空 |
 | NOT_FOUND | 404 | 指定的图片不存在 |
-| UPDATE_FAILED | 500 | 标签更新失败，可能是数据库错误 |
-
