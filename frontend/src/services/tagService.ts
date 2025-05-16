@@ -1,0 +1,59 @@
+import apiClient from './apiClient';
+import { ImageModel, TagInfo } from '@/types/models';
+import {
+  TagClient,
+  GetPopularTagsParams, PopularTagsResponse,
+  SearchTagsParams, TagSearchResponse,
+  GetImagesByTagParams, ImagesByTagResponse,
+  GetImagesByMultipleTagsParams, ImagesByMultipleTagsResponse,
+  TagMatchMode
+} from '@/types/tag';
+
+const tagService: TagClient = {
+  /**
+   * 获取热门标签
+   * GET /api/tags/
+   */
+  async getPopularTags(params?: GetPopularTagsParams): Promise<PopularTagsResponse> {
+    return apiClient.getWithTransform<TagInfo[]>('/tags', { params }) as Promise<PopularTagsResponse>;
+  },
+
+  /**
+   * 搜索标签
+   * GET /api/tags/search
+   */
+  async searchTags(params: SearchTagsParams): Promise<TagSearchResponse> {
+    return apiClient.getWithTransform<string[]>('/tags/search', { params }) as Promise<TagSearchResponse>;
+  },
+
+  /**
+   * 根据标签获取图片
+   * GET /api/tags/by-tag/{tag}
+   */
+  async getImagesByTag(params: GetImagesByTagParams): Promise<ImagesByTagResponse> {
+    const { tag, ...restParams } = params;
+    // API期望分页参数在查询中，而不是路径中
+    return apiClient.getWithTransform<ImageModel[]>(`/tags/by-tag/${tag}`, { 
+      params: restParams 
+    }) as Promise<ImagesByTagResponse>;
+  },
+
+  /**
+   * 根据多个标签获取图片
+   * GET /api/tags/by-multiple-tags
+   */
+  async getImagesByMultipleTags(params: GetImagesByMultipleTagsParams): Promise<ImagesByMultipleTagsResponse> {
+    const { tags, mode = TagMatchMode.OR, ...restParams } = params;
+    const tagsParam = Array.isArray(tags) ? tags.join(',') : tags;
+    
+    return apiClient.getWithTransform<ImageModel[]>('/tags/by-multiple-tags', {
+      params: {
+        ...restParams,
+        tags: tagsParam,
+        mode,
+      }
+    }) as Promise<ImagesByMultipleTagsResponse>;
+  },
+};
+
+export default tagService;

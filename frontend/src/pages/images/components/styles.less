@@ -1,0 +1,118 @@
+/* ImageCard组件样式 */
+.image-card {
+  transition: all 0.3s;
+}
+
+.image-cover {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f0f0f0;
+  overflow: hidden;
+  max-height: 400px;
+  position: relative;
+}
+
+.image-cover img {
+  width: 100%;
+  max-height: 400px;
+  object-fit: contain;
+}
+
+.similarity-indicator {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.65);
+  color: white;
+  padding: 4px 8px;
+  border-top-left-radius: 4px;
+}
+
+.image-info {
+  padding: 8px 0;
+}
+
+.image-title {
+  font-weight: bold;
+  margin-bottom: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.image-meta {
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 12px;
+}
+
+.image-tags {
+  margin-top: 8px;
+}
+
+.tag-item {
+  margin-right: 4px;
+  margin-bottom: 4px;
+  font-size: 12px;
+  padding: 0 5px;
+  cursor: pointer;
+}
+
+/* FilterForm组件样式 */
+.filter-form-container {
+  margin-bottom: 16px;
+}
+
+/* ImageDetail组件样式 */
+.image-detail {
+  display: flex;
+  flex-direction: column;
+}
+
+.image-detail-header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
+.image-detail-preview {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+  background-color: #f0f0f0;
+  padding: 16px;
+  border-radius: 4px;
+}
+
+.image-detail-info {
+  margin-top: 16px;
+}
+
+/* ViewControls组件样式 */
+.view-controls {
+  margin-bottom: 16px;
+}
+
+/* ImageList组件样式 */
+.image-list {
+  margin-bottom: 24px;
+}
+
+.image-card-wrapper {
+  height: 100%;
+}
+
+/* 主页面样式 */
+.images-page {
+  padding: 16px;
+}
+
+.filter-card {
+  margin-bottom: 16px;
+}
+
+.pagination-container {
+  text-align: center;
+  margin-top: 24px;
+  padding: 16px 0;
+}

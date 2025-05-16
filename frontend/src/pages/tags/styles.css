@@ -1,0 +1,65 @@
+.tags-page {
+  width: 100%;
+}
+
+.tag-cloud-container {
+  padding: 16px 0;
+}
+
+.tag-search-container {
+  margin-top: 16px;
+  margin-bottom: 16px;
+}
+
+.tag-search-input {
+  width: 300px;
+}
+
+.tag-search-hint {
+  margin-left: 8px;
+}
+
+.empty-container {
+  text-align: center;
+  padding: 24px 0;
+}
+
+.tag-item {
+  padding: 4px 8px;
+  margin: 0 8px 8px 0;
+  cursor: pointer;
+}
+
+.tag-label {
+  font-size: 14px;
+  padding: 4px 8px;
+}
+
+.tag-cloud-card {
+  margin-bottom: 24px;
+}
+
+/* 标签字体大小类 */
+.tag-size-xs {
+  font-size: 12px;
+}
+
+.tag-size-sm {
+  font-size: 14px;
+}
+
+.tag-size-md {
+  font-size: 16px;
+}
+
+.tag-size-lg {
+  font-size: 18px;
+}
+
+.tag-size-xl {
+  font-size: 20px;
+}
+
+.tag-size-xxl {
+  font-size: 24px;
+}

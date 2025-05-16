@@ -1,0 +1,86 @@
+import React from 'react';
+import { Layout, Input, Badge, Avatar, Dropdown } from 'antd';
+import { SearchOutlined, SettingOutlined, MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
+import { SystemStatus } from '@/hooks/useSystemStatus';
+import { theme } from 'antd';
+
+const { Header } = Layout;
+const { Search } = Input;
+
+interface MainHeaderProps {
+  collapsed: boolean;
+  toggleCollapse: () => void;
+  systemStatus: SystemStatus;
+}
+
+const MainHeader: React.FC<MainHeaderProps> = ({ collapsed, toggleCollapse, systemStatus }) => {
+  const navigate = useNavigate();
+  const { token } = theme.useToken();
+
+  // 处理搜索
+  const onSearch = (value: string) => {
+    if (value.trim()) {
+      navigate(`/search?q=${encodeURIComponent(value)}`);
+    }
+  };
+
+  // 系统状态指示器
+  const statusBadgeColor = 
+    systemStatus === 'healthy' 
+      ? 'green' 
+      : systemStatus === 'error' 
+        ? 'red' 
+        : 'orange';
+
+  // 设置下拉菜单项
+  const settingsMenu = {
+    items: [
+      {
+        key: '1',
+        label: '系统设置',
+        onClick: () => navigate('/settings'),
+      },
+    ],
+  };
+
+  return (
+    <Header className="main-header" style={{ background: token.colorBgContainer }}>
+      <div className="logo">
+        {React.createElement(collapsed ? MenuUnfoldOutlined : MenuFoldOutlined, {
+          className: 'trigger',
+          onClick: toggleCollapse,
+        })}
+        <h1>SmartImageFinder</h1>
+      </div>
+      
+      <div className="header-search">
+        <Search
+          placeholder="搜索图片..."
+          allowClear
+          enterButton={<SearchOutlined />}
+          size="middle"
+          onSearch={onSearch}
+        />
+      </div>
+
+      <div className="header-right">
+        <div className="system-status">
+          <Badge status={statusBadgeColor} text={`系统: ${systemStatus || '加载中'}`} />
+        </div>
+
+        <Dropdown menu={settingsMenu} placement="bottomRight">
+          <Avatar 
+            icon={<SettingOutlined />} 
+            style={{ 
+              backgroundColor: token.colorPrimary,
+              cursor: 'pointer'
+            }}
+          />
+        </Dropdown>
+      </div>
+    </Header>
+  );
+};
+
+export default MainHeader;

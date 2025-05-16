@@ -1,18 +1,26 @@
 import React from 'react';
 import { Card, Tag } from 'antd';
-import { Image, ImageSearchResult } from '@/types';
-import { formatDate, getImageUrl } from '@/utils/format';
+import { ImageCardModel } from '@/utils/typeConverters';
+import dayjs from 'dayjs';
+import './styles.less';
 
 interface ImageCardProps {
-  image: Image | ImageSearchResult;
-  onClick?: (image: Image | ImageSearchResult) => void;
+  image: ImageCardModel;
+  onClick?: (image: ImageCardModel) => void;
   showTags?: boolean;
   showSimilarity?: boolean;
   onTagClick?: (tag: string) => void;
 }
 
+/**
+ * 格式化日期
+ */
+const formatDate = (dateString: string): string => {
+  return dayjs(dateString).format('YYYY-MM-DD HH:mm');
+};
+
 // 处理标签数据，确保为数组格式
-const processTags = (tags: any): string[] => {
+const processTags = (tags: unknown): string[] => {
   if (!tags) return [];
   
   // 如果是字符串，尝试解析JSON
@@ -37,7 +45,7 @@ const ImageCard: React.FC<ImageCardProps> = ({
   showSimilarity = false,
   onTagClick
 }) => {
-  const isSearchResult = 'score' in image;
+  const isSearchResult = typeof image.score !== 'undefined';
   
   const handleClick = () => {
     if (onClick) {
@@ -62,26 +70,14 @@ const ImageCard: React.FC<ImageCardProps> = ({
       className="image-card"
       onClick={handleClick}
       cover={
-        <div className="image-cover" style={{ 
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          backgroundColor: '#f0f0f0',
-          overflow: 'hidden',
-          maxHeight: '400px'
-        }}>
+        <div className="image-cover">
           <img 
             alt={image.title} 
-            src={getImageUrl(image.filepath)} 
-            style={{ 
-              width: '100%',
-              maxHeight: '400px',
-              objectFit: 'contain'
-            }}
+            src={image.filepath} 
           />
           {isSearchResult && showSimilarity && (
             <div className="similarity-indicator">
-              {`相似度: ${Math.round((image as ImageSearchResult).score * 100)}%`}
+              {`相似度: ${Math.round((image.score || 0) * 100)}%`}
             </div>
           )}
         </div>
@@ -102,19 +98,13 @@ const ImageCard: React.FC<ImageCardProps> = ({
                 key={tag} 
                 color="blue" 
                 onClick={(e) => handleTagClick(e, tag)} 
-                style={{ 
-                  marginRight: 4, 
-                  marginBottom: 4, 
-                  fontSize: '12px', 
-                  padding: '0 5px',
-                  cursor: 'pointer'
-                }}
+                className="tag-item"
               >
                 {tag}
               </Tag>
             ))}
             {tags.length > 3 && (
-              <Tag color="default" style={{ fontSize: '12px', padding: '0 5px' }}>+{tags.length - 3}</Tag>
+              <Tag color="default" className="tag-item">+{tags.length - 3}</Tag>
             )}
           </div>
         )}

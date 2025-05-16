@@ -1,42 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Row, 
-  Col, 
-  Card, 
-  Form, 
-  Select, 
-  DatePicker, 
-  Space, 
-  Button, 
-  Pagination, 
-  Empty, 
-  Spin, 
-  message,
-  Drawer,
-  Radio,
-  Tag,
-  Popconfirm,
-  Image,
-  Tooltip
-} from 'antd';
-import { 
-  FilterOutlined, 
-  SortAscendingOutlined, 
-  AppstoreOutlined, 
-  BarsOutlined,
-  DeleteOutlined,
-  ReloadOutlined,
-  EyeOutlined
-} from '@ant-design/icons';
+import { Card, Spin, message, Drawer, Pagination } from 'antd';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import ImageCard from '@/components/ImageCard';
-import { imageService, tagService } from '@/services/api';
-import { Image as ImageType, ImageDetail, Tag as TagType, ImageListParams } from '@/types';
-import ImageDetailView from './detail';
-import { getImageUrl } from '@/utils/format';
-
-const { Option } = Select;
-const { RangePicker } = DatePicker;
+import { imageService, tagService, searchService, aiService } from '@/services/api';
+import { TagInfo, ImageModel } from '@/types/models';
+import { GetImagesListParams } from '@/types/image';
+import { ImageCardModel, convertToImageCardModel } from '@/utils/typeConverters';
+import { VectorSearchTarget, SearchType } from '@/types/search';
+import { AnalysisDetailLevel } from '@/types/ai';
+import FilterForm from './components/FilterForm';
+import ViewControls, { ViewMode } from './components/ViewControls';
+import ImageList from './components/ImageList';
+import ImageDetail from './components/ImageDetail';
+import './components/styles.less';
 
 const ImagesPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -44,27 +19,26 @@ const ImagesPage: React.FC = () => {
 
   // 状态定义
   const [loading, setLoading] = useState(false);
-  const [images, setImages] = useState<ImageType[]>([]);
-  const [tags, setTags] = useState<TagType[]>([]);
+  const [images, setImages] = useState<ImageCardModel[]>([]);
+  const [tags, setTags] = useState<TagInfo[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
-  const [selectedImage, setSelectedImage] = useState<ImageDetail | null>(null);
+  const [selectedImage, setSelectedImage] = useState<ImageModel | null>(null);
   const [detailVisible, setDetailVisible] = useState(false);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [gridColumns, setGridColumns] = useState<number>(2); // 新增：每行图片数量设置
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [gridColumns, setGridColumns] = useState<number>(2);
 
   // 筛选条件
-  const [form] = Form.useForm();
-  const [filterValues, setFilterValues] = useState<ImageListParams>({});
+  const [filterValues, setFilterValues] = useState<GetImagesListParams>({});
 
-  // 获取标签数据
+  // 获取热门标签
   useEffect(() => {
     const fetchTags = async () => {
       try {
-        const response = await tagService.getTags();
+        const response = await tagService.getPopularTags({ limit: 50 });
         if (response.status === 'success' && response.data) {
-          setTags(response.data.tags || []);
+          setTags(response.data);
         }
       } catch (error) {
         console.error('获取标签失败:', error);
@@ -79,26 +53,30 @@ const ImagesPage: React.FC = () => {
     const tagsParam = searchParams.get('tags');
     if (tagsParam) {
       const tagsArray = tagsParam.split(',').map(tag => tag.trim());
-      form.setFieldsValue({ tags: tagsArray });
       setFilterValues(prev => ({ ...prev, tags: tagsArray }));
     }
-  }, [searchParams, form]);
+  }, [searchParams]);
 
   // 获取图片数据
   useEffect(() => {
     const fetchImages = async () => {
       try {
         setLoading(true);
-        const params: ImageListParams = {
+        const params: GetImagesListParams = {
           ...filterValues,
           page,
           page_size: pageSize,
         };
 
-        const response = await imageService.getImages(params);
+        const response = await imageService.getImagesList(params);
         if (response.status === 'success' && response.data) {
-          setImages(response.data.images || []);
-          setTotal(response.metadata?.total || 0);
+          // 将API返回的ImageModel转换为前端显示所需的ImageCardModel
+          const imageCards = response.data.map(img => convertToImageCardModel(img));
+          setImages(imageCards);
+          
+          if (response.metadata && response.metadata.pagination) {
+            setTotal(response.metadata.pagination.total_items);
+          }
         }
       } catch (error) {
         console.error('获取图片失败:', error);
@@ -112,39 +90,22 @@ const ImagesPage: React.FC = () => {
   }, [page, pageSize, filterValues]);
 
   // 处理筛选表单提交
-  const handleFilterSubmit = async (values: any) => {
-    const filters: ImageListParams = {};
-
-    if (values.sort_by) {
-      filters.sort_by = values.sort_by;
-      filters.order = values.order || 'desc';
-    }
-
-    if (values.date_range && values.date_range.length === 2) {
-      filters.start_date = values.date_range[0].format('YYYY-MM-DD');
-      filters.end_date = values.date_range[1].format('YYYY-MM-DD');
-    }
-
-    if (values.tags && values.tags.length > 0) {
-      filters.tags = values.tags;
-    }
-
-    setFilterValues(filters);
+  const handleFilterSubmit = (values: GetImagesListParams) => {
+    setFilterValues(values);
     setPage(1); // 重置为第一页
   };
 
   // 重置筛选条件
   const resetFilters = () => {
-    form.resetFields();
     setFilterValues({});
     setPage(1);
   };
 
   // 处理图片点击事件，打开详情抽屉
-  const handleImageClick = async (image: ImageType) => {
+  const handleImageClick = async (image: ImageCardModel) => {
     try {
       setLoading(true);
-      const response = await imageService.getImageDetail(image.uuid);
+      const response = await imageService.getImageDetail({ image_id: image.id });
       if (response.status === 'success' && response.data) {
         setSelectedImage(response.data);
         setDetailVisible(true);
@@ -164,14 +125,14 @@ const ImagesPage: React.FC = () => {
   };
 
   // 删除图片
-  const handleDeleteImage = async (uuid: string) => {
+  const handleDeleteImage = async (id: number) => {
     try {
       setLoading(true);
-      const response = await imageService.deleteImage(uuid);
+      const response = await imageService.deleteImage({ image_id: id });
       if (response.status === 'success') {
         message.success('图片删除成功');
         // 重新获取当前页的数据
-        const updatedImages = images.filter(img => img.uuid !== uuid);
+        const updatedImages = images.filter(img => img.id !== id);
         if (updatedImages.length === 0 && page > 1) {
           setPage(page - 1);
         } else {
@@ -189,16 +150,80 @@ const ImagesPage: React.FC = () => {
     }
   };
 
-  // 图片详情更新后的处理
-  const handleImageUpdate = (updatedImage: ImageDetail) => {
+  // 更新图片信息
+  const handleImageUpdate = (updatedImage: ImageModel) => {
+    setSelectedImage(updatedImage);
+    
     // 更新列表中的图片数据
     setImages(prevImages => 
       prevImages.map(img => 
-        img.uuid === updatedImage.uuid 
-          ? { ...img, ...updatedImage } 
+        img.id === updatedImage.id 
+          ? convertToImageCardModel(updatedImage) 
           : img
       )
     );
+  };
+
+  // 查找相似图片
+  const handleFindSimilar = async (imageId: number, searchTarget: VectorSearchTarget) => {
+    try {
+      const params = {
+        search_type: SearchType.VECTOR,
+        search_targets: [searchTarget],
+        limit: 12
+      };
+      
+      const response = await searchService.similarSearch(imageId, params);
+      if (response.status === 'success' && response.data) {
+        return response.data;
+      }
+      return [];
+    } catch (error) {
+      console.error('查找相似图片失败:', error);
+      throw error;
+    }
+  };
+
+  // AI分析生成内容
+  const handleAIAnalyze = async (imageId: number) => {
+    try {
+      const response = await aiService.analyzeExistingImage(
+        imageId, 
+        { detail: AnalysisDetailLevel.HIGH }
+      );
+      
+      if (response.status === 'success' && response.data) {
+        return {
+          title: response.data.title,
+          description: response.data.description,
+          tags: response.data.tags
+        };
+      }
+      
+      throw new Error('AI分析失败');
+    } catch (error) {
+      console.error('AI分析失败:', error);
+      throw error;
+    }
+  };
+
+  // 更新标签
+  const handleUpdateTags = async (id: number, tags: string[]) => {
+    try {
+      const response = await imageService.updateImage({
+        image_id: id,
+        tags: tags
+      });
+      
+      if (response.status === 'success' && response.data) {
+        return response.data.tags;
+      }
+      
+      throw new Error('更新标签失败');
+    } catch (error) {
+      console.error('更新标签失败:', error);
+      throw error;
+    }
   };
 
   // 处理标签点击
@@ -207,190 +232,44 @@ const ImagesPage: React.FC = () => {
     const updatedTags = [...(filterValues.tags || [])];
     if (!updatedTags.includes(tag)) {
       updatedTags.push(tag);
-      form.setFieldsValue({ tags: updatedTags });
       setFilterValues(prev => ({ ...prev, tags: updatedTags }));
       setPage(1);
-    }
-  };
-
-  // 渲染筛选表单
-  const renderFilterForm = () => (
-    <Card style={{ marginBottom: 16 }}>
-      <Form
-        form={form}
-        layout="vertical"
-        onFinish={handleFilterSubmit}
-        initialValues={{
-          sort_by: 'created_at',
-          order: 'desc',
-        }}
-      >
-        <Row gutter={16}>
-          <Col xs={24} sm={12} md={8} lg={6}>
-            <Form.Item label="时间范围" name="date_range">
-              <RangePicker style={{ width: '100%' }} />
-            </Form.Item>
-          </Col>
-          <Col xs={24} sm={12} md={8} lg={6}>
-            <Form.Item label="标签" name="tags">
-              <Select
-                mode="multiple"
-                placeholder="选择标签"
-                style={{ width: '100%' }}
-                allowClear
-              >
-                {tags.map(tag => (
-                  <Option key={tag.name} value={tag.name}>
-                    {tag.name} ({tag.count})
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
-          </Col>
-          <Col xs={24} sm={12} md={8} lg={6}>
-            <Form.Item label="排序字段" name="sort_by">
-              <Select style={{ width: '100%' }}>
-                <Option value="created_at">上传时间</Option>
-                <Option value="title">标题</Option>
-                <Option value="file_size">文件大小</Option>
-              </Select>
-            </Form.Item>
-          </Col>
-          <Col xs={24} sm={12} md={8} lg={6}>
-            <Form.Item label="排序方向" name="order">
-              <Select style={{ width: '100%' }}>
-                <Option value="desc">降序</Option>
-                <Option value="asc">升序</Option>
-              </Select>
-            </Form.Item>
-          </Col>
-          <Col xs={24}>
-            <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
-              <Space>
-                <Button icon={<ReloadOutlined />} onClick={resetFilters}>
-                  重置
-                </Button>
-                <Button type="primary" icon={<FilterOutlined />} htmlType="submit">
-                  筛选
-                </Button>
-              </Space>
-            </Form.Item>
-          </Col>
-        </Row>
-      </Form>
-    </Card>
-  );
-
-  // 渲染视图控制栏
-  const renderViewControls = () => (
-    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
-      <div>
-        <span>共 {total} 张图片</span>
-      </div>
-      <Space>
-        <Radio.Group value={viewMode} onChange={e => setViewMode(e.target.value)}>
-          <Radio.Button value="grid"><AppstoreOutlined /> 网格</Radio.Button>
-          <Radio.Button value="list"><BarsOutlined /> 列表</Radio.Button>
-        </Radio.Group>
-        {viewMode === 'grid' && (
-          <Select value={gridColumns} onChange={setGridColumns} style={{ width: 120 }}>
-            <Option value={1}>1 列</Option>
-            <Option value={2}>2 列</Option>
-            <Option value={3}>3 列</Option>
-            <Option value={4}>4 列</Option>
-          </Select>
-        )}
-      </Space>
-    </div>
-  );
-
-  // 渲染图片列表
-  const renderImageGrid = () => {
-    if (images.length === 0) {
-      return <Empty description="暂无图片" />;
-    }
-
-    if (viewMode === 'grid') {
-      return (
-        <Row gutter={[24, 24]}>
-          {images.map(image => (
-            <Col xs={24} sm={12} md={12} lg={24 / gridColumns} xl={24 / gridColumns} key={image.uuid}>
-              <div className="image-card-wrapper">
-                <ImageCard 
-                  image={image} 
-                  onClick={handleImageClick} 
-                  showTags={true}
-                  onTagClick={handleTagClick}
-                />
-              </div>
-            </Col>
-          ))}
-        </Row>
-      );
-    } else {
-      return (
-        <div>
-          {images.map(image => (
-            <Card 
-              style={{ marginBottom: 16 }}
-              key={image.uuid}
-            >
-              <div style={{ display: 'flex' }}>
-                <div style={{ width: 100, height: 100, overflow: 'hidden', marginRight: 16, position: 'relative' }}>
-                  <Image
-                    src={getImageUrl(image.filepath)} 
-                    alt={image.title}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    preview={{
-                      mask: <div><EyeOutlined style={{ marginRight: 5 }} />预览</div>,
-                    }}
-                  />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <h3 style={{ margin: '0 0 8px' }}>{image.title}</h3>
-                  <p style={{ color: 'rgba(0, 0, 0, 0.45)', margin: '0 0 8px' }}>
-                    上传时间: {new Date(image.created_at).toLocaleString()}
-                  </p>
-                  <div>
-                    {image.tags.map(tag => (
-                      <Tag 
-                        key={tag} 
-                        onClick={() => handleTagClick(tag)}
-                        style={{ cursor: 'pointer' }}
-                      >
-                        {tag}
-                      </Tag>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <Button type="link" onClick={() => handleImageClick(image)}>查看详情</Button>
-                  <Popconfirm
-                    title="确定要删除这张图片吗？"
-                    onConfirm={() => handleDeleteImage(image.uuid)}
-                    okText="确定"
-                    cancelText="取消"
-                  >
-                    <Button type="link" danger icon={<DeleteOutlined />}>删除</Button>
-                  </Popconfirm>
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
-      );
     }
   };
 
   return (
     <div className="images-page">
       <Spin spinning={loading}>
-        {renderFilterForm()}
-        {renderViewControls()}
-        {renderImageGrid()}
+        <Card className="filter-card">
+          <FilterForm 
+            tags={tags}
+            onFilter={handleFilterSubmit}
+            onReset={resetFilters}
+            initialValues={filterValues}
+            loading={loading}
+          />
+        </Card>
+        
+        <ViewControls 
+          total={total}
+          viewMode={viewMode}
+          gridColumns={gridColumns}
+          onViewModeChange={setViewMode}
+          onGridColumnsChange={setGridColumns}
+        />
+        
+        <ImageList 
+          images={images}
+          viewMode={viewMode}
+          gridColumns={gridColumns}
+          onImageClick={handleImageClick}
+          onTagClick={handleTagClick}
+          onDeleteImage={handleDeleteImage}
+          loading={loading}
+        />
         
         {total > 0 && (
-          <div style={{ textAlign: 'center', marginTop: 16 }}>
+          <div className="pagination-container">
             <Pagination
               current={page}
               pageSize={pageSize}
@@ -416,15 +295,16 @@ const ImagesPage: React.FC = () => {
             open={detailVisible}
             width={640}
             destroyOnClose
-          >
-            <ImageDetailView 
+          >            <ImageDetail 
               image={selectedImage} 
               onUpdate={handleImageUpdate} 
-              onDelete={handleDeleteImage} 
+              onDelete={handleDeleteImage}
+              onFindSimilar={handleFindSimilar}
+              onAIAnalyze={handleAIAnalyze}
+              onUpdateTags={handleUpdateTags}
             />
           </Drawer>
-        )}
-      </Spin>
+        )}      </Spin>
     </div>
   );
 };

@@ -1,0 +1,114 @@
+/**
+ * 搜索页面样式
+ */
+.search-page-container {
+  padding: 24px;
+  
+  .search-tabs {
+    margin-bottom: 16px;
+    
+    .ant-tabs-nav {
+      margin-bottom: 16px;
+    }
+  }
+  
+  .search-form-card {
+    margin-bottom: 24px;
+  }
+  
+  .search-type-row {
+    margin-top: 16px;
+  }
+  
+  .search-targets-select {
+    width: 100%;
+  }
+  
+  .date-range-picker {
+    width: 100%;
+  }
+  
+  .upload-container {
+    margin-bottom: 16px;
+    
+    .ant-upload-drag {
+      border: 2px dashed #d9d9d9;
+      border-radius: 8px;
+      background: #fafafa;
+      transition: border-color 0.3s;
+      
+      &:hover {
+        border-color: #1890ff;
+      }
+    }
+    
+    .image-preview {
+      display: flex;
+      justify-content: center;
+      margin: 16px 0;
+      
+      .preview-container {
+        position: relative;
+        display: inline-block;
+        
+        img {
+          max-width: 100%;
+          max-height: 300px;
+          border-radius: 8px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .remove-btn {
+          position: absolute;
+          top: 8px;
+          right: 8px;
+          opacity: 0.8;
+          
+          &:hover {
+            opacity: 1;
+          }
+        }
+      }
+    }
+  }
+  
+  .weights-container {
+    margin-bottom: 16px;
+    padding: 16px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    
+    p {
+      margin-bottom: 8px;
+      font-weight: bold;
+    }
+  }
+  
+  .search-loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px;
+    
+    p {
+      margin-top: 16px;
+      color: rgba(0, 0, 0, 0.45);
+    }
+  }
+  
+  .search-results-container {
+    .search-results-header {
+      margin-bottom: 16px;
+    }
+    
+    .search-results-grid {
+      margin-top: 16px;
+    }
+    
+    .search-results-empty {
+      padding: 48px;
+      text-align: center;
+    }
+  }
+}
