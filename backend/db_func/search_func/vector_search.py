@@ -1,8 +1,7 @@
 import sqlite3
 import json
-from typing import List, Dict, Any, Literal, Optional, Union
-
-from ..core import get_db_connection, dict_factory
+from typing import List, Dict, Any, Literal
+from ..core import dict_factory
 from .basic_search import get_filtered_image_ids
 
 def find_similar_images(

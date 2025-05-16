@@ -14,11 +14,14 @@ import numpy as np
 import functools
 from contextlib import contextmanager
 
+from backend.db_func.search_func.text_search import search_by_text
+
 # 导入向量生成相关功能
 from ..utils.generate_vector import model, encode_image, encode_text
 # 导入数据库连接函数
 from ..db_func.core import get_db
-
+# 导入响应模型
+from ..global_schemas import ResponseModel
 
 
 router = APIRouter(prefix="/search", tags=["search"])
@@ -54,9 +57,8 @@ async def text_search(
         filters["end_date"] = end_date
     
     try:
-        if search_type in ["title", "description", "both"]:
-            # 使用文本匹配搜索
-            return db_func.search_by_text(
+        if search_type in ["title", "description", "both"]:            # 使用文本匹配搜索
+            results = search_by_text(
                 conn=conn,
                 text=q,
                 search_type=search_type,
@@ -64,11 +66,28 @@ async def text_search(
                 limit=limit,
                 offset=offset
             )
+            
+            # 获取总条目数（用于分页）
+            # 由于没有专门的计数函数，这里使用一种简单的方法估算总条目数
+            # 如果结果少于limit，则总数就是offset+结果数
+            # 否则，我们无法准确知道总数，只能提供一个估计值
+            total = offset + len(results)
+            if len(results) >= limit:
+                # 表示可能还有更多结果
+                total += 1
+            
+            return ResponseModel.paginated_response(
+                data=results,
+                page=offset // limit + 1,
+                page_size=limit,
+                total_items=total,
+                message="文本搜索成功"
+            )
         elif search_type == "vector":
             # 使用向量搜索
             from ..db_func.search_func.hybrid_search import hybrid_search
             
-            return hybrid_search(
+            results = hybrid_search(
                 conn=conn,
                 query=q,
                 query_type="text",
@@ -76,12 +95,23 @@ async def text_search(
                 filters=filters,
                 limit=limit,
                 offset=offset
+            )
+            
+            # 向量搜索目前可能无法获取准确的总条目数，使用结果长度作为估计
+            total = len(results) + offset
+            
+            return ResponseModel.paginated_response(
+                data=results,
+                page=offset // limit + 1,
+                page_size=limit,
+                total_items=total,
+                message="向量搜索成功"
             )
         elif search_type == "hybrid":
             # 使用混合搜索
             from ..db_func.search_func.hybrid_search import hybrid_search
             
-            return hybrid_search(
+            results = hybrid_search(
                 conn=conn,
                 query=q,
                 query_type="text",
@@ -90,11 +120,28 @@ async def text_search(
                 limit=limit,
                 offset=offset
             )
+            
+            # 混合搜索目前可能无法获取准确的总条目数，使用结果长度作为估计
+            total = len(results) + offset
+            
+            return ResponseModel.paginated_response(
+                data=results,
+                page=offset // limit + 1,
+                page_size=limit,
+                total_items=total,
+                message="混合搜索成功"
+            )
         else:
             raise HTTPException(status_code=400, detail=f"不支持的搜索类型: {search_type}")
             
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"搜索失败: {str(e)}")
+        return ResponseModel.paginated_error(
+            error_code="SEARCH_ERROR",
+            message=f"搜索失败: {str(e)}",
+            http_code=500,
+            page=offset // limit + 1,
+            page_size=limit
+        )
 
 @router.post("/image")
 async def image_search(
@@ -138,10 +185,10 @@ async def image_search(
             # 获取图像的向量表示
             image_embedding = encode_image(temp_file_path)
             
+            results = []
             if search_type == "vector":
                 from ..db_func.search_func.vector_search import find_similar_images
                 
-                results = []
                 # 对每个搜索目标执行向量搜索
                 for target in search_targets:
                     target_results = find_similar_images(
@@ -163,11 +210,11 @@ async def image_search(
                 sorted_results = sorted(unique_results.values(), key=lambda x: x["distance"])
                 
                 # 应用分页
-                return sorted_results[offset:offset+limit]
+                results = sorted_results[offset:offset+limit]
             elif search_type == "hybrid":
                 from ..db_func.search_func.hybrid_search import hybrid_search
                 
-                return hybrid_search(
+                results = hybrid_search(
                     conn=conn,
                     query=temp_file_path,
                     query_type="image",
@@ -177,15 +224,35 @@ async def image_search(
                     offset=offset
                 )
             else:
-                raise HTTPException(status_code=400, detail=f"不支持的搜索类型: {search_type}")
+                return ResponseModel.error(
+                    code="INVALID_SEARCH_TYPE",
+                    message=f"不支持的搜索类型: {search_type}",
+                    http_code=400
+                )
                 
+            # 向量搜索目前可能无法获取准确的总条目数，使用结果长度作为估计
+            total = len(results) + offset
+            
+            return ResponseModel.paginated_response(
+                data=results,
+                page=offset // limit + 1,
+                page_size=limit,
+                total_items=total,
+                message="图像搜索成功"
+            )
         finally:
             # 清理临时文件
             if os.path.exists(temp_file_path):
                 os.unlink(temp_file_path)
                 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"图像搜索失败: {str(e)}")
+        return ResponseModel.paginated_error(
+            error_code="IMAGE_SEARCH_ERROR",
+            message=f"图像搜索失败: {str(e)}",
+            http_code=500,
+            page=offset // limit + 1,
+            page_size=limit
+        )
 
 @router.get("/similar/{image_id}")
 async def similar_image_search(
@@ -222,13 +289,17 @@ async def similar_image_search(
         image = cursor.fetchone()
         
         if not image:
-            raise HTTPException(status_code=404, detail=f"未找到ID为{image_id}的图像")
+            return ResponseModel.error(
+                code="IMAGE_NOT_FOUND",
+                message=f"未找到ID为{image_id}的图像",
+                http_code=404
+            )
         
+        results = []
         # 对于向量搜索，需要从向量表获取对应的向量
         if search_type == "vector":
             from ..db_func.search_func.vector_search import find_similar_images
             
-            results = []
             for target in search_targets:
                 # 检索目标向量
                 vector_table = f"{target}_vectors"
@@ -267,13 +338,13 @@ async def similar_image_search(
             sorted_results = sorted(unique_results.values(), key=lambda x: x["distance"])
             
             # 应用分页
-            return sorted_results[offset:offset+limit]
+            results = sorted_results[offset:offset+limit]
             
         elif search_type == "hybrid":
             from ..db_func.search_func.hybrid_search import hybrid_search
             
             # 对于混合搜索，我们可以直接用图像ID作为查询参数
-            return hybrid_search(
+            results = hybrid_search(
                 conn=conn,
                 query=image_id,  # 直接传递图像ID
                 query_type="image_id",  # 指定查询类型为图像ID
@@ -284,9 +355,36 @@ async def similar_image_search(
                 exclude_self=True  # 排除查询图像本身
             )
         else:
-            raise HTTPException(status_code=400, detail=f"不支持的搜索类型: {search_type}")
+            return ResponseModel.error(
+                code="INVALID_SEARCH_TYPE",
+                message=f"不支持的搜索类型: {search_type}",
+                http_code=400
+            )
+        
+        # 向量搜索目前可能无法获取准确的总条目数，使用结果长度作为估计
+        total = len(results) + offset
+        
+        return ResponseModel.paginated_response(
+            data=results,
+            page=offset // limit + 1,
+            page_size=limit,
+            total_items=total,
+            message="相似图像搜索成功"
+        )
                 
     except sqlite3.Error as e:
-        raise HTTPException(status_code=500, detail=f"数据库错误: {str(e)}")
+        return ResponseModel.paginated_error(
+            error_code="DATABASE_ERROR",
+            message=f"数据库错误: {str(e)}",
+            http_code=500,
+            page=offset // limit + 1,
+            page_size=limit
+        )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"相似图像搜索失败: {str(e)}")
+        return ResponseModel.paginated_error(
+            error_code="SIMILAR_SEARCH_ERROR",
+            message=f"相似图像搜索失败: {str(e)}",
+            http_code=500,
+            page=offset // limit + 1,
+            page_size=limit
+        )
