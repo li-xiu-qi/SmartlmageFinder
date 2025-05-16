@@ -6,9 +6,10 @@ import os
 import shutil
 import tempfile
 
+from ..global_schemas import ResponseModel
+
 from ..ai_func.analyze_upload_image import analyze_upload_image
 from ..ai_func.initialization import get_image_analyzer, initialize_ai_services
-from ..global_schemas import ResponseModel
 from ..config import settings
 from ..utils.image_analysis import ImageAnalysis
 from ..db_func.core import get_db
@@ -52,6 +53,7 @@ async def analyze_uploaded_image(
             }
         )
     except Exception as e:
+        print("出错了",(e))
         return ResponseModel.error(
             code="AI_PROCESSING_ERROR",
             message=f"AI处理出错: {str(e)}",

@@ -10,6 +10,7 @@ class AppConfig(BaseModel):
     VECTOR_DB_DRIVER: Optional[str] = None
     EMBEDDING_DIMENSION: Optional[int] = None
     UPLOAD_DIR: str = "./data/images"
+    TEMP_DIR: str = "./data/temp"  # 添加临时目录配置
     DB_PATH: str = "./data/db/smartimagefinder.db"
     TEXT_VECTOR_CACHE_DIR: str = "./data/caches/text_vector_cache"
     IMAGE_VECTOR_CACHE_DIR: str = "./data/caches/image_vector_cache"

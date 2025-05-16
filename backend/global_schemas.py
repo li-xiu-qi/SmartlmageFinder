@@ -1,5 +1,5 @@
 from typing import Any, Dict, Generic, List, Optional, TypeVar, Union
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from enum import Enum
 from datetime import datetime
 import uuid  # 导入uuid模块
@@ -35,6 +35,12 @@ class ResponseModel(BaseModel, Generic[T]):
     metadata: Dict[str, Any] = Field({}, description="附加元数据")
     timestamp: datetime = Field(default_factory=datetime.now, description="响应时间戳")
     request_id: str = Field(default_factory=lambda: str(uuid.uuid4()), description="请求ID，用于跟踪")
+    
+    # 为 Pydantic v2 添加配置
+    model_config = {
+        "arbitrary_types_allowed": True,
+        "validate_assignment": True
+    }
     
     @classmethod
     def success(
@@ -75,7 +81,6 @@ class ResponseModel(BaseModel, Generic[T]):
             metadata={},
             request_id=request_id
         )
-    
     @classmethod
     def paginated_response(
         cls, data: Any, page: int, page_size: int, 
@@ -91,7 +96,7 @@ class ResponseModel(BaseModel, Generic[T]):
             total_pages=total_pages
         )
         
-        metadata = {"pagination": pagination.dict()}
+        metadata = {"pagination": pagination.model_dump()}  # 使用 model_dump() 替代 dict()
         if additional_metadata:
             metadata.update(additional_metadata)
             
@@ -121,6 +126,6 @@ class ResponseModel(BaseModel, Generic[T]):
             message=message,
             data=None,
             error=error,
-            metadata={"pagination": pagination.dict()},
+            metadata={"pagination": pagination.model_dump()},  # 使用 model_dump() 替代 dict()
             request_id=request_id
         )

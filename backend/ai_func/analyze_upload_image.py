@@ -14,10 +14,17 @@ def analyze_upload_image(image_analyzer_instance:ImageAnalysis,
     # 然后调用图像分析器的分析方法
     # 生成标题、描述和标签
     # 返回分析结果
-    # 清理临时文件
-    config = settings.get_config()
+    # 清理临时文件  
     
-    temp_file_path = config.TEMP_DIR / upload_image.filename
+    import os
+    from pathlib import Path
+    config = settings.get_config()
+    # 确保临时目录存在
+    temp_dir = Path(config.TEMP_DIR)
+    os.makedirs(temp_dir, exist_ok=True)
+    
+    # 使用 Path 对象拼接路径
+    temp_file_path = temp_dir / upload_image.filename
     with open(temp_file_path, "wb") as f:
         f.write(upload_image.file.read())
         

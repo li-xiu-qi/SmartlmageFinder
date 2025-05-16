@@ -62,8 +62,7 @@ const imageService: ImageClient = {
       } else { // string[]
         formData.append('tags', JSON.stringify(params.tags));
       }
-    }
-    if (params.metadata) {
+    }    if (params.metadata) {
       if (typeof params.metadata === 'string') {
         formData.append('metadata', params.metadata);
       } else { // Record<string, unknown>
@@ -71,7 +70,7 @@ const imageService: ImageClient = {
       }
     }
 
-    return apiClient.postWithTransform<ImageModel[]>('/images', formData, {
+    return apiClient.postWithTransform<ImageModel[]>('/images/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },

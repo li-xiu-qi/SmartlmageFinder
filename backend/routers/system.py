@@ -1,8 +1,10 @@
-from fastapi import APIRouter, Body
+from fastapi import APIRouter, Body, Depends
 from typing import List, Dict, Any
+import sqlite3
 from ..global_schemas import ResponseModel
 import os
 from ..config import settings
+from ..db_func.core import get_db
 
 # 导入重构后的函数
 from ..system_fun.status import get_system_status_data
@@ -14,14 +16,14 @@ router = APIRouter(prefix="/system", tags=["system"])
 
 
 @router.get("/status", response_model=ResponseModel)
-async def get_system_status():
+async def get_system_status(db: sqlite3.Connection = Depends(get_db)):
     """获取系统当前状态，包括数据库连接状态和存储信息"""
-    system_status = get_system_status_data()
+    system_status = get_system_status_data(db)
     return ResponseModel.success(data=system_status)
 
 
 @router.post("/clear-cache", response_model=ResponseModel)
-async def api_clear_system_cache():
+async def api_clear_system_cache(db: sqlite3.Connection = Depends(get_db)):
     """清除系统缓存"""
     config = settings.get_config()
 
@@ -50,14 +52,14 @@ async def api_clear_system_cache():
 
 
 @router.get("/config", response_model=ResponseModel)
-async def get_system_config():
+async def get_system_config(db: sqlite3.Connection = Depends(get_db)):
     """获取系统配置信息"""
     frontend_config = get_frontend_config()
     return ResponseModel.success(data=frontend_config)
 
 
 @router.post("/update-config", response_model=ResponseModel)
-async def api_update_system_config(config: Dict[str, Any] = Body(...)):
+async def api_update_system_config(config: Dict[str, Any] = Body(...), db: sqlite3.Connection = Depends(get_db)):
     """更新系统配置"""
     result = update_system_config(config)
     if result.success:
@@ -67,7 +69,7 @@ async def api_update_system_config(config: Dict[str, Any] = Body(...)):
 
 
 @router.get("/cache-stats", response_model=ResponseModel)
-async def get_cache_statistics():
+async def get_cache_statistics(db: sqlite3.Connection = Depends(get_db)):
     """获取缓存统计信息"""
     cache_stats = get_cache_stats()
     return ResponseModel.success(data=cache_stats.model_dump())

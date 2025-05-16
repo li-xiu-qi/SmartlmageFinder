@@ -28,7 +28,7 @@ def add_text_vector(conn: sqlite3.Connection, image_id: int, text: str, table_na
         
         # 添加向量
         conn.enable_load_extension(True)
-        conn.execute(f"SELECT load_extension('{settings.get_config().VECTOR_DB_DRIVER}')")
+        # conn.execute(f"SELECT load_extension('{settings.get_config().VECTOR_DB_DRIVER}')")
         
         cursor = conn.cursor()
         

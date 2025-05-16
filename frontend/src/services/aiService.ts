@@ -5,7 +5,8 @@ import {
   UploadImageAnalysisRequestParams, 
   ExistingImageAnalysisFormParams,
   AIServiceConfig,
-  AnalysisDetailLevel
+  AnalysisDetailLevel,
+  ImageAnalysisData
 } from '@/types/ai';
 
 /**
@@ -18,15 +19,14 @@ const aiService: AIAnalysisClient = {
    * POST /api/ai/analyze-upload-image
    * @param params 包含图片文件和分析详细程度的请求参数
    * @returns 分析结果的 Promise
-   */
-  analyzeUploadImage: (
+   */  analyzeUploadImage: (
     params: UploadImageAnalysisRequestParams
   ): Promise<ImageAnalysisResponse> => {
     const formData = new FormData();
     formData.append('file', params.file);
     formData.append('detail', params.detail || AnalysisDetailLevel.LOW);
     
-    return apiClient.post('/ai/analyze-upload-image', formData, {
+    return apiClient.postWithTransform<ImageAnalysisResponse>('/ai/analyze-upload-image', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
@@ -39,15 +39,14 @@ const aiService: AIAnalysisClient = {
    * @param imageId 图片ID
    * @param params 可选的分析参数
    * @returns 分析结果的 Promise
-   */
-  analyzeExistingImage: (
+   */  analyzeExistingImage: (
     imageId: string | number,
     params?: ExistingImageAnalysisFormParams
   ): Promise<ImageAnalysisResponse> => {
     const formData = new FormData();
     formData.append('detail', params?.detail || AnalysisDetailLevel.LOW);
     
-    return apiClient.post(`/ai/analyze-image-id/${imageId}`, formData, {
+    return apiClient.postWithTransform<ImageAnalysisData>(`/ai/analyze-image-id/${imageId}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }

@@ -166,16 +166,21 @@ async def upload_images(
             # 获取新添加的图像信息
             image = get_image_by_id(db, image_id)
             uploaded_images.append(image)
-        
         return ResponseModel.success(
             data=uploaded_images,
             message=f"成功上传 {len(uploaded_images)} 个文件"
         )
     except Exception as e:
-        return ResponseModel.error(
-            code="UPLOAD_ERROR",
+        # 使用自定义错误响应
+        return ResponseModel(
+            status="error",
+            code=500,
             message=f"上传图片失败: {str(e)}",
-            http_code=500
+            data=None,
+            error=ErrorModel(
+                code="UPLOAD_ERROR",
+                message=f"上传图片失败: {str(e)}"
+            )
         )
 
 

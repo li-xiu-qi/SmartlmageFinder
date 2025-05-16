@@ -105,10 +105,14 @@ def check_vector_db_driver_status() -> VectorDbDriverStatus:
             error=str(e)
         )
 
-def get_database_status() -> DatabaseStatus:
+def get_database_status(conn: sqlite3.Connection = None) -> DatabaseStatus:
     """获取数据库状态信息"""
     try:
-        conn = db_func.core.get_db_connection()
+        # 如果没有提供连接，使用临时连接
+        if conn is None:
+            with db_func.core.get_db_connection() as temp_conn:
+                return get_database_status(temp_conn)
+        
         cursor = conn.cursor()
         
         # 检查images表是否存在
@@ -117,19 +121,22 @@ def get_database_status() -> DatabaseStatus:
         
         if has_images_table:
             cursor.execute("SELECT COUNT(*) FROM images")
-            image_count = cursor.fetchone()[0]
+            
+            image_count = cursor.fetchone()[0]    
+              
             cursor.execute("SELECT SUM(file_size) FROM images")
             total_size = cursor.fetchone()[0] or 0
         else:
             image_count = 0
             total_size = 0
-        
+            
         # 获取标签总数
-        tags = db_func.tags.get_popular_tags()
+        from ..db_func.tags_func.get_tags import get_all_tags
+        tags = get_all_tags(conn)  # 使用正确的函数并传入数据库连接
         tag_count = len(tags)
             
         db_status = "connected"
-        conn.close()
+        # 不关闭传入的连接，它由调用者管理
         
         return DatabaseStatus(
             status=db_status,
@@ -147,14 +154,14 @@ def get_database_status() -> DatabaseStatus:
             error=str(e)
         )
 
-def get_system_status_data() -> Dict[str, Any]:
+def get_system_status_data(conn: sqlite3.Connection = None) -> Dict[str, Any]:
     """获取完整的系统状态数据"""
     # 获取系统运行信息
     uptime = time.time() - psutil.boot_time()
     config = settings.get_config()
     
     # 获取数据库信息
-    db_info = get_database_status()
+    db_info = get_database_status(conn)
     
     # 获取缓存统计
     cache_info = get_cache_stats()

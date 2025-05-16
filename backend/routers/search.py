@@ -57,6 +57,7 @@ async def text_search(
         if search_type in ["title", "description", "both"]:
             # 使用文本匹配搜索
             return db_func.search_by_text(
+                conn=conn,
                 text=q,
                 search_type=search_type,
                 filters=filters,

@@ -1,49 +1,58 @@
 """
 图片获取相关函数
 """
+
 import sqlite3
 from typing import Dict, List, Any, Optional, Tuple
 
 from ..core import dict_factory
 from .utils import json_from_db_to_python
 
-def get_image_by_id(conn: sqlite3.Connection, image_id: int,) -> Optional[Dict[str, Any]]:
+
+def get_image_by_id(
+    conn: sqlite3.Connection,
+    image_id: int,
+) -> Optional[Dict[str, Any]]:
     """通过ID获取图片信息"""
     conn.row_factory = dict_factory
     cursor = conn.cursor()
-    
+
     cursor.execute("SELECT * FROM images WHERE id = ?", (image_id,))
     image = cursor.fetchone()
     # 处理JSON字段
     return json_from_db_to_python(image)
 
-def get_images(page: int = 1, 
-               page_size: int = 20, 
-               sort_by: str = "created_at",
-               order: str = "desc",
-               start_date: Optional[str] = None,
-               end_date: Optional[str] = None,
-               tags: Optional[List[str]] = None,
-               conn: sqlite3.Connection = None) -> Tuple[List[Dict[str, Any]], int]:
+
+def get_images(
+    conn: sqlite3.Connection,
+    page: int = 1,
+    page_size: int = 20,
+    sort_by: str = "created_at",
+    order: str = "desc",
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    tags: Optional[List[str]] = None,
+) -> Tuple[List[Dict[str, Any]], int]:
     """获取图片列表，支持分页和过滤"""
+
     conn.row_factory = dict_factory
     cursor = conn.cursor()
-    
+
     query = "SELECT * FROM images"
     count_query = "SELECT COUNT(*) as count FROM images"
-    
+
     conditions = []
     params = []
-    
+
     # 添加过滤条件
     if start_date:
         conditions.append("created_at >= ?")
         params.append(start_date)
-    
+
     if end_date:
         conditions.append("created_at <= ?")
         params.append(end_date)
-    
+
     # 改进标签过滤逻辑
     if tags and len(tags) > 0:
         tag_conditions = []
@@ -53,42 +62,45 @@ def get_images(page: int = 1,
             # 对特定标签进行精确匹配
             params.append(f'%"{tag}"%')
         conditions.append("(" + " OR ".join(tag_conditions) + ")")
-    
+
     # 组合查询条件
     if conditions:
         query += " WHERE " + " AND ".join(conditions)
         count_query += " WHERE " + " AND ".join(conditions)
-    
+
     # 添加排序和分页
     query += f" ORDER BY {sort_by} {order}"
     query += f" LIMIT {page_size} OFFSET {(page - 1) * page_size}"
-    
+
     # 执行查询
     cursor.execute(query, params)
     images = cursor.fetchall()
-    
+
     # 执行计数查询
     cursor.execute(count_query, params)
-    total_count = cursor.fetchone()['count']
-    
+    total_count = cursor.fetchone()["count"]
+
     # 处理JSON字段
     processed_images = [json_from_db_to_python(image) for image in images]
     return processed_images, total_count
 
-def get_images_by_ids(image_ids: List[int], conn: sqlite3.Connection) -> List[Dict[str, Any]]:
+
+def get_images_by_ids(
+    image_ids: List[int], conn: sqlite3.Connection
+) -> List[Dict[str, Any]]:
     """批量获取图片信息"""
     if not image_ids:
         return []
-    
+
     conn.row_factory = dict_factory
     cursor = conn.cursor()
-    
+
     placeholders = ", ".join(["?"] * len(image_ids))
     query = f"SELECT * FROM images WHERE id IN ({placeholders})"
-    
+
     cursor.execute(query, image_ids)
     images = cursor.fetchall()
-    
+
     # 处理JSON字段并返回
     return [json_from_db_to_python(image) for image in images]
 
@@ -96,13 +108,10 @@ def get_images_by_ids(image_ids: List[int], conn: sqlite3.Connection) -> List[Di
 def get_images_by_tag(conn: sqlite3.Connection, tag: str) -> List[int]:
     """获取包含指定标签的所有图片ID"""
     cursor = conn.cursor()
-    
+
     # 查找包含特定标签的图片
-    cursor.execute(
-        "SELECT id FROM images WHERE tags LIKE ?",
-        (f'%"{tag}"%',)
-    )
+    cursor.execute("SELECT id FROM images WHERE tags LIKE ?", (f'%"{tag}"%',))
     results = cursor.fetchall()
-    
+
     # 返回图片ID列表
     return [row[0] for row in results]
