@@ -33,6 +33,10 @@ def get_db_connection():
         if conn:
             conn.close()
 
+def get_db():
+    with get_db_connection() as conn:
+        yield conn
+
 def init_db():
     """初始化数据库表结构"""
     with get_db_connection() as conn:

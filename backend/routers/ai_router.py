@@ -11,7 +11,7 @@ from ..ai_func.initialization import get_image_analyzer, initialize_ai_services
 from ..global_schemas import ResponseModel
 from ..config import settings
 from ..utils.image_analysis import ImageAnalysis
-from ..db_func.core import get_db_connection
+from ..db_func.core import get_db
 
 # 创建路由器
 router = APIRouter(prefix="/ai", tags=["ai"])
@@ -62,7 +62,7 @@ async def analyze_uploaded_image(
 async def analyze_image(image_id: str = Path(..., description="图片的ID"),
                         detail: str = Form("low", description="细节级别: low或high"),
                         analyzer: ImageAnalysis = Depends(get_image_analyzer),  # 使用依赖注入
-                        conn = Depends(get_db_connection),  # 使用依赖注入获取数据库连接
+                        conn = Depends(get_db),  # 使用依赖注入获取数据库连接
                         ):
     """分析图片并生成标题、描述和标签"""
     try:
