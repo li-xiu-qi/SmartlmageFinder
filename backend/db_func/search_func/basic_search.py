@@ -64,4 +64,3 @@ def get_filtered_image_ids(conn: sqlite3.Connection, filters: Dict[str, Any]) ->
     cursor.execute(filter_query, tuple(filter_params))
     filtered_ids = [row[0] for row in cursor.fetchall()]
     return filtered_ids
-

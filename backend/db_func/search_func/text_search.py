@@ -2,10 +2,11 @@
 文本搜索功能模块，提供基于文本的图像检索。
 """
 import sqlite3
+import json
 from typing import List, Dict, Any, Optional, Literal
 
 from ..core import get_db_connection, dict_factory
-from .basic_search import get_filtered_image_uuids
+from .basic_search import get_filtered_image_ids
 
 def search_by_text(
     text: str,
@@ -42,79 +43,78 @@ def search_by_text(
         return results  # 如果搜索文本为空，直接返回空结果
     
     try:
-        conn = get_db_connection()
-        conn.row_factory = dict_factory
-        cursor = conn.cursor()
-        
-        # 构建查询条件
-        search_conditions = []
-        search_params = []
-        
-        if search_type in ["title", "both"]:
-            search_conditions.append("title LIKE ?")
-            search_params.append(f"%{text}%")
+        with get_db_connection() as conn:
+            conn.row_factory = dict_factory
+            cursor = conn.cursor()
             
-        if search_type in ["description", "both"]:
-            search_conditions.append("description LIKE ?")
-            search_params.append(f"%{text}%")
+            # 构建查询条件
+            search_conditions = []
+            search_params = []
             
-        if not search_conditions:
-            return []  # 如果搜索类型无效，返回空结果
-        
-        # 获取符合过滤条件的UUID
-        if filters:
-            filtered_uuids = get_filtered_image_uuids(conn, filters)
-            if not filtered_uuids:
-                return []  # 如果没有符合过滤条件的UUID，直接返回空结果
+            if search_type in ["title", "both"]:
+                search_conditions.append("title LIKE ?")
+                search_params.append(f"%{text}%")
+                
+            if search_type in ["description", "both"]:
+                search_conditions.append("description LIKE ?")
+                search_params.append(f"%{text}%")
+                
+            if not search_conditions:
+                return []  # 如果搜索类型无效，返回空结果
             
-            # 构建查询SQL
-            query = f"""
-            SELECT * FROM images 
-            WHERE ({" OR ".join(search_conditions)})
-            AND uuid IN ({','.join(['?'] * len(filtered_uuids))})
-            ORDER BY created_at DESC
-            LIMIT ? OFFSET ?
-            """
+            # 获取符合过滤条件的ID
+            query = ""
+            params = []
             
-            # 构建查询参数
-            params = search_params + filtered_uuids + [limit, offset]
+            if filters:
+                filtered_ids = get_filtered_image_ids(conn, filters)
+                if not filtered_ids:
+                    return []  # 如果没有符合过滤条件的ID，直接返回空结果
+                
+                # 构建查询SQL
+                query = f"""
+                SELECT * FROM images 
+                WHERE ({" OR ".join(search_conditions)})
+                AND id IN ({','.join(['?'] * len(filtered_ids))})
+                ORDER BY created_at DESC
+                LIMIT ? OFFSET ?
+                """
+                
+                # 构建查询参数
+                params = search_params + filtered_ids + [limit, offset]
+                
+            else:
+                # 没有过滤条件，直接进行文本搜索
+                query = f"""
+                SELECT * FROM images 
+                WHERE {" OR ".join(search_conditions)}
+                ORDER BY created_at DESC
+                LIMIT ? OFFSET ?
+                """
+                params = search_params + [limit, offset]
             
-        else:
-            # 没有过滤条件，直接进行文本搜索
-            query = f"""
-            SELECT * FROM images 
-            WHERE {" OR ".join(search_conditions)}
-            ORDER BY created_at DESC
-            LIMIT ? OFFSET ?
-            """
-            params = search_params + [limit, offset]
-        
-        # 执行查询
-        cursor.execute(query, params)
-        results = cursor.fetchall()
-        
-        # 处理标签字段，将JSON字符串转换为Python列表
-        for result in results:
-            if result.get('tags') and isinstance(result['tags'], str):
-                try:
-                    import json
-                    result['tags'] = json.loads(result['tags'])
-                except:
-                    result['tags'] = []
-                    
-            # 处理metadata字段
-            if result.get('metadata') and isinstance(result['metadata'], str):
-                try:
-                    result['metadata'] = json.loads(result['metadata'])
-                except:
-                    result['metadata'] = {}
+            # 执行查询
+            cursor.execute(query, params)
+            results = cursor.fetchall()
+            
+            # 处理标签字段，将JSON字符串转换为Python列表
+            for result in results:
+                if result.get('tags') and isinstance(result['tags'], str):
+                    try:
+                        result['tags'] = json.loads(result['tags'])
+                    except:
+                        result['tags'] = []
+                        
+                # 处理metadata字段
+                if result.get('metadata') and isinstance(result['metadata'], str):
+                    try:
+                        result['metadata'] = json.loads(result['metadata'])
+                    except:
+                        result['metadata'] = {}
         
     except sqlite3.Error as e:
         print(f"数据库文本搜索错误: {e}")
     except Exception as e:
         print(f"文本搜索期间发生意外错误: {e}")
-    finally:
-        if 'conn' in locals():
-            conn.close()
             
     return results

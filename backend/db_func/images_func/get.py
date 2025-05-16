@@ -14,7 +14,6 @@ def get_image_by_id(conn: sqlite3.Connection, image_id: int,) -> Optional[Dict[s
     
     cursor.execute("SELECT * FROM images WHERE id = ?", (image_id,))
     image = cursor.fetchone()
-    
     # 处理JSON字段
     return json_from_db_to_python(image)
 

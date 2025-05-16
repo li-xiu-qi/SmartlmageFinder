@@ -1,14 +1,14 @@
-\
 import sqlite3
 import json
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Literal, Optional, Union
 
-from .basic_search import get_filtered_image_uuids 
+from ..core import get_db_connection, dict_factory
+from .basic_search import get_filtered_image_ids
 
 def find_similar_images(
     conn: sqlite3.Connection,
     query_embedding: List[float], 
-    vector_type: str, 
+    vector_type: Literal["title", "description", "image"], 
     k: int = 5, 
     filters: Dict[str, Any] = None
 ) -> List[Dict[str, Any]]:
@@ -16,6 +16,7 @@ def find_similar_images(
     根据查询嵌入向量执行 K-最近邻 (KNN) 搜索以查找相似图像，支持过滤条件。
 
     Args:
+        conn: 数据库连接对象
         query_embedding: 查询的嵌入向量。
         vector_type: 要搜索的向量类型。
                      有效选项："title", "description", "image"。
@@ -30,12 +31,12 @@ def find_similar_images(
 
     Returns:
         一个字典列表，其中每个字典包含有关相似图像及其与查询嵌入的距离的信息。
-        示例: [{'uuid': '...', 'filename': '...', 'filepath': '...', 'distance': 0.123}, ...]
+        示例: [{'id': 1, 'filename': '...', 'filepath': '...', 'distance': 0.123}, ...]
         如果发生错误或未找到结果，则返回空列表。
     """
     if not isinstance(query_embedding, list) or not all(isinstance(x, (float, int)) for x in query_embedding):
         raise ValueError("query_embedding 必须是浮点数或整数列表。")
-    if not vector_type in ["title", "description", "image"]:
+    if vector_type not in ["title", "description", "image"]:
         raise ValueError("无效的 vector_type。必须是 'title', 'description', 或 'image'。")
     if not isinstance(k, int) or k <= 0:
         raise ValueError("k 必须是正整数。")
@@ -48,27 +49,27 @@ def find_similar_images(
     target_vector_table = vector_table_map[vector_type]
     filters = filters or {}
 
-    conn = None
     results = []
     try:
         cursor = conn.cursor()
+        conn.row_factory = dict_factory
 
         query_embedding_json = json.dumps(query_embedding)
 
-        # 1. 首先根据过滤条件查询符合的图像UUID
-        filtered_ids = get_filtered_image_uuids(conn, filters) # 调用新函数
+        # 1. 首先根据过滤条件查询符合的图像ID
+        filtered_ids = get_filtered_image_ids(conn, filters)
 
         # 如果没有符合条件的结果，直接返回空列表
         if not filtered_ids:
             return []
 
-        # 2. 使用过滤后的UUID进行向量相似度搜索
-        filtered_ids_str = ','.join(f"'{id}'" for id in filtered_ids)  # 使用单引号包裹每个UUID
+        # 2. 使用过滤后的ID进行向量相似度搜索
+        filtered_ids_str = ','.join(str(id) for id in filtered_ids)
         
         # 3. 构建向量相似度搜索查询
         sql_query = f"""
         SELECT
-            img.uuid,
+            img.id,
             img.filename,
             img.filepath,
             img.title,
@@ -76,7 +77,6 @@ def find_similar_images(
             img.file_size,
             img.file_type,
             img.width,
-            img.height,
             img.created_at,
             img.updated_at,
             img.metadata,
@@ -106,9 +106,6 @@ def find_similar_images(
         raise e
     except Exception as e:
         print(f"相似度搜索期间发生意外错误: {e}")
-    finally:
-        if conn:
-            conn.close()
             
     return results
 

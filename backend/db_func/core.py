@@ -33,13 +33,6 @@ def get_db_connection():
         if conn:
             conn.close()
 
-# 为了向后兼容，提供一个直接获取连接的函数
-def get_db_connection_direct():
-    """直接获取数据库连接，需要手动关闭"""
-    conn = sqlite3.connect(settings.get_config().DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
-
 def init_db():
     """初始化数据库表结构"""
     with get_db_connection() as conn:
