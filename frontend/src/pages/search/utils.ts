@@ -23,16 +23,6 @@ export const formatTagsForParam = (tags: string[]): string => {
 };
 
 /**
- * 格式化权重为逗号分隔的字符串
- * @param weights 权重对象
- * @param modes 模式数组
- * @returns 逗号分隔的权重字符串
- */
-export const formatWeights = (weights: {[key: string]: number}, modes: string[]): string => {
-  return modes.map(mode => weights[mode] || 0).join(',');
-};
-
-/**
  * 文本搜索类型转换为API搜索类型
  * @param searchType 前端搜索类型
  * @returns API搜索类型
@@ -112,14 +102,14 @@ export const validateImageFile = (file: File, maxSize: number = 10): { valid: bo
 };
 
 /**
- * 获取图片预览URL
+ * 从文件获取图片预览URL
  * @param file 图片文件
- * @returns 预览URL
+ * @returns 预览URL Promise
  */
 export const getImagePreviewUrl = (file: File): Promise<string> => {
   return new Promise((resolve) => {
     const reader = new FileReader();
-    reader.addEventListener('load', () => resolve(reader.result as string));
     reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
   });
 };

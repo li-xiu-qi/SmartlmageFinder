@@ -40,11 +40,15 @@ const TextSearchForm: React.FC<TextSearchFormProps> = ({ onSearch, loading, tags
   // 从Form.useWatch获取当前搜索类型值
   const searchType = Form.useWatch('search_type', form);
   const isVectorSearch = searchType === SearchType.VECTOR || searchType === SearchType.MULTI;
-    // 初始化表单值
+  
+  // 初始化表单值
   useEffect(() => {
     const query = searchParams.get('q');
     const searchType = searchParams.get('search_type') || 'both';
     const tagsParam = searchParams.get('tags');
+    const startDate = searchParams.get('start_date');
+    const endDate = searchParams.get('end_date');
+    const filename = searchParams.get('filename');
     const vectorTargets = searchParams.get('vector_targets')?.split(',');
     
     // 设置默认表单值
@@ -66,12 +70,15 @@ const TextSearchForm: React.FC<TextSearchFormProps> = ({ onSearch, loading, tags
     // 设置表单初始值
     form.setFieldsValue(initialValues);
   }, [searchParams, form]);
-    // 执行文本搜索
-  const handleSubmit = (values: Record<string, any>) => {
+  
+  // 执行文本搜索
+  const handleSubmit = (values: any) => {
     // 构造搜索参数
     const params: TextSearchParams = {
       q: values.q
-    };// 添加搜索类型
+    };
+    
+    // 添加搜索类型
     params.search_type = mapToApiSearchType(values.search_type);
     
     // 设置向量搜索目标
@@ -123,7 +130,8 @@ const TextSearchForm: React.FC<TextSearchFormProps> = ({ onSearch, loading, tags
                 allowClear
               />
             </Form.Item>
-          </Col>          <Col xs={24} md={6}>
+          </Col>
+          <Col xs={24} md={6}>
             <Form.Item name="search_type">
               <Select size="large">
                 <Select.OptGroup label="基础搜索">
@@ -163,7 +171,9 @@ const TextSearchForm: React.FC<TextSearchFormProps> = ({ onSearch, loading, tags
               ))}
             </Select>
           </Form.Item>
-        )}        <Space>
+        )}
+
+        <Space>
           <Button 
             type="primary" 
             htmlType="submit" 

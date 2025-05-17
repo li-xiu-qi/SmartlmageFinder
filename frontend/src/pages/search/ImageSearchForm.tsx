@@ -10,15 +10,13 @@ import {
   Card,
   Row,
   Col,
-  Slider,
   message,
   Input
 } from 'antd';
 import {
   UploadOutlined,
   InboxOutlined,
-  DeleteOutlined,
-  FilterOutlined
+  DeleteOutlined
 } from '@ant-design/icons';
 import type { UploadFile, RcFile } from 'antd/es/upload';
 import { TagInfo } from '@/types/models';
@@ -44,11 +42,7 @@ const ImageSearchForm: React.FC<ImageSearchFormProps> = ({ onSearch, loading, ta
   const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [searchFile, setSearchFile] = useState<RcFile | null>(null);
   const [imageUrl, setImageUrl] = useState<string>('');
-  const [showAdvanced, setShowAdvanced] = useState(false);
   const [selectedSearchTargets, setSelectedSearchTargets] = useState<string[]>([VectorSearchTarget.IMAGE]);
-  const [targetWeights, setTargetWeights] = useState<{[key: string]: number}>({
-    [VectorSearchTarget.IMAGE]: 1.0
-  });
 
   // 处理上传前的验证
   const beforeUpload = (file: RcFile) => {
@@ -87,33 +81,6 @@ const ImageSearchForm: React.FC<ImageSearchFormProps> = ({ onSearch, loading, ta
     }
     
     setSelectedSearchTargets(targets);
-    
-    // 更新权重对象，为新选择的目标添加默认权重
-    const newWeights = { ...targetWeights };
-    targets.forEach(target => {
-      if (!(target in newWeights)) {
-        newWeights[target] = 1.0;
-      }
-    });
-    
-    // 删除未选择的目标的权重
-    Object.keys(newWeights).forEach(key => {
-      if (!targets.includes(key)) {
-        delete newWeights[key];
-      }
-    });
-    
-    setTargetWeights(newWeights);
-  };
-
-  // 更新特定目标的权重
-  const updateTargetWeight = (target: string, weight: number) => {
-    setTargetWeights(prev => ({ ...prev, [target]: weight }));
-  };
-
-  // 切换高级选项显示
-  const toggleAdvanced = () => {
-    setShowAdvanced(!showAdvanced);
   };
   
   // 执行图片搜索
@@ -218,27 +185,6 @@ const ImageSearchForm: React.FC<ImageSearchFormProps> = ({ onSearch, loading, ta
           </Select>
         </Form.Item>
 
-        {selectedSearchTargets.length > 1 && (
-          <div className="weights-container">
-            <p>搜索目标权重：</p>
-            {selectedSearchTargets.map(target => (
-              <Form.Item 
-                key={target} 
-                label={IMAGE_SEARCH_TARGETS.find(t => t.value === target)?.label || target}
-              >
-                <Slider
-                  min={0}
-                  max={1}
-                  step={0.1}
-                  value={targetWeights[target]}
-                  onChange={(value) => updateTargetWeight(target, value)}
-                  marks={{ 0: '0', 0.5: '0.5', 1: '1' }}
-                />
-              </Form.Item>
-            ))}
-          </div>
-        )}
-
         <Space>
           <Button
             type="primary"
@@ -249,57 +195,46 @@ const ImageSearchForm: React.FC<ImageSearchFormProps> = ({ onSearch, loading, ta
           >
             以图搜图
           </Button>
-          <Button
-            type="link"
-            icon={<FilterOutlined />}
-            onClick={toggleAdvanced}
-          >
-            {showAdvanced ? '隐藏' : '显示'}高级选项
-          </Button>
         </Space>
 
-        {showAdvanced && (
-          <>
-            <Divider />
-            <Row gutter={16}>
-              <Col xs={24} md={12}>
-                <Form.Item
-                  name="tags"
-                  label="标签筛选"
-                >
-                  <Select
-                    mode="multiple"
-                    placeholder="选择标签筛选"
-                    optionFilterProp="children"
-                    allowClear
-                  >
-                    {tags.map(tag => (
-                      <Option key={tag.tag} value={tag.tag}>{tag.tag} ({tag.count})</Option>
-                    ))}
-                  </Select>
-                </Form.Item>
-              </Col>
-              <Col xs={24} md={12}>
-                <Form.Item
-                  name="date_range"
-                  label="日期范围"
-                >
-                  <RangePicker
-                    className="date-range-picker"
-                    showTime={{ format: 'HH:mm' }}
-                    format="YYYY-MM-DD HH:mm"
-                  />
-                </Form.Item>
-              </Col>
-            </Row>
+        <Divider />
+        <Row gutter={16}>
+          <Col xs={24} md={12}>
             <Form.Item
-              name="filename"
-              label="文件名包含"
+              name="tags"
+              label="标签筛选"
             >
-              <Input placeholder="输入文件名关键词" />
+              <Select
+                mode="multiple"
+                placeholder="选择标签筛选"
+                optionFilterProp="children"
+                allowClear
+              >
+                {tags.map(tag => (
+                  <Option key={tag.tag} value={tag.tag}>{tag.tag} ({tag.count})</Option>
+                ))}
+              </Select>
             </Form.Item>
-          </>
-        )}
+          </Col>
+          <Col xs={24} md={12}>
+            <Form.Item
+              name="date_range"
+              label="日期范围"
+            >
+              <RangePicker
+                className="date-range-picker"
+                showTime={{ format: 'HH:mm' }}
+                format="YYYY-MM-DD HH:mm"
+              />
+            </Form.Item>
+          </Col>
+        </Row>
+        <Form.Item
+          name="filename"
+          label="文件名包含"
+        >
+          <Input placeholder="输入文件名关键词" />
+        </Form.Item>
       </Form>
     </Card>
   );
