@@ -12,6 +12,10 @@ interface SearchResultsProps {
   total: number;
   searchTime: number;
   searchKeyword?: string;
+  referenceImage?: {
+    id: number;
+    title: string;
+  };
 }
 
 /**
@@ -22,7 +26,8 @@ const SearchResults: React.FC<SearchResultsProps> = ({
   results,
   total,
   searchTime,
-  searchKeyword
+  searchKeyword,
+  referenceImage
 }) => {
   if (loading) {
     return (
@@ -58,13 +63,17 @@ const SearchResults: React.FC<SearchResultsProps> = ({
           <Space split={<Divider type="vertical" />}>
             <Text>共找到 {total} 张相关图片</Text>
             <Text>耗时 {(searchTime / 1000).toFixed(2)} 秒</Text>
+            {referenceImage && (
+              <Text>参照图: {referenceImage.title}</Text>
+            )}
           </Space>
         </Space>
       </Card>
       
       <Row gutter={[16, 16]} className="search-results-grid">
         {results.map(image => (
-          <Col xs={24} sm={12} md={8} lg={6} key={image.id}>            <ImageCard 
+          <Col xs={24} sm={12} md={8} lg={6} key={image.id}>
+            <ImageCard 
               image={image} 
               showSimilarity={true}
             />

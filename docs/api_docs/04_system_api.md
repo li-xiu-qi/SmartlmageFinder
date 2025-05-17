@@ -13,7 +13,7 @@ SmartImageFinder 提供了一系列系统管理API，用于监控系统状态、
 **请求**:
 
 - **方法**: GET
-- **URL**: `/api/system/status`
+- **URL**: `/api/v1/system/status`
 
 **成功响应**:
 
@@ -90,7 +90,7 @@ SmartImageFinder 提供了一系列系统管理API，用于监控系统状态、
 **请求**:
 
 - **方法**: GET
-- **URL**: `/api/system/config`
+- **URL**: `/api/v1/system/config`
 
 **成功响应**:
 
@@ -131,7 +131,7 @@ SmartImageFinder 提供了一系列系统管理API，用于监控系统状态、
 **请求**:
 
 - **方法**: POST
-- **URL**: `/api/system/update-config`
+- **URL**: `/api/v1/system/update-config`
 - **内容类型**: `application/json`
 - **请求体**:
 
@@ -199,7 +199,7 @@ SmartImageFinder 提供了一系列系统管理API，用于监控系统状态、
 **请求**:
 
 - **方法**: GET
-- **URL**: `/api/system/cache-stats`
+- **URL**: `/api/v1/system/cache-stats`
 
 **成功响应**:
 
@@ -232,7 +232,7 @@ SmartImageFinder 提供了一系列系统管理API，用于监控系统状态、
 **请求**:
 
 - **方法**: POST
-- **URL**: `/api/system/clear-cache`
+- **URL**: `/api/v1/system/clear-cache`
 
 **成功响应**:
 

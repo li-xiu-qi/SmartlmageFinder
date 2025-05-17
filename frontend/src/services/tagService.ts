@@ -12,7 +12,7 @@ import {
 const tagService: TagClient = {
   /**
    * 获取热门标签
-   * GET /api/tags/
+   * GET /api/v1/tags/
    */
   async getPopularTags(params?: GetPopularTagsParams): Promise<PopularTagsResponse> {
     return apiClient.getWithTransform<TagInfo[]>('/tags', { params }) as Promise<PopularTagsResponse>;
@@ -20,7 +20,7 @@ const tagService: TagClient = {
 
   /**
    * 搜索标签
-   * GET /api/tags/search
+   * GET /api/v1/tags/search
    */
   async searchTags(params: SearchTagsParams): Promise<TagSearchResponse> {
     return apiClient.getWithTransform<string[]>('/tags/search', { params }) as Promise<TagSearchResponse>;
@@ -28,7 +28,7 @@ const tagService: TagClient = {
 
   /**
    * 根据标签获取图片
-   * GET /api/tags/by-tag/{tag}
+   * GET /api/v1/tags/by-tag/{tag}
    */
   async getImagesByTag(params: GetImagesByTagParams): Promise<ImagesByTagResponse> {
     const { tag, ...restParams } = params;
@@ -40,7 +40,7 @@ const tagService: TagClient = {
 
   /**
    * 根据多个标签获取图片
-   * GET /api/tags/by-multiple-tags
+   * GET /api/v1/tags/by-multiple-tags
    */
   async getImagesByMultipleTags(params: GetImagesByMultipleTagsParams): Promise<ImagesByMultipleTagsResponse> {
     const { tags, mode = TagMatchMode.OR, ...restParams } = params;
@@ -57,7 +57,7 @@ const tagService: TagClient = {
 
   /**
    * 为图片添加标签
-   * POST /api/tags/image/{image_id}/add
+   * POST /api/v1/tags/image/{image_id}/add
    */
   async addTagsToImage(imageId: number, tags: string[]): Promise<ApiResponse<{ tags: string[] }>> {
     return apiClient.postWithTransform<{ tags: string[] }>(`/tags/image/${imageId}/add`, { tags });
@@ -65,7 +65,7 @@ const tagService: TagClient = {
 
   /**
    * 从图片移除标签
-   * DELETE /api/tags/image/{image_id}/{tag}
+   * DELETE /api/v1/tags/image/{image_id}/{tag}
    */
   async removeTagFromImage(imageId: number, tag: string): Promise<ApiResponse<{ tags: string[] }>> {
     return apiClient.deleteWithTransform<{ tags: string[] }>(`/tags/image/${imageId}/${tag}`);

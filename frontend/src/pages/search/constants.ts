@@ -1,7 +1,7 @@
 /**
  * 搜索页面常量定义
  */
-import { SearchType, VectorSearchTarget } from '@/types/search';
+import { SearchType, VectorSearchTarget, VectorType } from '@/types/search';
 
 /**
  * 搜索类型选项
@@ -11,7 +11,7 @@ export const SEARCH_TYPES = [
   { value: SearchType.DESCRIPTION, label: '仅描述' },
   { value: SearchType.BOTH, label: '标题+描述' },
   { value: SearchType.VECTOR, label: '向量搜索' },
-  { value: SearchType.HYBRID, label: '混合搜索' }
+  { value: SearchType.MULTI, label: '多维向量搜索' }
 ];
 
 /**
@@ -28,7 +28,7 @@ export const TEXT_SEARCH_TYPES = [
  */
 export const ADVANCED_SEARCH_TYPES = [
   { value: SearchType.VECTOR, label: '向量搜索' },
-  { value: SearchType.HYBRID, label: '混合搜索' }
+  { value: SearchType.MULTI, label: '多维向量搜索' }
 ];
 
 /**
@@ -47,6 +47,15 @@ export const IMAGE_SEARCH_TARGETS = [
   { value: VectorSearchTarget.IMAGE, label: '图像向量' },
   { value: VectorSearchTarget.TITLE, label: '标题向量' },
   { value: VectorSearchTarget.DESCRIPTION, label: '描述向量' }
+];
+
+/**
+ * 向量类型选项
+ */
+export const VECTOR_TYPES = [
+  { value: VectorType.TITLE, label: '标题向量' },
+  { value: VectorType.DESCRIPTION, label: '描述向量' },
+  { value: VectorType.IMAGE, label: '图像向量' }
 ];
 
 /**

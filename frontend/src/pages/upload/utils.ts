@@ -11,8 +11,8 @@ import imageService from '@/services/imageService';
 // 导入图片数据模型
 import { ImageModel } from '@/types/models';
 // 导入AI分析详细程度枚举
-import { AnalysisDetailLevel, AIErrorCode, ImageAnalysisData } from '@/types/ai';
-import { ApiError, ApiResponse } from '@/types/api';
+import { AnalysisDetailLevel, AIErrorCode } from '@/types/ai';
+import { ApiError } from '@/types/api';
 
 /**
  * 获取可用标签数据
@@ -63,10 +63,11 @@ export const analyzeImage = async (
   setIsAnalyzing(true);
   try {
     // 调用AI服务上传并分析图片
-    const response: ApiResponse<ImageAnalysisData> = await aiService.analyzeUploadImage({
+    const response = await aiService.analyzeUploadImage({
       file: file.originFileObj, // 使用原始 File 对象
       detail: AnalysisDetailLevel.HIGH, // 设置分析详细程度为高
     });
+    
     // 如果AI分析成功且返回了数据
     if (response.status === 'success' && response.data) {
       // 更新对应文件的元数据
@@ -74,16 +75,16 @@ export const analyzeImage = async (
         ...prev,
         [file.uid]: {
           ...(prev[file.uid] || {}), // 保留已有的其他元数据，如location, event
-          title: response.data!.title,       // 更新标题 (使用非空断言，因为 status success 保证 data 不为 null)
-          description: response.data!.description, // 更新描述
-          tags: response.data!.tags,         // 更新标签
+          title: response.data.title,       // 更新标题
+          description: response.data.description, // 更新描述
+          tags: response.data.tags,         // 更新标签
         },
       }));
       message.success(`图片 ${file.name} AI分析完成。`);
     } else {
       // 如果AI分析失败，显示错误提示
       const errorDetails = response.error?.details as Record<string, string> | undefined;
-      let errorMessage = response.message;
+      let errorMessage = response.message || '未知错误';
       if (response.error?.code === AIErrorCode.SERVICE_UNAVAILABLE) {
         errorMessage = 'AI服务不可用，请检查配置。';
       } else if (errorDetails?.reason) {
@@ -95,6 +96,7 @@ export const analyzeImage = async (
     // 捕获AI分析过程中的异常，显示错误提示
     const errorMessage = (error as ApiError)?.message || `图片 ${file.name} AI分析时发生未知错误`;
     message.error(errorMessage);
+    console.error('AI分析错误:', error);
   } finally {
     // 无论成功或失败，最后都重置分析状态
     setIsAnalyzing(false);
@@ -115,16 +117,71 @@ export const batchAnalyzeImages = async (
   setAnalyzingFile: React.Dispatch<React.SetStateAction<UploadFile | null>>,
   setImageMetadataMap: React.Dispatch<React.SetStateAction<Record<string, ImageMetadata>>>
 ): Promise<void> => {
-  setIsAnalyzing(true); // 开始批量分析，设置状态
-  // 遍历文件列表，对每个文件进行AI分析
-  for (const file of fileList) {
-    // 通常AI分析在上传前，或者对已选择的文件进行
-    // 此处简单处理，未考虑文件状态 file.status !== 'done'，因为AI分析通常独立于上传状态
-    // 注意：内部setIsAnalyzing会被analyzeImage函数覆盖，这里传递一个空函数或不更新setIsAnalyzing，由analyzeImage管理单个文件分析状态
-    await analyzeImage(file, setAnalyzingFile, () => {}, setImageMetadataMap);
+  // 开始批量分析，设置全局分析状态
+  setIsAnalyzing(true); 
+  
+  try {
+    // 遍历文件列表，对每个文件进行AI分析
+    for (const file of fileList) {
+      // 设置当前正在分析的文件
+      setAnalyzingFile(file);
+      
+      // 检查文件对象是否存在 originFileObj，这是实际的文件数据
+      if (!file.originFileObj) {
+        message.error(`文件 ${file.name} 无效，无法进行AI分析。`);
+        continue; // 跳过此文件，继续处理下一个
+      }
+      
+      try {
+        // 调用AI服务上传并分析图片
+        const response = await aiService.analyzeUploadImage({
+          file: file.originFileObj, // 使用原始 File 对象
+          detail: AnalysisDetailLevel.HIGH, // 设置分析详细程度为高
+        });
+        
+        // 如果AI分析成功且返回了数据
+        if (response.status === 'success' && response.data) {
+          // 更新对应文件的元数据
+          setImageMetadataMap(prev => ({
+            ...prev,
+            [file.uid]: {
+              ...(prev[file.uid] || {}), // 保留已有的其他元数据，如location, event
+              title: response.data.title,       // 更新标题
+              description: response.data.description, // 更新描述
+              tags: response.data.tags,         // 更新标签
+            },
+          }));
+          message.success(`图片 ${file.name} AI分析完成。`);
+        } else {
+          // 如果AI分析失败，显示错误提示
+          const errorDetails = response.error?.details as Record<string, string> | undefined;
+          let errorMessage = response.message || '未知错误';
+          if (response.error?.code === AIErrorCode.SERVICE_UNAVAILABLE) {
+            errorMessage = 'AI服务不可用，请检查配置。';
+          } else if (errorDetails?.reason) {
+            errorMessage += `: ${errorDetails.reason}`;
+          }
+          message.error(`图片 ${file.name} AI分析失败: ${errorMessage}`);
+        }
+      } catch (error) {
+        // 捕获AI分析过程中的异常，显示错误提示
+        const errorMessage = (error as ApiError)?.message || `图片 ${file.name} AI分析时发生未知错误`;
+        message.error(errorMessage);
+        console.error('批量AI分析单张图片错误:', error);
+      }
+    }
+    
+    message.success('所有选定图片的批量AI分析已完成。');
+  } catch (error) {
+    // 捕获整个批处理过程中的异常
+    const errorMessage = (error as ApiError)?.message || '批量AI分析时发生未知错误';
+    message.error(errorMessage);
+    console.error('批量AI分析总体错误:', error);
+  } finally {
+    // 无论成功或失败，最后都重置分析状态
+    setIsAnalyzing(false);
+    setAnalyzingFile(null);
   }
-  setIsAnalyzing(false); // 所有文件分析完成，重置状态
-  message.success('所有选定图片的批量AI分析已完成。');
 };
 
 /**
@@ -166,18 +223,18 @@ export const uploadImages = async (
       setUploadProgress(Math.round((uploadedCount / totalFiles) * 100));
       continue; // 处理下一个文件
     }
-
+    
     // 获取当前文件的元数据
-    const metadata = imageMetadataMap[file.uid] || {};
+    const metadata = imageMetadataMap[file.uid] || { title: '', description: '', tags: [] };
     try {
       // 调用图片服务上传图片
       // imageService.uploadImages 期望参数是一个包含 File 对象的数组
       // 此处为每个文件单独调用上传服务，符合逐个处理并反馈进度的场景
-      const response: ApiResponse<ImageModel[]> = await imageService.uploadImages({
+      const response = await imageService.uploadImages({
         files: [file.originFileObj], // 将单个文件包装在数组中
-        title: metadata.title,       // 图片标题
-        description: metadata.description, // 图片描述
-        tags: metadata.tags,         // 图片标签
+        title: metadata.title || '',       // 图片标题，确保不为undefined
+        description: metadata.description || '', // 图片描述，确保不为undefined
+        tags: metadata.tags || [],         // 图片标签，确保不为undefined
         // metadata: { location: metadata.location, event: metadata.event } // 可选：传递其他自定义元数据
       });
 
@@ -207,6 +264,7 @@ export const uploadImages = async (
         success: false,
         message: (error as ApiError)?.message || '上传时发生未知错误'
       });
+      console.error('上传图片错误:', error);
     }
     uploadedCount++; // 更新已处理文件计数
     // 更新上传进度条

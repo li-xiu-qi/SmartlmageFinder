@@ -22,9 +22,9 @@ import {
 } from '@ant-design/icons';
 import type { UploadFile, RcFile } from 'antd/es/upload';
 import { TagInfo } from '@/types/models';
-import { ImageSearchParams, SearchType, VectorSearchTarget } from '@/types/search';
+import { ImageSearchParams, VectorSearchTarget } from '@/types/search';
 import { IMAGE_SEARCH_TARGETS, UPLOAD_CONFIG } from './constants';
-import { validateImageFile, getImagePreviewUrl } from './utils';
+import { validateImageFile, getImagePreviewUrl, getVectorSearchTargets } from './utils';
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
@@ -115,6 +115,7 @@ const ImageSearchForm: React.FC<ImageSearchFormProps> = ({ onSearch, loading, ta
   const toggleAdvanced = () => {
     setShowAdvanced(!showAdvanced);
   };
+  
   // 执行图片搜索
   const handleSearch = () => {
     if (!searchFile) {
@@ -127,13 +128,12 @@ const ImageSearchForm: React.FC<ImageSearchFormProps> = ({ onSearch, loading, ta
     
     // 构造搜索参数
     const params: ImageSearchParams = {
-      file: searchFile,
-      search_type: values.search_type === 'hybrid' ? SearchType.HYBRID : SearchType.VECTOR
+      file: searchFile
     };
 
     // 设置搜索目标
     if (selectedSearchTargets.length > 0) {
-      params.search_targets = selectedSearchTargets as VectorSearchTarget[];
+      params.search_targets = getVectorSearchTargets(selectedSearchTargets);
     }
 
     // 添加高级搜索参数（如果有）
@@ -187,7 +187,8 @@ const ImageSearchForm: React.FC<ImageSearchFormProps> = ({ onSearch, loading, ta
               </p>
             </Dragger>
           ) : (
-            <div className="image-preview">              {imageUrl && (
+            <div className="image-preview">
+              {imageUrl && (
                 <div className="preview-container">
                   <img src={imageUrl} alt="搜索图片" />
                   <Button 
@@ -202,18 +203,10 @@ const ImageSearchForm: React.FC<ImageSearchFormProps> = ({ onSearch, loading, ta
               )}
             </div>
           )}
-        </div>        <Row gutter={16} className="search-type-row">
-          <Col span={24}>
-            <Form.Item name="search_type" label="搜索类型">
-              <Select>
-                <Option value="vector">向量搜索</Option>
-                <Option value="hybrid">混合搜索</Option>
-              </Select>
-            </Form.Item>
-          </Col>
-        </Row>
+        </div>
 
-        <Form.Item label="搜索目标">          <Select
+        <Form.Item label="搜索目标">
+          <Select
             mode="multiple"
             value={selectedSearchTargets}
             onChange={handleSearchTargetsChange}
@@ -290,7 +283,8 @@ const ImageSearchForm: React.FC<ImageSearchFormProps> = ({ onSearch, loading, ta
                 <Form.Item
                   name="date_range"
                   label="日期范围"
-                >                  <RangePicker
+                >
+                  <RangePicker
                     className="date-range-picker"
                     showTime={{ format: 'HH:mm' }}
                     format="YYYY-MM-DD HH:mm"

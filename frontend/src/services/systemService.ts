@@ -10,7 +10,7 @@ import {
 const systemService = {
   /**
    * 获取系统状态
-   * GET /api/system/status
+   * GET /api/v1/system/status
    */
   getSystemStatus: (): Promise<ApiResponse<SystemStatusData>> => {
     return apiClient.getWithTransform<SystemStatusData>('/system/status');
@@ -18,7 +18,7 @@ const systemService = {
 
   /**
    * 获取系统配置
-   * GET /api/system/config
+   * GET /api/v1/system/config
    */
   getSystemConfig: (): Promise<ApiResponse<SystemConfig>> => {
     return apiClient.getWithTransform<SystemConfig>('/system/config');
@@ -26,7 +26,7 @@ const systemService = {
 
   /**
    * 更新系统配置
-   * POST /api/system/update-config
+   * POST /api/v1/system/update-config
    */
   updateSystemConfig: (config: SystemConfig): Promise<ApiResponse<{ message: string }>> => {
     return apiClient.postWithTransform<{ message: string }>('/system/update-config', config);
@@ -34,7 +34,7 @@ const systemService = {
 
   /**
    * 获取缓存统计信息
-   * GET /api/system/cache-stats
+   * GET /api/v1/system/cache-stats
    */
   getCacheStats: (): Promise<ApiResponse<CacheStatsData>> => {
     return apiClient.getWithTransform<CacheStatsData>('/system/cache-stats');
@@ -42,7 +42,7 @@ const systemService = {
 
   /**
    * 清除系统缓存
-   * POST /api/system/clear-cache
+   * POST /api/v1/system/clear-cache
    */
   clearCache: (): Promise<ApiResponse<CacheClearData>> => {
     return apiClient.postWithTransform<CacheClearData>('/system/clear-cache', {});

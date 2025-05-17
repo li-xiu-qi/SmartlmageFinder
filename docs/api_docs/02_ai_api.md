@@ -24,7 +24,7 @@ AI功能依赖于以下配置参数：
 
 **请求**:
 - **方法**: POST
-- **URL**: `/api/ai/analyze-upload-image`
+- **URL**: `/api/v1/ai/analyze-upload-image`
 - **内容类型**: `multipart/form-data`
 - **参数**:
   - `file`: (必需) 要分析的图片文件
@@ -75,7 +75,7 @@ AI功能依赖于以下配置参数：
 
 **请求**:
 - **方法**: POST
-- **URL**: `/api/ai/analyze-image-id/{image_id}`
+- **URL**: `/api/v1/ai/analyze-image-id/{image_id}`
 - **内容类型**: `application/x-www-form-urlencoded`
 - **路径参数**:
   - `image_id`: (必需) 要分析的图片ID

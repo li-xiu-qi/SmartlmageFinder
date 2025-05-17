@@ -15,7 +15,7 @@ class UpdateTagsRequest(BaseModel):
     tags: List[str] = Field(..., description="标签列表")
 
 
-router = APIRouter(prefix="/tags", tags=["tags"])
+router = APIRouter(prefix="/api/v1/tags", tags=["tags"])
 
 @router.get("/", response_model=ResponseModel)
 async def get_tags(

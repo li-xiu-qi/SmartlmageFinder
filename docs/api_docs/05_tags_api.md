@@ -13,7 +13,7 @@ SmartImageFinder 系统提供了一套完整的标签管理 API，用于获取�
 **请求**:
 
 - **方法**: GET
-- **URL**: `/api/tags/`
+- **URL**: `/api/v1/tags/`
 - **参数**:
   - `limit`: (可选) 返回标签数量，默认 50，范围 1-200
 
@@ -55,7 +55,7 @@ SmartImageFinder 系统提供了一套完整的标签管理 API，用于获取�
 **请求**:
 
 - **方法**: GET
-- **URL**: `/api/tags/search`
+- **URL**: `/api/v1/tags/search`
 - **参数**:
   - `query`: (必需) 标签搜索关键字
   - `limit`: (可选) 返回标签数量，默认 20，范围 1-100
@@ -63,7 +63,7 @@ SmartImageFinder 系统提供了一套完整的标签管理 API，用于获取�
 **示例请求**:
 
 ```
-GET /api/tags/search?query=风景&limit=10
+GET /api/v1/tags/search?query=风景&limit=10
 ```
 
 **成功响应**:
@@ -96,7 +96,7 @@ GET /api/tags/search?query=风景&limit=10
 **请求**:
 
 - **方法**: GET
-- **URL**: `/api/tags/by-tag/{tag}`
+- **URL**: `/api/v1/tags/by-tag/{tag}`
 - **路径参数**:
   - `tag`: (必需) 标签名称
 - **查询参数**:
@@ -106,7 +106,7 @@ GET /api/tags/search?query=风景&limit=10
 **示例请求**:
 
 ```
-GET /api/tags/by-tag/风景?page=1&page_size=10
+GET /api/v1/tags/by-tag/风景?page=1&page_size=10
 ```
 
 **成功响应**:
@@ -156,7 +156,7 @@ GET /api/tags/by-tag/风景?page=1&page_size=10
 **请求**:
 
 - **方法**: GET
-- **URL**: `/api/tags/by-multiple-tags`
+- **URL**: `/api/v1/tags/by-multiple-tags`
 - **参数**:
   - `tags`: (必需) 多个标签，以逗号分隔
   - `mode`: (可选) 匹配模式，可选值：
@@ -168,7 +168,7 @@ GET /api/tags/by-tag/风景?page=1&page_size=10
 **示例请求**:
 
 ```
-GET /api/tags/by-multiple-tags?tags=风景,自然,山水&mode=and&page=1&page_size=10
+GET /api/v1/tags/by-multiple-tags?tags=风景,自然,山水&mode=and&page=1&page_size=10
 ```
 
 **成功响应**:

@@ -17,7 +17,7 @@ import { ImageModel, DeletedImageInfo } from '../types/models';
 const imageService: ImageClient = {
   /**
    * 获取图片列表
-   * GET /api/images/
+   * GET /api/v1/images/
    */
   getImagesList: async (params?: GetImagesListParams): Promise<ImagesListResponse> => {
     const response = await apiClient.getWithTransform<ImageModel[]>('/images', { params });
@@ -27,7 +27,7 @@ const imageService: ImageClient = {
 
   /**
    * 获取单张图片详情
-   * GET /api/images/{image_id}
+   * GET /api/v1/images/{image_id}
    */
   getImageDetail: (params: GetImageDetailParams): Promise<ImageDetailResponse> => {
     return apiClient.getWithTransform<ImageModel>(`/images/${params.image_id}`);
@@ -35,7 +35,7 @@ const imageService: ImageClient = {
 
   /**
    * 上传一张或多张图片
-   * POST /api/images
+   * POST /api/v1/images
    */
   uploadImages: (params: UploadImageParams): Promise<UploadImagesResponse> => {
     const formData = new FormData();
@@ -79,7 +79,7 @@ const imageService: ImageClient = {
 
   /**
    * 更新图片信息
-   * PATCH /api/images/{image_id}
+   * PATCH /api/v1/images/{image_id}
    */
   updateImage: (params: UpdateImageParams): Promise<UpdateImageResponse> => {
     const formData = new FormData();
@@ -114,7 +114,7 @@ const imageService: ImageClient = {
 
   /**
    * 删除图片
-   * DELETE /api/images/{image_id}
+   * DELETE /api/v1/images/{image_id}
    */
   deleteImage: (params: DeleteImageParams): Promise<DeleteImageResponse> => {
     return apiClient.deleteWithTransform<DeletedImageInfo>(`/images/${params.image_id}`);

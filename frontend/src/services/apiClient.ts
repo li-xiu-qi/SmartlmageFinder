@@ -2,7 +2,7 @@ import axios, { AxiosInstance, AxiosResponse, AxiosRequestConfig } from 'axios';
 import { ApiResponse } from '@/types/api';
 
 // 配置参数
-const API_BASE_URL = '/api'; // 不包含版本，符合后端文档
+const API_BASE_URL = '/api/v1'; // 包含版本，符合后端路由配置
 const API_TIMEOUT = 30000;
 
 // 创建axios实例并扩展类型

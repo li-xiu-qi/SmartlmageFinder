@@ -21,7 +21,7 @@ SmartImageFinder 系统提供了强大的图片搜索功能，支持多种搜索
 **请求**:
 
 - **方法**: GET
-- **URL**: `/api/search/text`
+- **URL**: `/api/v1/search/text`
 - **参数**:
   - `q`: (必需) 搜索关键词
   - `search_type`: (可选) 搜索类型，可选值：
@@ -29,8 +29,7 @@ SmartImageFinder 系统提供了强大的图片搜索功能，支持多种搜索
     - `description`: 仅搜索描述
     - `both`: 同时搜索标题和描述（默认）
     - `vector`: 使用向量搜索
-    - `hybrid`: 使用混合搜索（结合向量和文本）
-  - `vector_targets`: (可选) 向量搜索目标，当 search_type 为 vector 或 hybrid 时有效，可选值（可多选）：
+  - `vector_targets`: (可选) 向量搜索目标，当 search_type 为 vector 时有效，可选值（可多选）：
     - `title`: 标题向量
     - `description`: 描述向量
     - `image`: 图像向量
@@ -44,7 +43,7 @@ SmartImageFinder 系统提供了强大的图片搜索功能，支持多种搜索
 **示例请求**:
 
 ```http
-GET /api/search/text?q=山水风景&search_type=hybrid&vector_targets=title&vector_targets=description&tags=自然&tags=风景&limit=10
+GET /api/v1/search/text?q=山水风景&search_type=vector&vector_targets=title&vector_targets=description&tags=自然&tags=风景&limit=10
 ```
 
 **成功响应**:
@@ -94,7 +93,7 @@ GET /api/search/text?q=山水风景&search_type=hybrid&vector_targets=title&vect
 **请求**:
 
 - **方法**: POST
-- **URL**: `/api/search/image`
+- **URL**: `/api/v1/search/image`
 - **内容类型**: `multipart/form-data`
 - **参数**:
   - `file`: (必需) 用于搜索的图片文件
@@ -102,9 +101,6 @@ GET /api/search/text?q=山水风景&search_type=hybrid&vector_targets=title&vect
     - `image`: 图像向量（默认）
     - `title`: 标题向量
     - `description`: 描述向量
-  - `search_type`: (可选) 搜索类型，可选值：
-    - `vector`: 仅向量搜索（默认）
-    - `hybrid`: 混合搜索
   - `filename`: (可选) 按文件名过滤
   - `tags`: (可选) 按标签过滤，可提供多个标签
   - `start_date`: (可选) 开始日期，格式：YYYY-MM-DD HH:MM:SS
@@ -159,7 +155,7 @@ GET /api/search/text?q=山水风景&search_type=hybrid&vector_targets=title&vect
 **请求**:
 
 - **方法**: GET
-- **URL**: `/api/search/similar/{image_id}`
+- **URL**: `/api/v1/search/similar/{image_id}`
 - **路径参数**:
   - `image_id`: (必需) 用于搜索的图片ID
 - **查询参数**:
@@ -169,7 +165,7 @@ GET /api/search/text?q=山水风景&search_type=hybrid&vector_targets=title&vect
     - `description`: 描述向量
   - `search_type`: (可选) 搜索类型，可选值：
     - `vector`: 仅向量搜索（默认）
-    - `hybrid`: 混合搜索
+    - `multi`: 多维向量搜索
   - `filename`: (可选) 按文件名过滤
   - `tags`: (可选) 按标签过滤，可提供多个标签
   - `start_date`: (可选) 开始日期，格式：YYYY-MM-DD HH:MM:SS
@@ -180,7 +176,7 @@ GET /api/search/text?q=山水风景&search_type=hybrid&vector_targets=title&vect
 **示例请求**:
 
 ```http
-GET /api/search/similar/42?search_targets=image&search_type=hybrid&limit=5
+GET /api/v1/search/similar/42?search_targets=image&search_type=vector&limit=5
 ```
 
 **成功响应**:
@@ -223,6 +219,135 @@ GET /api/search/similar/42?search_targets=image&search_type=hybrid&limit=5
 }
 ```
 
+### 4. 基于向量的搜索
+
+使用文本查询并转换为向量进行搜索。
+
+**请求**:
+
+- **方法**: GET
+- **URL**: `/api/v1/search/by-vector`
+- **参数**:
+  - `q`: (必需) 搜索文本，将转换为向量
+  - `vector_type`: (可选) 要搜索的向量类型，可选值：
+    - `title`: 标题向量
+    - `description`: 描述向量
+    - `image`: 图像向量（默认）
+  - `filename`: (可选) 按文件名过滤
+  - `tags`: (可选) 按标签过滤，可提供多个标签
+  - `start_date`: (可选) 开始日期，格式：YYYY-MM-DD HH:MM:SS
+  - `end_date`: (可选) 结束日期，格式：YYYY-MM-DD HH:MM:SS
+  - `limit`: (可选) 返回结果数量限制，默认20
+  - `offset`: (可选) 分页偏移，默认0
+
+**示例请求**:
+
+```http
+GET /api/v1/search/by-vector?q=海边日出&vector_type=description&limit=10
+```
+
+**成功响应**:
+
+```json
+{
+  "status": "success",
+  "code": 200,
+  "message": "向量搜索成功",
+  "data": [
+    {
+      "id": 25,
+      "filename": "sunrise_beach.jpg",
+      "filepath": "/path/to/sunrise_beach.jpg",
+      "title": "海边日出",
+      "description": "清晨的海滩，金色的阳光从海平面升起",
+      "file_size": 1245000,
+      "file_type": "image/jpeg",
+      "width": 1920,
+      "height": 1080,
+      "created_at": "2023-06-05 06:30:00",
+      "updated_at": "2023-06-05 06:30:00",
+      "metadata": {"camera": "Nikon Z6", "exposure": "1/125"},
+      "tags": ["海滩", "日出", "自然"],
+      "distance": 0.18,
+      "score": 0.82
+    }
+  ],
+  "metadata": {
+    "pagination": {
+      "page": 1,
+      "page_size": 10,
+      "total_items": 15,
+      "total_pages": 2
+    }
+  },
+  "error": null,
+  "timestamp": "2025-05-16T14:20:33.123456",
+  "request_id": "550e8400-e29b-41d4-a716-446655440036"
+}
+```
+
+### 5. 过滤搜索
+
+根据各种过滤条件搜索图像，不使用向量或文本匹配，仅通过元数据过滤。
+
+**请求**:
+
+- **方法**: GET
+- **URL**: `/api/v1/search/filtered`
+- **参数**:
+  - `filename`: (可选) 按文件名过滤
+  - `title`: (可选) 按标题过滤
+  - `description`: (可选) 按描述过滤
+  - `tags`: (可选) 按标签过滤，可提供多个标签
+  - `start_date`: (可选) 开始日期，格式：YYYY-MM-DD HH:MM:SS
+  - `end_date`: (可选) 结束日期，格式：YYYY-MM-DD HH:MM:SS
+  - `limit`: (可选) 返回结果数量限制，默认100
+  - `offset`: (可选) 分页偏移，默认0
+
+**示例请求**:
+
+```http
+GET /api/v1/search/filtered?title=风景&tags=自然&limit=20
+```
+
+**成功响应**:
+
+```json
+{
+  "status": "success",
+  "code": 200,
+  "message": "过滤搜索成功",
+  "data": [
+    {
+      "id": 15,
+      "filename": "nature_landscape.jpg",
+      "filepath": "/path/to/nature_landscape.jpg",
+      "title": "自然风景",
+      "description": "绿色的草地和远处的山脉",
+      "file_size": 954000,
+      "file_type": "image/jpeg",
+      "width": 1920,
+      "height": 1080,
+      "created_at": "2023-05-10 12:30:00",
+      "updated_at": "2023-05-10 12:30:00",
+      "metadata": {"camera": "Canon EOS 5D", "exposure": "1/200"},
+      "tags": ["自然", "风景", "山脉"]
+    }
+  ],
+  "metadata": {
+    "pagination": {
+      "page": 1,
+      "page_size": 20,
+      "total_items": 45,
+      "total_pages": 3
+    }
+  },
+  "error": null,
+  "timestamp": "2025-05-16T15:45:10.123456",
+  "request_id": "550e8400-e29b-41d4-a716-446655440048"
+}
+```
+
 ## 搜索类型详解
 
 ### 文本匹配搜索
@@ -247,20 +372,24 @@ LIMIT 20 OFFSET 0
 
 向量搜索能够理解语义相似性，例如"海滩日落"的查询可能会匹配到描述为"黄昏时的沙滩"的图片。
 
-### 混合搜索
+### 多维向量搜索
 
-当设置 `search_type` 为 `hybrid` 时，系统综合使用向量搜索和文本匹配，为每个结果计算综合得分，提供更准确的搜索结果。混合搜索的步骤包括：
+当使用相似图片搜索时，设置 `search_type` 为 `multi` 可以启用多维向量搜索，这会：
 
-1. 对每个搜索目标类型分别执行向量搜索
-2. 合并结果并计算综合得分
-3. 去除重复项，保留得分最高的结果
-4. 按得分排序并返回
+1. 获取原始图像的多种向量表示（图像、标题、描述）
+2. 在各个向量空间中分别搜索相似内容
+3. 综合所有搜索结果，为每个结果计算综合得分
+4. 根据得分排序，去除重复项
+
+多维向量搜索结合了不同维度的相似性，通常能提供更全面的搜索结果。
 
 ## 过滤机制
 
 所有搜索端点都支持以下过滤条件：
 
 - **文件名过滤**：按文件名进行模糊匹配
+- **标题过滤**：按标题进行模糊匹配（仅在过滤搜索中可用）
+- **描述过滤**：按描述进行模糊匹配（仅在过滤搜索中可用）
 - **标签过滤**：只返回包含指定标签的图片
 - **时间范围过滤**：按图片创建时间过滤
 
@@ -340,22 +469,47 @@ ORDER BY
     res.distance ASC
 ```
 
-### 混合搜索实现
+### 多维向量搜索实现
 
-混合搜索会对每个搜索目标（图像、标题、描述）分别执行向量搜索，然后将结果合并，计算综合得分：
+多维向量搜索会对每个搜索目标（图像、标题、描述）分别执行向量搜索，然后将结果合并：
 
 1. 对每个目标类型执行向量搜索
 2. 将所有结果合并到一个集合中
-3. 对于同一个图像在多个搜索目标中出现的情况，保留最高得分
-4. 计算每个结果的综合得分（1 - 距离）
-5. 根据得分排序结果
+3. 对于同一个图像在多个搜索目标中出现的情况，保留最高得分（最小距离）
+4. 按相似度距离排序结果
+
+多维搜索的实现示例：
+
+```python
+# 对每个搜索目标执行向量搜索
+all_results = []
+for target in search_targets:
+    target_results = search_by_image_id(
+        conn=conn,
+        image_id=image_id,
+        vector_type=target,
+        k=limit,
+        filters=filters,
+        exclude_self=True
+    )
+    all_results.extend(target_results)
+
+# 按相似度排序并去重
+unique_results = {}
+for item in all_results:
+    if item["id"] not in unique_results or item["distance"] < unique_results[item["id"]]["distance"]:
+        unique_results[item["id"]] = item
+
+# 转换为列表并排序
+sorted_results = sorted(unique_results.values(), key=lambda x: x["distance"])
+```
 
 ## 使用建议
 
 1. **搜索类型选择**：
    - 简单关键词匹配使用 `both` 类型
    - 需要语义理解使用 `vector` 类型
-   - 需要最全面的结果使用 `hybrid` 类型
+   - 需要最全面的结果使用相似搜索中的 `multi` 类型
 
 2. **搜索目标选择**：
    - 查找视觉相似图片，使用 `image` 目标
@@ -366,11 +520,18 @@ ORDER BY
    - 向量搜索比文本匹配更耗费资源
    - 合理设置 `limit` 参数，避免返回过多结果
    - 使用过滤条件缩小搜索范围
+   - 对于简单过滤场景，使用 `filtered` 端点而非向量搜索
+
+4. **搜索结果处理**：
+   - 系统自动处理JSON字段（如tags和metadata）
+   - 结果会按照相似度（向量搜索）或创建时间（文本匹配和过滤搜索）排序
+   - 所有搜索结果都支持分页机制
 
 ## 错误代码
 
 | HTTP 状态码 | 错误代码 | 错误描述 | 可能原因 |
 |------------|---------|---------|---------|
+| 400 | NO_FILTERS | 请提供至少一个过滤条件 | 使用过滤搜索时未提供任何过滤条件 |
 | 400 | INVALID_SEARCH_TYPE | 不支持的搜索类型 | 提供了无效的 search_type 值 |
 | 404 | IMAGE_NOT_FOUND | 未找到图像 | 提供的 image_id 不存在 |
 | 500 | DATABASE_ERROR | 数据库错误 | 数据库连接或查询问题 |
@@ -378,3 +539,4 @@ ORDER BY
 | 500 | IMAGE_SEARCH_ERROR | 图像搜索失败 | 图片处理或向量生成失败 |
 | 500 | VECTOR_SEARCH_ERROR | 向量搜索错误 | 向量搜索过程中的错误 |
 | 500 | SIMILAR_SEARCH_ERROR | 相似搜索失败 | 相似图像搜索过程中的错误 |
+| 500 | FILTER_SEARCH_ERROR | 过滤搜索失败 | 过滤搜索过程中的错误 |

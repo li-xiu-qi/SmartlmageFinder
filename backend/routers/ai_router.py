@@ -15,7 +15,7 @@ from ..utils.image_analysis import ImageAnalysis
 from ..db_func.core import get_db
 
 # 创建路由器
-router = APIRouter(prefix="/ai", tags=["ai"])
+router = APIRouter(prefix="/api/v1/ai", tags=["ai"])
 
 # 初始化AI组件
 image_analyzer_instance, ai_feature_available = initialize_ai_services()

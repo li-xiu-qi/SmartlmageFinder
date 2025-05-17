@@ -48,11 +48,11 @@ app.add_middleware(
 app.mount("/static/images", StaticFiles(directory=settings.get_config().UPLOAD_DIR), name="images")
 
 # 包含路由模块
-app.include_router(images.router, prefix="/api", tags=["images"])
-app.include_router(search.router, prefix="/api", tags=["search"])
-app.include_router(tags.router, prefix="/api", tags=["tags"])
-app.include_router(ai_router.router, prefix="/api", tags=["ai"])
-app.include_router(system.router, prefix="/api", tags=["system"])
+app.include_router(images.router)
+app.include_router(search.router)
+app.include_router(tags.router)
+app.include_router(ai_router)
+app.include_router(system.router)
 
 # 请求处理时间中间件
 @app.middleware("http")

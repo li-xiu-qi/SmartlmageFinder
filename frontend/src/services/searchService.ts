@@ -1,3 +1,7 @@
+/**
+ * SmartImageFinder 搜索服务
+ * 基于最新的搜索功能 API 文档
+ */
 import apiClient from './apiClient';
 import {
   SearchClient,
@@ -6,23 +10,39 @@ import {
   ImageSearchParams,
   ImageSearchResponse,
   SimilarSearchQueryParams,
-  SimilarSearchResponse
+  SimilarSearchResponse,
+  VectorSearchParams,
+  VectorSearchResponse,
+  FilteredSearchParams,
+  FilteredSearchResponse
 } from '../types/search';
 import { SearchImageItem } from '../types/models';
 
-// 定义将发送给 Axios 进行 similarSearch 的参数类型，
-// 其中 'tags' 是字符串，其他数组类型保留供 Axios 的默认序列化使用。
-type AxiosSimilarSearchQueryInternalParams = Omit<SimilarSearchQueryParams, 'tags'> & {
-  tags?: string; // 标签将是逗号分隔的字符串
-};
-
+/**
+ * 搜索服务实现
+ */
 const searchService: SearchClient = {
-  // 文本搜索
-  textSearch: (params: TextSearchParams): Promise<TextSearchResponse> => {
-    return apiClient.getWithTransform<SearchImageItem[]>('/search/text', { params }) as Promise<TextSearchResponse>;
+  /**
+   * 文本搜索
+   * @param params 文本搜索参数
+   */  textSearch: (params: TextSearchParams): Promise<TextSearchResponse> => {
+    const { tags, ...restParams } = params;
+    const apiParams: Record<string, unknown> = { ...restParams };
+    
+    // 处理标签参数
+    if (tags && tags.length > 0) {
+      apiParams.tags = tags.join(',');
+    }
+    
+    return apiClient.getWithTransform<SearchImageItem[]>('/search/text', { 
+      params: apiParams 
+    }) as Promise<TextSearchResponse>;
   },
 
-  // 图像搜索
+  /**
+   * 图像搜索
+   * @param params 图像搜索参数
+   */
   imageSearch: (params: ImageSearchParams): Promise<ImageSearchResponse> => {
     const formData = new FormData();
     formData.append('file', params.file);
@@ -32,24 +52,27 @@ const searchService: SearchClient = {
         formData.append('search_targets', target);
       });
     }
-    if (params.search_type) {
-      formData.append('search_type', params.search_type);
-    }
+    
     if (params.filename) {
       formData.append('filename', params.filename);
     }
+    
     if (params.tags && params.tags.length > 0) {
       formData.append('tags', params.tags.join(','));
     }
+    
     if (params.start_date) {
       formData.append('start_date', params.start_date);
     }
+    
     if (params.end_date) {
       formData.append('end_date', params.end_date);
     }
+    
     if (typeof params.limit === 'number') {
       formData.append('limit', params.limit.toString());
     }
+    
     if (typeof params.offset === 'number') {
       formData.append('offset', params.offset.toString());
     }
@@ -61,9 +84,12 @@ const searchService: SearchClient = {
     }) as Promise<ImageSearchResponse>;
   },
 
-  // 相似图片搜索
-  similarSearch: (imageId: number | string, queryParams?: SimilarSearchQueryParams): Promise<SimilarSearchResponse> => {
-    let apiParams: AxiosSimilarSearchQueryInternalParams | undefined = undefined;
+  /**
+   * 相似图片搜索
+   * @param imageId 图片ID
+   * @param params 相似搜索查询参数
+   */  similarSearch: (imageId: number | string, queryParams?: SimilarSearchQueryParams): Promise<SimilarSearchResponse> => {
+    let apiParams: Record<string, unknown> | undefined = undefined;
 
     if (queryParams) {
       const { tags, ...rest } = queryParams;
@@ -72,7 +98,8 @@ const searchService: SearchClient = {
       if (tags && tags.length > 0) {
         apiParams.tags = tags.join(',');
       }
-      // 如果处理后 apiParams 没有键，则将其设为 undefined，这样 axios 就不会发送查询字符串。
+      
+      // 如果处理后 apiParams 没有键，则将其设为 undefined，这样 axios 就不会发送查询字符串
       if (Object.keys(apiParams).length === 0) {
         apiParams = undefined;
       }
@@ -83,6 +110,40 @@ const searchService: SearchClient = {
       { params: apiParams }
     ) as Promise<SimilarSearchResponse>;
   },
+  
+  /**
+   * 基于向量的搜索
+   * @param params 向量搜索参数
+   */  vectorSearch: (params: VectorSearchParams): Promise<VectorSearchResponse> => {
+    const { tags, ...restParams } = params;
+    const apiParams: Record<string, unknown> = { ...restParams };
+    
+    // 处理标签参数
+    if (tags && tags.length > 0) {
+      apiParams.tags = tags.join(',');
+    }
+    
+    return apiClient.getWithTransform<SearchImageItem[]>('/search/by-vector', { 
+      params: apiParams 
+    }) as Promise<VectorSearchResponse>;
+  },
+  
+  /**
+   * 过滤搜索
+   * @param params 过滤搜索参数
+   */  filteredSearch: (params: FilteredSearchParams): Promise<FilteredSearchResponse> => {
+    const { tags, ...restParams } = params;
+    const apiParams: Record<string, any> = { ...restParams };
+    
+    // 处理标签参数
+    if (tags && tags.length > 0) {
+      apiParams.tags = tags.join(',');
+    }
+    
+    return apiClient.getWithTransform<SearchImageItem[]>('/search/filtered', { 
+      params: apiParams 
+    }) as Promise<FilteredSearchResponse>;
+  }
 };
 
 export default searchService;

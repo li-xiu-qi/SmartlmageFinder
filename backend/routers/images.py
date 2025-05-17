@@ -32,7 +32,7 @@ from ..config import settings
 
 
 # 创建路由器
-router = APIRouter(prefix="/images", tags=["images"])
+router = APIRouter(prefix="/api/v1/images", tags=["images"])
 
 
 @router.get("/", response_model=ResponseModel)

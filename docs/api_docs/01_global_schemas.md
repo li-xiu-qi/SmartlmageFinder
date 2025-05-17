@@ -183,7 +183,7 @@ return ResponseModel.paginated_error(
 ```python
 from backend.global_schemas import ResponseModel
 
-@app.get("/api/users/me")
+@app.get("/api/v1/users/me")
 async def get_current_user():
     user = {"id": 1, "username": "demo", "email": "demo@example.com"}
     return ResponseModel.success(data=user, message="获取当前用户信息成功")
@@ -194,7 +194,7 @@ async def get_current_user():
 ```python
 from backend.global_schemas import ResponseModel
 
-@app.get("/api/users/{user_id}")
+@app.get("/api/v1/users/{user_id}")
 async def get_user(user_id: int):
     user = find_user(user_id)
     if not user:
@@ -211,7 +211,7 @@ async def get_user(user_id: int):
 ```python
 from backend.global_schemas import ResponseModel
 
-@app.get("/api/images")
+@app.get("/api/v1/images")
 async def list_images(page: int = 1, page_size: int = 10):
     try:
         images, total = get_images_paginated(page, page_size)

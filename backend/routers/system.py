@@ -12,7 +12,7 @@ from ..system_fun.config import get_frontend_config, update_system_config
 from ..system_fun.clear_cache import clear_cache
 from ..system_fun.cache_info import get_cache_stats, CacheClearResult
 
-router = APIRouter(prefix="/system", tags=["system"])
+router = APIRouter(prefix="/api/v1/system", tags=["system"])
 
 
 @router.get("/status", response_model=ResponseModel)

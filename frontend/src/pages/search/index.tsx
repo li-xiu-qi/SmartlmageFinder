@@ -28,6 +28,7 @@ const SearchPage: React.FC = () => {
   const [total, setTotal] = useState(0);
   const [searchTime, setSearchTime] = useState<number>(0);
   const [searchKeyword, setSearchKeyword] = useState<string>('');
+  const [referenceImage, setReferenceImage] = useState<{id: number, title: string} | undefined>(undefined);
 
   // 初始化 - 加载热门标签
   useEffect(() => {
@@ -65,16 +66,17 @@ const SearchPage: React.FC = () => {
     
     try {
       const response = await searchService.textSearch(params);
-      
-      if (response.status === 'success' && response.data) {
+        if (response.status === 'success' && response.data) {
         setResults(response.data);
         setTotal(response.metadata?.total_results || response.data.length);
         setSearchTime(response.metadata?.execution_time_ms || 0);
+        setReferenceImage(response.metadata?.reference_image);
         
         // 更新URL参数
         updateSearchParams({
           q: params.q,
           search_type: params.search_type,
+          vector_targets: params.vector_targets?.join(','),
           tags: params.tags ? formatTagsForParam(params.tags) : undefined,
           start_date: params.start_date,
           end_date: params.end_date,
@@ -83,7 +85,8 @@ const SearchPage: React.FC = () => {
         });
       } else {
         message.error(response.message || '搜索失败');
-      }    } catch (error: unknown) {
+      }
+    } catch (error: unknown) {
       console.error('Text search failed', error);
       message.error(error instanceof Error ? error.message : '搜索过程中发生错误');
     } finally {
@@ -98,15 +101,15 @@ const SearchPage: React.FC = () => {
     
     try {
       const response = await searchService.imageSearch(params);
-      
-      if (response.status === 'success' && response.data) {
+        if (response.status === 'success' && response.data) {
         setResults(response.data);
         setTotal(response.metadata?.total_results || response.data.length);
         setSearchTime(response.metadata?.execution_time_ms || 0);
+        setReferenceImage(response.metadata?.reference_image);
         
         // 更新URL参数 (仅包含部分参数，因为图片文件不能放在URL中)
         updateSearchParams({
-          search_type: params.search_type,
+          search_targets: params.search_targets?.join(','),
           tags: params.tags ? formatTagsForParam(params.tags) : undefined,
           start_date: params.start_date,
           end_date: params.end_date,
@@ -115,13 +118,15 @@ const SearchPage: React.FC = () => {
         });
       } else {
         message.error(response.message || '图像搜索失败');
-      }    } catch (error: unknown) {
+      }
+    } catch (error: unknown) {
       console.error('Image search failed', error);
       message.error(error instanceof Error ? error.message : '图像搜索过程中发生错误');
     } finally {
       setLoading(false);
     }
   };
+  
   // 更新URL搜索参数
   const updateSearchParams = (params: Record<string, string | number | undefined>) => {
     const newParams = new URLSearchParams();
@@ -174,14 +179,13 @@ const SearchPage: React.FC = () => {
             tags={tags} 
           />
         </TabPane>
-      </Tabs>
-      
-      <SearchResults 
+      </Tabs>        <SearchResults 
         loading={loading} 
         results={results} 
         total={total} 
         searchTime={searchTime}
         searchKeyword={searchKeyword}
+        referenceImage={referenceImage}
       />
     </div>
   );

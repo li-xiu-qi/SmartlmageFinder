@@ -13,7 +13,7 @@ SmartImageFinder 系统提供了一套完整的图片管理 API，用于上传�
 **请求**:
 
 - **方法**: GET
-- **URL**: `/api/images/`
+- **URL**: `/api/v1/images/`
 - **参数**:
   - `page`: (可选) 页码，默认为 1
   - `page_size`: (可选) 每页数量，默认为 20，范围 1-100
@@ -96,7 +96,7 @@ SmartImageFinder 系统提供了一套完整的图片管理 API，用于上传�
 **请求**:
 
 - **方法**: GET
-- **URL**: `/api/images/{image_id}`
+- **URL**: `/api/v1/images/{image_id}`
 - **路径参数**:
   - `image_id`: 图片ID
 
@@ -154,7 +154,7 @@ SmartImageFinder 系统提供了一套完整的图片管理 API，用于上传�
 **请求**:
 
 - **方法**: POST
-- **URL**: `/api/images/upload`
+- **URL**: `/api/v1/images/upload`
 - **内容类型**: `multipart/form-data`
 - **参数**:
   - `files`: (必需) 图片文件，可以上传多个文件
@@ -240,7 +240,7 @@ SmartImageFinder 系统提供了一套完整的图片管理 API，用于上传�
 **请求**:
 
 - **方法**: PATCH
-- **URL**: `/api/images/{image_id}`
+- **URL**: `/api/v1/images/{image_id}`
 - **内容类型**: `multipart/form-data`
 - **路径参数**:
   - `image_id`: 图片ID
@@ -322,7 +322,7 @@ SmartImageFinder 系统提供了一套完整的图片管理 API，用于上传�
 **请求**:
 
 - **方法**: DELETE
-- **URL**: `/api/images/{image_id}`
+- **URL**: `/api/v1/images/{image_id}`
 - **路径参数**:
   - `image_id`: 图片ID
 

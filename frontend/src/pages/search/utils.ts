@@ -1,7 +1,7 @@
 /**
  * 搜索页面工具函数
  */
-import { SearchType } from '@/types/search';
+import { SearchType, VectorType, VectorSearchTarget } from '@/types/search';
 
 /**
  * 将URL参数中的标签字符串转换为标签数组
@@ -44,19 +44,51 @@ export const mapToApiSearchType = (searchType: string): SearchType => {
     'both': SearchType.BOTH,
     'combined': SearchType.BOTH,
     'vector': SearchType.VECTOR,
-    'hybrid': SearchType.HYBRID
+    'multi': SearchType.MULTI,
+    // 兼容旧代码
+    'hybrid': SearchType.MULTI
   };
   
   return map[searchType] || SearchType.BOTH;
 };
 
 /**
- * 检查搜索类型是否是高级搜索（向量或混合）
+ * 向量类型转换为API向量类型
+ * @param vectorType 前端向量类型
+ * @returns API向量类型
+ */
+export const mapToApiVectorType = (vectorType: string): VectorType => {
+  const map: Record<string, VectorType> = {
+    'title': VectorType.TITLE,
+    'description': VectorType.DESCRIPTION,
+    'image': VectorType.IMAGE
+  };
+  
+  return map[vectorType] || VectorType.IMAGE;
+};
+
+/**
+ * 检查搜索类型是否是高级搜索（向量或多维）
  * @param searchType 搜索类型
  * @returns 是否是高级搜索
  */
 export const isAdvancedSearch = (searchType: string): boolean => {
-  return ['vector', 'hybrid'].includes(searchType);
+  return ['vector', 'multi', 'hybrid'].includes(searchType);
+};
+
+/**
+ * 获取向量搜索目标数组
+ * @param targetValues 目标值数组
+ * @returns 向量搜索目标数组
+ */
+export const getVectorSearchTargets = (targetValues: string[]): VectorSearchTarget[] => {
+  const map: Record<string, VectorSearchTarget> = {
+    'title': VectorSearchTarget.TITLE,
+    'description': VectorSearchTarget.DESCRIPTION,
+    'image': VectorSearchTarget.IMAGE
+  };
+  
+  return targetValues.map(value => map[value] || VectorSearchTarget.IMAGE);
 };
 
 /**

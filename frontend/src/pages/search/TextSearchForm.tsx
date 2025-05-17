@@ -19,9 +19,9 @@ import {
 } from '@ant-design/icons';
 import { useSearchParams } from 'react-router-dom';
 import { TagInfo } from '@/types/models';
-import { TextSearchParams } from '@/types/search';
-import { TEXT_SEARCH_TYPES, ADVANCED_SEARCH_TYPES } from './constants';
-import { mapToApiSearchType, parseTagsFromParam } from './utils';
+import { TextSearchParams, VectorSearchTarget } from '@/types/search';
+import { TEXT_SEARCH_TYPES, ADVANCED_SEARCH_TYPES, VECTOR_SEARCH_TARGETS } from './constants';
+import { mapToApiSearchType, parseTagsFromParam, getVectorSearchTargets } from './utils';
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
@@ -42,7 +42,8 @@ const TextSearchForm: React.FC<TextSearchFormProps> = ({ onSearch, loading, tags
 
   // 从Form.useWatch获取当前搜索类型值
   const searchType = Form.useWatch('search_type', form);
-  const isVectorSearch = searchType === 'vector' || searchType === 'hybrid';
+  const isVectorSearch = searchType === 'vector' || searchType === 'multi';
+  
   // 初始化表单值
   useEffect(() => {
     const query = searchParams.get('q');
@@ -51,6 +52,7 @@ const TextSearchForm: React.FC<TextSearchFormProps> = ({ onSearch, loading, tags
     const startDate = searchParams.get('start_date');
     const endDate = searchParams.get('end_date');
     const filename = searchParams.get('filename');
+    const vectorTargets = searchParams.get('vector_targets')?.split(',');
     
     // 设置默认表单值
     const initialValues: Record<string, string | string[]> = {
@@ -62,6 +64,11 @@ const TextSearchForm: React.FC<TextSearchFormProps> = ({ onSearch, loading, tags
     if (tagsParam) {
       initialValues.tags = parseTagsFromParam(tagsParam);
     }
+    
+    // 如果有向量搜索目标参数，设置
+    if (vectorTargets && vectorTargets.length > 0) {
+      initialValues.vector_targets = vectorTargets;
+    }
 
     // 设置表单初始值
     form.setFieldsValue(initialValues);
@@ -71,6 +78,7 @@ const TextSearchForm: React.FC<TextSearchFormProps> = ({ onSearch, loading, tags
       setShowAdvanced(true);
     }
   }, [searchParams, form, isVectorSearch]);
+  
   // 执行文本搜索
   const handleSubmit = (values: Record<string, any>) => {
     // 构造搜索参数
@@ -82,8 +90,8 @@ const TextSearchForm: React.FC<TextSearchFormProps> = ({ onSearch, loading, tags
     params.search_type = mapToApiSearchType(values.search_type);
     
     // 设置向量搜索目标
-    if (values.search_type === 'vector' || values.search_type === 'hybrid') {
-      params.vector_targets = values.vector_targets;
+    if (values.search_type === 'vector' || values.search_type === 'multi') {
+      params.vector_targets = getVectorSearchTargets(values.vector_targets);
     }
 
     // 添加高级搜索参数（如果有）
@@ -119,7 +127,7 @@ const TextSearchForm: React.FC<TextSearchFormProps> = ({ onSearch, loading, tags
         layout="vertical"
         initialValues={{
           search_type: 'both',
-          vector_targets: ['title', 'description']
+          vector_targets: [VectorSearchTarget.TITLE, VectorSearchTarget.DESCRIPTION]
         }}
       >
         <Row gutter={16}>
@@ -162,9 +170,14 @@ const TextSearchForm: React.FC<TextSearchFormProps> = ({ onSearch, loading, tags
               </span>
             }
           >
-            <Select mode="multiple" placeholder="选择搜索目标">
-              <Option value="title">标题向量</Option>
-              <Option value="description">描述向量</Option>
+            <Select 
+              mode="multiple" 
+              placeholder="选择搜索目标"
+              className="search-targets-select"
+            >
+              {VECTOR_SEARCH_TARGETS.map(target => (
+                <Option key={target.value} value={target.value}>{target.label}</Option>
+              ))}
             </Select>
           </Form.Item>
         )}
@@ -214,7 +227,7 @@ const TextSearchForm: React.FC<TextSearchFormProps> = ({ onSearch, loading, tags
                   label="日期范围"
                 >
                   <RangePicker
-                    style={{ width: '100%' }}
+                    className="date-range-picker"
                     showTime={{ format: 'HH:mm' }}
                     format="YYYY-MM-DD HH:mm"
                   />
