@@ -33,10 +33,8 @@ export const mapToApiSearchType = (searchType: string): SearchType => {
     'description': SearchType.DESCRIPTION,
     'both': SearchType.BOTH,
     'combined': SearchType.BOTH,
-    'vector': SearchType.VECTOR,
-    'multi': SearchType.MULTI,
-    // 兼容旧代码
-    'hybrid': SearchType.MULTI
+    'vector': SearchType.VECTOR
+    // 'multi'和'hybrid'类型已不再支持
   };
   
   return map[searchType] || SearchType.BOTH;
@@ -63,7 +61,7 @@ export const mapToApiVectorType = (vectorType: string): VectorType => {
  * @returns 是否是高级搜索
  */
 export const isAdvancedSearch = (searchType: string): boolean => {
-  return ['vector', 'multi', 'hybrid'].includes(searchType);
+  return ['vector'].includes(searchType);
 };
 
 /**

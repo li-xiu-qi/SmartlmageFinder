@@ -20,17 +20,20 @@ const aiService: AIAnalysisClient = {
    * @param params 包含图片文件和分析详细程度的请求参数
    * @returns 分析结果的 Promise
    */
-  analyzeUploadImage: (
+  analyzeUploadImage: async (
     params: UploadImageAnalysisRequestParams
   ): Promise<ImageAnalysisResponse> => {
-    const formData = new FormData();    formData.append('file', params.file);
+    const formData = new FormData();
+    formData.append('file', params.file);
     formData.append('detail', params.detail || AnalysisDetailLevel.LOW);
     
-    return apiClient.postWithTransform<ImageAnalysisData>('/ai/analyze-upload-image', formData, {
+    const response = await apiClient.postWithTransform<ImageAnalysisData>('/ai/analyze-upload-image', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
     });
+    
+    return response as ImageAnalysisResponse;
   },
 
   /**
@@ -40,25 +43,40 @@ const aiService: AIAnalysisClient = {
    * @param params 可选的分析参数
    * @returns 分析结果的 Promise
    */
-  analyzeExistingImage: (
+  analyzeExistingImage: async (
     imageId: string | number,
     params?: ExistingImageAnalysisFormParams
   ): Promise<ImageAnalysisResponse> => {
-    const formData = new FormData();    formData.append('detail', params?.detail || AnalysisDetailLevel.LOW);
+    const formData = new FormData();
+    formData.append('detail', params?.detail || AnalysisDetailLevel.LOW);
     
-    return apiClient.postWithTransform<ImageAnalysisData>(`/ai/analyze-image-id/${imageId}`, formData, {
+    const response = await apiClient.postWithTransform<ImageAnalysisData>(`/ai/analyze-image-id/${imageId}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
     });
+    
+    return response as ImageAnalysisResponse;
   },
   
   /**
    * 获取AI服务配置状态
    * GET /api/v1/ai/service-status
    * @returns 服务配置信息的 Promise
-   */  getServiceStatus: (): Promise<AIServiceConfig> => {
-    return apiClient.getWithTransform<AIServiceConfig>('/ai/service-status');
+   */
+  getServiceStatus: async (): Promise<AIServiceConfig> => {
+    const response = await apiClient.getWithTransform<AIServiceConfig>('/ai/service-status');
+    
+    if (response.status === 'success' && response.data) {
+      return response.data;
+    }
+    
+    // 如果请求失败，返回默认配置
+    return {
+      isAvailable: false,
+      configuredModels: [],
+      apiProvider: '未知'
+    };
   }
 };
 

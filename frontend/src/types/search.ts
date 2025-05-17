@@ -13,8 +13,7 @@ export enum SearchType {
   TITLE = 'title',              // 仅搜索标题
   DESCRIPTION = 'description',  // 仅搜索描述
   BOTH = 'both',                // 同时搜索标题和描述（默认）
-  VECTOR = 'vector',            // 使用向量搜索
-  MULTI = 'multi'               // 多维向量搜索（仅用于相似搜索）
+  VECTOR = 'vector'             // 使用向量搜索
 }
 
 /**
@@ -76,7 +75,7 @@ export interface SimilarSearchPathParams {
  */
 export interface SimilarSearchQueryParams {
   search_targets?: VectorSearchTarget[];         // 搜索目标，默认为 image
-  search_type?: SearchType.VECTOR | SearchType.MULTI; // 搜索类型，仅支持向量和多维
+  search_type?: SearchType.VECTOR;               // 搜索类型，仅支持向量搜索
   filename?: string;                             // 按文件名过滤
   tags?: string[];                               // 按标签过滤
   start_date?: string;                           // 开始日期

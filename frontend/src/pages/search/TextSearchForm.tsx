@@ -36,10 +36,9 @@ interface TextSearchFormProps {
  */
 const TextSearchForm: React.FC<TextSearchFormProps> = ({ onSearch, loading, tags }) => {
   const [searchParams] = useSearchParams();
-  const [form] = Form.useForm();
-  // 从Form.useWatch获取当前搜索类型值
+  const [form] = Form.useForm();  // 从Form.useWatch获取当前搜索类型值
   const searchType = Form.useWatch('search_type', form);
-  const isVectorSearch = searchType === SearchType.VECTOR || searchType === SearchType.MULTI;
+  const isVectorSearch = searchType === SearchType.VECTOR;
     // 初始化表单值
   useEffect(() => {
     const query = searchParams.get('q');
@@ -71,11 +70,11 @@ const TextSearchForm: React.FC<TextSearchFormProps> = ({ onSearch, loading, tags
     // 构造搜索参数
     const params: TextSearchParams = {
       q: values.q
-    };// 添加搜索类型
+    };    // 添加搜索类型
     params.search_type = mapToApiSearchType(values.search_type);
     
     // 设置向量搜索目标
-    if (values.search_type === SearchType.VECTOR || values.search_type === SearchType.MULTI) {
+    if (values.search_type === SearchType.VECTOR) {
       params.vector_targets = getVectorSearchTargets(values.vector_targets);
     }
 

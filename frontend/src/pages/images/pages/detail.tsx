@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Spin, message } from 'antd';
 import { imageService, searchService } from '@/services/api';
 import { ImageDetail, ImageSearchResult } from '@/types';
+import { SearchType } from '@/types/search';
 import ImagePreview from '../components/ImagePreview';
 import EditableField from '../components/EditableField';
 import FileInfoSection from '../components/FileInfoSection';
@@ -64,22 +65,21 @@ const ImageDetailView: React.FC<ImageDetailViewProps> = ({ image, onUpdate, onDe
       setLoading(false);
     }
   };
-  
-  // 获取相似图片
+    // 获取相似图片
   const fetchSimilarImages = async () => {
     try {
       setLoading(true);
       setShowSimilarModal(true);
       
-      const response = await searchService.searchSimilar({ 
-        image_id: image.id, 
-        limit: 12,
-        match_modes: [searchType]
+      const response = await searchService.similarSearch(image.id, {
+        search_targets: [searchType],
+        search_type: SearchType.VECTOR,
+        limit: 12
       });
       
       if (response.status === 'success' && response.data) {
         // 过滤掉当前图片
-        const filtered = response.data.results.filter(img => img.id !== image.id);
+        const filtered = response.data.filter(img => img.id !== image.id);
         setSimilarImages(filtered);
       }
     } catch (error) {
