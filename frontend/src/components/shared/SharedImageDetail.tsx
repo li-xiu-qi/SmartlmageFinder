@@ -1,0 +1,173 @@
+import React, { useState } from 'react';
+import { Spin, message } from 'antd';
+import { imageService, searchService } from '@/services/api';
+import { ImageDetail, ImageSearchResult } from '@/types';
+import ImagePreview from '@/pages/images/components/ImagePreview';
+import EditableField from '@/pages/images/components/EditableField';
+import FileInfoSection from '@/pages/images/components/FileInfoSection';
+import TagsSection from '@/pages/images/components/TagsSection';
+import MetadataSection from '@/pages/images/components/MetadataSection';
+import ActionsPanel from '@/pages/images/components/ActionsPanel';
+import SimilarImagesModal from '@/pages/images/components/SimilarImagesModal';
+import './shared-image-detail.less';
+
+interface SharedImageDetailProps {
+  image: ImageDetail;
+  onUpdate: (image: ImageDetail) => void;
+  onDelete: (id: number) => void;
+  onClose?: () => void; // 可选的关闭回调
+}
+
+/**
+ * 共享的图片详情组件
+ * 该组件可以在多个地方重用，包括图片列表页、首页最近图片等
+ */
+const SharedImageDetail: React.FC<SharedImageDetailProps> = ({ 
+  image, 
+  onUpdate, 
+  onDelete,
+  onClose 
+}) => {
+  const [loading, setLoading] = useState(false);
+  const [similarImages, setSimilarImages] = useState<ImageSearchResult[]>([]);
+  const [showSimilarModal, setShowSimilarModal] = useState(false);
+  const [searchType, setSearchType] = useState<string>('image');
+  
+  // 更新标题
+  const handleUpdateTitle = async (newTitle: string) => {
+    if (newTitle.trim() === '') {
+      message.error('标题不能为空');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await imageService.updateImage({ image_id: image.id, title: newTitle });
+      if (response.status === 'success') {
+        message.success('标题更新成功');
+        onUpdate({ ...image, title: newTitle });
+      }
+    } catch (error) {
+      console.error('更新标题失败:', error);
+      message.error('更新标题失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 更新描述
+  const handleUpdateDescription = async (newDescription: string) => {
+    try {
+      setLoading(true);
+      const response = await imageService.updateImage({ image_id: image.id, description: newDescription });
+      if (response.status === 'success') {
+        message.success('描述更新成功');
+        onUpdate({ ...image, description: newDescription });
+      }
+    } catch (error) {
+      console.error('更新描述失败:', error);
+      message.error('更新描述失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // 获取相似图片
+  const fetchSimilarImages = async () => {
+    try {
+      setLoading(true);
+      setShowSimilarModal(true);
+      
+      const response = await searchService.searchSimilar({ 
+        image_id: image.id, 
+        limit: 12,
+        match_modes: [searchType]
+      });
+      
+      if (response.status === 'success' && response.data) {
+        // 过滤掉当前图片
+        const filtered = response.data.results.filter(img => img.id !== image.id);
+        setSimilarImages(filtered);
+      }
+    } catch (error) {
+      console.error('获取相似图片失败:', error);
+      message.error('获取相似图片失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 标签更新处理
+  const handleTagsUpdate = (tags: string[]) => {
+    onUpdate({ ...image, tags });
+  };
+
+  // 处理图片删除，如果提供了onClose则调用
+  const handleDelete = (id: number) => {
+    onDelete(id);
+    if (onClose) {
+      onClose();
+    }
+  };
+
+  return (
+    <div className="image-detail-container">
+      <Spin spinning={loading}>
+        {/* 图片预览 */}
+        <ImagePreview image={image} />
+        
+        {/* 标题和描述 */}
+        <div className="detail-section">
+          <EditableField 
+            value={image.title} 
+            onSave={handleUpdateTitle}
+            title={true}
+            loading={loading}
+          />
+          
+          <EditableField 
+            value={image.description || ''} 
+            onSave={handleUpdateDescription}
+            loading={loading}
+          />
+        </div>
+        
+        {/* 文件信息 */}
+        <FileInfoSection image={image} />
+          {/* 标签管理 */}
+        <TagsSection 
+          imageId={image.id} 
+          tags={image.tags} 
+          onTagsUpdate={handleTagsUpdate} 
+        />
+        
+        {/* 元数据展示 */}
+        <MetadataSection metadata={image.metadata || {}} />
+        
+        {/* 操作按钮 */}
+        <ActionsPanel 
+          image={image}
+          searchType={searchType}
+          onSearchTypeChange={setSearchType}
+          onFindSimilar={fetchSimilarImages}
+          onDelete={handleDelete}
+          onUpdate={onUpdate}
+          loading={loading}
+        />
+        
+        {/* 相似图片模态框 */}
+        <SimilarImagesModal 
+          open={showSimilarModal}
+          onClose={() => setShowSimilarModal(false)}
+          loading={loading}
+          searchType={searchType}
+          onSearchTypeChange={setSearchType}
+          onSearch={fetchSimilarImages}
+          similarImages={similarImages}
+        />
+      </Spin>
+    </div>
+  );
+};
+
+export default SharedImageDetail;

@@ -10,7 +10,7 @@ import { AnalysisDetailLevel } from '@/types/ai';
 import FilterForm from '../components/FilterForm';
 import ViewControls, { ViewMode } from '../components/ViewControls';
 import ImageList from '../components/ImageList';
-import ImageDetail from '../components/ImageDetail';
+import SharedImageDetail from '@/components/shared/SharedImageDetail';
 import '../styles/components.less';
 
 const ImagesPage: React.FC = () => {
@@ -294,14 +294,12 @@ const ImagesPage: React.FC = () => {
             onClose={handleDetailClose}
             open={detailVisible}
             width={640}
-            destroyOnClose
-          >            <ImageDetail 
+            destroyOnClose          >            
+            <SharedImageDetail 
               image={selectedImage} 
               onUpdate={handleImageUpdate} 
               onDelete={handleDeleteImage}
-              onFindSimilar={handleFindSimilar}
-              onAIAnalyze={handleAIAnalyze}
-              onUpdateTags={handleUpdateTags}
+              onClose={handleDetailClose}
             />
           </Drawer>
         )}      </Spin>

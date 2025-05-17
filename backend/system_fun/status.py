@@ -133,7 +133,7 @@ def get_database_status(conn: sqlite3.Connection = None) -> DatabaseStatus:
             
         db_status = "connected"
         # 不关闭传入的连接，它由调用者管理
-        
+        print(f"数据库连接成功: {conn}")
         return DatabaseStatus(
             status=db_status,
             image_count=image_count,

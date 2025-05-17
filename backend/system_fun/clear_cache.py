@@ -15,5 +15,11 @@ def clear_cache(cache_dir: str) -> int:
 
     cache = diskcache.Cache(directory=cache_dir)
     clear_count = cache.clear()
+    
+    # Ensure cache directory exists after clearing
+    if not os.path.exists(cache_dir):
+        os.makedirs(cache_dir)
+        cache = diskcache.Cache(directory=cache_dir)
+    
     print(f"清除缓存成功，清除条目数: {clear_count}")
     return clear_count

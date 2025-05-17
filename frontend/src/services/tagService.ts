@@ -54,6 +54,22 @@ const tagService: TagClient = {
       }
     }) as Promise<ImagesByMultipleTagsResponse>;
   },
+
+  /**
+   * 为图片添加标签
+   * POST /api/tags/image/{image_id}/add
+   */
+  async addTagsToImage(imageId: number, tags: string[]): Promise<ApiResponse<{ tags: string[] }>> {
+    return apiClient.postWithTransform<{ tags: string[] }>(`/tags/image/${imageId}/add`, { tags });
+  },
+
+  /**
+   * 从图片移除标签
+   * DELETE /api/tags/image/{image_id}/{tag}
+   */
+  async removeTagFromImage(imageId: number, tag: string): Promise<ApiResponse<{ tags: string[] }>> {
+    return apiClient.deleteWithTransform<{ tags: string[] }>(`/tags/image/${imageId}/${tag}`);
+  },
 };
 
 export default tagService;
