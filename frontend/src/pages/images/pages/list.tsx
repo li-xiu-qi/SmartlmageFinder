@@ -7,11 +7,11 @@ import { GetImagesListParams } from '@/types/image';
 import { ImageCardModel, convertToImageCardModel } from '@/utils/typeConverters';
 import { VectorSearchTarget, SearchType } from '@/types/search';
 import { AnalysisDetailLevel } from '@/types/ai';
-import FilterForm from './components/FilterForm';
-import ViewControls, { ViewMode } from './components/ViewControls';
-import ImageList from './components/ImageList';
-import ImageDetail from './components/ImageDetail';
-import './components/styles.less';
+import FilterForm from '../components/FilterForm';
+import ViewControls, { ViewMode } from '../components/ViewControls';
+import ImageList from '../components/ImageList';
+import ImageDetail from '../components/ImageDetail';
+import '../styles/components.less';
 
 const ImagesPage: React.FC = () => {
   const [searchParams] = useSearchParams();

@@ -8,6 +8,7 @@ import {
 } from '@ant-design/icons';
 import { aiService } from '@/services/api';
 import { ImageDetail } from '@/types';
+import { AnalysisDetailLevel } from '@/types/ai';
 
 const { Option } = Select;
 
@@ -23,7 +24,7 @@ interface ActionsPanelProps {
   searchType: string;
   onSearchTypeChange: (value: string) => void;
   onFindSimilar: () => void;
-  onDelete: (uuid: string) => void;
+  onDelete: (id: number) => void;
   onUpdate: (image: ImageDetail) => void;
   loading: boolean;
 }
@@ -45,23 +46,19 @@ const ActionsPanel: React.FC<ActionsPanelProps> = ({
     try {
       message.loading('正在分析图片并生成内容...', 0);
       
-      const response = await aiService.generateContent(image.uuid, {
-        generate_title: true,
-        generate_description: true,
-        generate_tags: true,
-        detail: 'high',
+      const response = await aiService.analyzeExistingImage(image.id, {
+        detail: AnalysisDetailLevel.HIGH,
       });
       
       if (response.status === 'success' && response.data) {
         message.destroy();
         message.success('内容生成成功');
         
-        const generatedData = response.data.generated;
         const updatedImage = { 
           ...image,
-          title: generatedData.title || image.title,
-          description: generatedData.description || image.description,
-          tags: generatedData.tags || image.tags,
+          title: response.data.title || image.title,
+          description: response.data.description || image.description,
+          tags: response.data.tags || image.tags,
         };
         
         onUpdate(updatedImage);
@@ -102,10 +99,9 @@ const ActionsPanel: React.FC<ActionsPanelProps> = ({
         >
           AI分析生成
         </Button>
-        <Popconfirm
-          title="确定要删除这张图片吗？"
+        <Popconfirm          title="确定要删除这张图片吗？"
           icon={<ExclamationCircleOutlined style={{ color: 'red' }} />}
-          onConfirm={() => onDelete(image.uuid)}
+          onConfirm={() => onDelete(image.id)}
           okText="确定"
           cancelText="取消"
         >

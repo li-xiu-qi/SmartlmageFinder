@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, Tag } from 'antd';
 import { ImageCardModel } from '@/utils/typeConverters';
 import dayjs from 'dayjs';
-import './styles.less';
+import '../styles/components.less';
 
 interface ImageCardProps {
   image: ImageCardModel;

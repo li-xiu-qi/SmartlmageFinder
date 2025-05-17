@@ -6,7 +6,7 @@ import { tagService } from '@/services/api';
 const { Title } = Typography;
 
 interface TagsSectionProps {
-  uuid: string;
+  imageId: number;
   tags: string[];
   onTagsUpdate: (tags: string[]) => void;
 }
@@ -14,7 +14,7 @@ interface TagsSectionProps {
 /**
  * 标签管理组件
  */
-const TagsSection: React.FC<TagsSectionProps> = ({ uuid, tags, onTagsUpdate }) => {
+const TagsSection: React.FC<TagsSectionProps> = ({ imageId, tags, onTagsUpdate }) => {
   const [newTag, setNewTag] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -33,7 +33,7 @@ const TagsSection: React.FC<TagsSectionProps> = ({ uuid, tags, onTagsUpdate }) =
         return;
       }
 
-      const response = await tagService.addTags(uuid, [newTag]);
+      const response = await tagService.addTagsToImage(imageId, [newTag]);
       if (response.status === 'success') {
         message.success('标签添加成功');
         setNewTag('');
@@ -51,7 +51,7 @@ const TagsSection: React.FC<TagsSectionProps> = ({ uuid, tags, onTagsUpdate }) =
   const handleDeleteTag = async (tag: string) => {
     try {
       setLoading(true);
-      const response = await tagService.deleteTag(uuid, tag);
+      const response = await tagService.removeTagFromImage(imageId, tag);
       if (response.status === 'success') {
         message.success('标签删除成功');
         onTagsUpdate(response.data.tags);

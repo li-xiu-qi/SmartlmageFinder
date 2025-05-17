@@ -8,7 +8,7 @@ import { ImageCardModel } from '@/utils/typeConverters';
 import { ImageModel } from '@/types/models';
 import { VectorSearchTarget } from '@/types/search';
 import dayjs from 'dayjs';
-import './styles.less';
+import '../styles/components.less';
 
 const { TextArea } = Input;
 const { Title } = Typography;

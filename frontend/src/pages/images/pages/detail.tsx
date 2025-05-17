@@ -2,19 +2,19 @@ import React, { useState } from 'react';
 import { Spin, message } from 'antd';
 import { imageService, searchService } from '@/services/api';
 import { ImageDetail, ImageSearchResult } from '@/types';
-import ImagePreview from './components/ImagePreview';
-import EditableField from './components/EditableField';
-import FileInfoSection from './components/FileInfoSection';
-import TagsSection from './components/TagsSection';
-import MetadataSection from './components/MetadataSection';
-import ActionsPanel from './components/ActionsPanel';
-import SimilarImagesModal from './components/SimilarImagesModal';
-import './components/detail.less';
+import ImagePreview from '../components/ImagePreview';
+import EditableField from '../components/EditableField';
+import FileInfoSection from '../components/FileInfoSection';
+import TagsSection from '../components/TagsSection';
+import MetadataSection from '../components/MetadataSection';
+import ActionsPanel from '../components/ActionsPanel';
+import SimilarImagesModal from '../components/SimilarImagesModal';
+import '../styles/components.less';
 
 interface ImageDetailViewProps {
   image: ImageDetail;
   onUpdate: (image: ImageDetail) => void;
-  onDelete: (uuid: string) => void;
+  onDelete: (id: number) => void;
 }
 
 /**
@@ -35,7 +35,7 @@ const ImageDetailView: React.FC<ImageDetailViewProps> = ({ image, onUpdate, onDe
 
     try {
       setLoading(true);
-      const response = await imageService.updateImage(image.uuid, { title: newTitle });
+      const response = await imageService.updateImage({ image_id: image.id, title: newTitle });
       if (response.status === 'success') {
         message.success('标题更新成功');
         onUpdate({ ...image, title: newTitle });
@@ -52,7 +52,7 @@ const ImageDetailView: React.FC<ImageDetailViewProps> = ({ image, onUpdate, onDe
   const handleUpdateDescription = async (newDescription: string) => {
     try {
       setLoading(true);
-      const response = await imageService.updateImage(image.uuid, { description: newDescription });
+      const response = await imageService.updateImage({ image_id: image.id, description: newDescription });
       if (response.status === 'success') {
         message.success('描述更新成功');
         onUpdate({ ...image, description: newDescription });
@@ -71,15 +71,15 @@ const ImageDetailView: React.FC<ImageDetailViewProps> = ({ image, onUpdate, onDe
       setLoading(true);
       setShowSimilarModal(true);
       
-      // 使用match_modes参数代替search_type以符合后端API要求
-      const response = await searchService.searchSimilar(image.uuid, { 
+      const response = await searchService.searchSimilar({ 
+        image_id: image.id, 
         limit: 12,
-        match_modes: [searchType] // 将单个值改为数组形式发送
+        match_modes: [searchType]
       });
       
       if (response.status === 'success' && response.data) {
         // 过滤掉当前图片
-        const filtered = response.data.results.filter(img => img.uuid !== image.uuid);
+        const filtered = response.data.results.filter(img => img.id !== image.id);
         setSimilarImages(filtered);
       }
     } catch (error) {
