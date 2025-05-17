@@ -10,7 +10,7 @@ import { AnalysisDetailLevel } from '@/types/ai';
 import FilterForm from '../components/FilterForm';
 import ViewControls, { ViewMode } from '../components/ViewControls';
 import ImageList from '../components/ImageList';
-import SharedImageDetail from '@/components/shared/SharedImageDetail';
+import SharedImageDetail from '@/components/SharedImageDetail';
 import '../styles/components.less';
 
 const ImagesPage: React.FC = () => {

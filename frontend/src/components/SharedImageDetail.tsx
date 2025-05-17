@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Spin, message } from 'antd';
 import { imageService, searchService } from '@/services/api';
 import { ImageDetail, ImageSearchResult } from '@/types';
+import { VectorSearchTarget, SearchType } from '@/types/search';
 import ImagePreview from '@/pages/images/components/ImagePreview';
 import EditableField from '@/pages/images/components/EditableField';
 import FileInfoSection from '@/pages/images/components/FileInfoSection';
@@ -32,6 +33,11 @@ const SharedImageDetail: React.FC<SharedImageDetailProps> = ({
   const [similarImages, setSimilarImages] = useState<ImageSearchResult[]>([]);
   const [showSimilarModal, setShowSimilarModal] = useState(false);
   const [searchType, setSearchType] = useState<string>('image');
+  
+  // 处理搜索类型变更
+  const handleSearchTypeChange = (value: string) => {
+    setSearchType(value);
+  };
   
   // 更新标题
   const handleUpdateTitle = async (newTitle: string) => {
@@ -71,22 +77,36 @@ const SharedImageDetail: React.FC<SharedImageDetailProps> = ({
       setLoading(false);
     }
   };
-  
   // 获取相似图片
   const fetchSimilarImages = async () => {
     try {
       setLoading(true);
       setShowSimilarModal(true);
       
-      const response = await searchService.searchSimilar({ 
-        image_id: image.id, 
+      // 将searchType字符串映射到VectorSearchTarget枚举
+      let targetType: VectorSearchTarget;
+      switch (searchType) {
+        case 'title':
+          targetType = VectorSearchTarget.TITLE;
+          break;
+        case 'description':
+          targetType = VectorSearchTarget.DESCRIPTION;
+          break;
+        case 'image':
+        default:
+          targetType = VectorSearchTarget.IMAGE;
+          break;
+      }
+      
+      const response = await searchService.similarSearch(image.id, { 
+        search_targets: [targetType], 
         limit: 12,
-        match_modes: [searchType]
+        search_type: SearchType.VECTOR // 使用向量搜索
       });
       
       if (response.status === 'success' && response.data) {
         // 过滤掉当前图片
-        const filtered = response.data.results.filter(img => img.id !== image.id);
+        const filtered = response.data.filter(img => img.id !== image.id);
         setSimilarImages(filtered);
       }
     } catch (error) {
@@ -143,12 +163,11 @@ const SharedImageDetail: React.FC<SharedImageDetailProps> = ({
         
         {/* 元数据展示 */}
         <MetadataSection metadata={image.metadata || {}} />
-        
-        {/* 操作按钮 */}
+          {/* 操作按钮 */}
         <ActionsPanel 
           image={image}
           searchType={searchType}
-          onSearchTypeChange={setSearchType}
+          onSearchTypeChange={handleSearchTypeChange}
           onFindSimilar={fetchSimilarImages}
           onDelete={handleDelete}
           onUpdate={onUpdate}
@@ -161,7 +180,7 @@ const SharedImageDetail: React.FC<SharedImageDetailProps> = ({
           onClose={() => setShowSimilarModal(false)}
           loading={loading}
           searchType={searchType}
-          onSearchTypeChange={setSearchType}
+          onSearchTypeChange={handleSearchTypeChange}
           onSearch={fetchSimilarImages}
           similarImages={similarImages}
         />

@@ -1,23 +1,22 @@
 from fastapi import APIRouter, HTTPException, Query, Path, UploadFile, File, Form, Body, Depends
 from typing import List, Optional, Dict, Any, Union, TypeVar, Generic, Callable, Literal
+import tempfile
+import shutil
+import json
+import sqlite3
+import os
+import traceback
 
 from backend import db_func
-import os
-import sqlite3
-import shutil
 from datetime import datetime
-import json
 from PIL import Image as PILImage
-import tempfile
-import time
-import numpy as np
-import functools
 from contextlib import contextmanager
 
+from backend.db_func.search_func.search_by_image_id import search_by_image_id
 from backend.db_func.search_func.text_search import search_by_text
 
 # 导入向量生成相关功能
-from ..utils.generate_vector import model, encode_image, encode_text
+from ..utils.generate_vector import encode_image
 # 导入数据库连接函数
 from ..db_func.core import get_db
 # 导入响应模型
@@ -34,8 +33,7 @@ async def text_search(
     filename: Optional[str] = Query(None, description="按文件名过滤"),
     tags: Optional[List[str]] = Query(None, description="按标签过滤"),
     start_date: Optional[str] = Query(None, description="开始日期 (YYYY-MM-DD HH:MM:SS)"),
-    end_date: Optional[str] = Query(None, description="结束日期 (YYYY-MM-DD HH:MM:SS)"), 
-    limit: int = Query(20, description="返回结果数量限制"),
+    end_date: Optional[str] = Query(None, description="结束日期 (YYYY-MM-DD HH:MM:SS)"),    limit: int = Query(20, description="返回结果数量限制"),
     offset: int = Query(0, description="分页偏移"),
     conn = Depends(get_db)
 ):
@@ -57,7 +55,8 @@ async def text_search(
         filters["end_date"] = end_date
     
     try:
-        if search_type in ["title", "description", "both"]:            # 使用文本匹配搜索
+        if search_type in ["title", "description", "both"]:            
+            # 使用文本匹配搜索
             results = search_by_text(
                 conn=conn,
                 text=q,
@@ -151,8 +150,7 @@ async def image_search(
     filename: Optional[str] = Form(None, description="按文件名过滤"),
     tags: Optional[List[str]] = Form(None, description="按标签过滤"),
     start_date: Optional[str] = Form(None, description="开始日期 (YYYY-MM-DD HH:MM:SS)"),
-    end_date: Optional[str] = Form(None, description="结束日期 (YYYY-MM-DD HH:MM:SS)"),
-    limit: int = Form(20, description="返回结果数量限制"),
+    end_date: Optional[str] = Form(None, description="结束日期 (YYYY-MM-DD HH:MM:SS)"),    limit: int = Form(20, description="返回结果数量限制"),
     offset: int = Form(0, description="分页偏移"),
     conn = Depends(get_db)
 ):
@@ -175,12 +173,13 @@ async def image_search(
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
         temp_file_path = temp_file.name
         temp_file.close()
-        
+        print("临时文件路径:", temp_file_path)
         try:
             # 保存上传的图像文件
             with open(temp_file_path, "wb") as buffer:
                 shutil.copyfileobj(file.file, buffer)
-              # 使用PIL打开图像以确保它是有效的图像
+                
+            # 使用PIL打开图像以确保它是有效的图像
             img = PILImage.open(temp_file_path)
             # 获取图像的向量表示
             image_embedding = encode_image(temp_file_path)
@@ -262,8 +261,7 @@ async def similar_image_search(
     filename: Optional[str] = Query(None, description="按文件名过滤"),
     tags: Optional[List[str]] = Query(None, description="按标签过滤"),
     start_date: Optional[str] = Query(None, description="开始日期 (YYYY-MM-DD HH:MM:SS)"),
-    end_date: Optional[str] = Query(None, description="结束日期 (YYYY-MM-DD HH:MM:SS)"),
-    limit: int = Query(20, description="返回结果数量限制"),
+    end_date: Optional[str] = Query(None, description="结束日期 (YYYY-MM-DD HH:MM:SS)"),    limit: int = Query(20, description="返回结果数量限制"),
     offset: int = Query(0, description="分页偏移"),
     conn = Depends(get_db)
 ):
@@ -294,51 +292,43 @@ async def similar_image_search(
                 message=f"未找到ID为{image_id}的图像",
                 http_code=404
             )
-        
-        results = []
+        results = []        
         # 对于向量搜索，需要从向量表获取对应的向量
         if search_type == "vector":
-            from ..db_func.search_func.vector_search import find_similar_images
-            
-            for target in search_targets:
-                # 检索目标向量
-                vector_table = f"{target}_vectors"
-                cursor.execute(
-                    f"SELECT embedding FROM {vector_table} WHERE image_id = ?", 
-                    (image_id,)
+            try:
+                # 对每个搜索目标执行向量搜索
+                all_results = []
+                for target in search_targets:
+                    # 使用单SQL查询完成向量获取和搜索
+                    target_results = search_by_image_id(
+                        conn=conn,
+                        image_id=image_id,
+                        vector_type=target,
+                        k=limit,
+                        filters=filters,
+                        exclude_self=True
+                    )
+                    all_results.extend(target_results)
+                
+                # 按相似度排序并去重
+                unique_results = {}
+                for item in all_results:
+                    if item["id"] not in unique_results or item["distance"] < unique_results[item["id"]]["distance"]:
+                        unique_results[item["id"]] = item
+                
+                # 转换为列表并排序
+                sorted_results = sorted(unique_results.values(), key=lambda x: x["distance"])
+                
+                # 应用分页
+                results = sorted_results[offset:offset+limit]
+            except Exception as e:
+                print(f"向量搜索失败: {e}")
+                traceback.print_exc()
+                return ResponseModel.error(
+                    code="VECTOR_SEARCH_ERROR",
+                    message=f"向量搜索失败: {str(e)}",
+                    http_code=500
                 )
-                vector_row = cursor.fetchone()
-                
-                if not vector_row:
-                    continue  # 如果没有找到向量，跳过这个目标
-                
-                # 将向量字符串转为列表
-                embedding = json.loads(vector_row["embedding"])
-                
-                # 执行相似搜索
-                target_results = find_similar_images(
-                    conn=conn,
-                    query_embedding=embedding,
-                    vector_type=target,
-                    k=limit,
-                    filters=filters
-                )
-                results.extend(target_results)
-            
-            # 按相似度排序并去重
-            # 同时去除查询图像本身
-            unique_results = {}
-            for item in results:
-                if item["id"] == image_id:
-                    continue  # 跳过查询图像本身
-                if item["id"] not in unique_results or item["distance"] < unique_results[item["id"]]["distance"]:
-                    unique_results[item["id"]] = item
-            
-            # 转换为列表并排序
-            sorted_results = sorted(unique_results.values(), key=lambda x: x["distance"])
-            
-            # 应用分页
-            results = sorted_results[offset:offset+limit]
             
         elif search_type == "hybrid":
             from ..db_func.search_func.hybrid_search import hybrid_search

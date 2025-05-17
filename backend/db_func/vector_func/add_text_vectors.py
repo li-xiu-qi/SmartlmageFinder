@@ -5,7 +5,6 @@ import json
 import traceback
 import sqlite3
 
-from ...config import settings
 from ...utils.generate_vector import encode_text
 
 def add_text_vector(conn: sqlite3.Connection, image_id: int, text: str, table_name: str, text_type: str):
@@ -21,14 +20,12 @@ def add_text_vector(conn: sqlite3.Connection, image_id: int, text: str, table_na
     if not text or not text.strip():
         return None
     
-    try:
+    try:        
         # 生成向量
         vector = encode_text(text)
         vector_json = json.dumps(vector.tolist())
         
-        # 添加向量
-        conn.enable_load_extension(True)
-        # conn.execute(f"SELECT load_extension('{settings.get_config().VECTOR_DB_DRIVER}')")
+        # 连接池已自动加载向量扩展，不再需要单独加载
         
         cursor = conn.cursor()
         

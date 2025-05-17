@@ -3,7 +3,7 @@ import { Row, Col, Card, Empty, Drawer, Spin, message } from 'antd';
 import { RecentImagesProps } from '../../types';
 import { imageService } from '@/services/api';
 import { ImageDetail } from '@/types/image';
-import SharedImageDetail from '@/components/shared/SharedImageDetail';
+import SharedImageDetail from '@/components/SharedImageDetail';
 import './styles.less';
 
 /**

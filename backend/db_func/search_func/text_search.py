@@ -37,7 +37,8 @@ def search_by_text(
     Returns:
         图像信息字典的列表，每个字典包含图像的所有字段。
         如果未找到结果或发生错误，则返回空列表。
-    """
+    """      
+
     filters = filters or {}
     results = []    
     if not text.strip():

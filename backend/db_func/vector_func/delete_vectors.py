@@ -4,13 +4,11 @@
 import traceback
 import sqlite3
 
-from ...config import settings
 
 def delete_vectors(conn: sqlite3.Connection, image_id: int):
     """从向量表中删除指定图片ID的所有向量"""
     try:
-        conn.enable_load_extension(True)
-        conn.execute(f"SELECT load_extension('{settings.get_config().VECTOR_DB_DRIVER}')")
+        # 连接池已自动加载向量扩展，不再需要单独加载
         
         cursor = conn.cursor()
         
@@ -34,11 +32,11 @@ def delete_vector_by_type(conn: sqlite3.Connection, image_id: int, vector_table:
     Args:
         conn: 数据库连接
         image_id: 图片ID
-        vector_table: 向量表名称 (title_vectors, description_vectors, image_vectors)
+    vector_table: 向量表名称 (title_vectors, description_vectors, image_vectors)
     """
     try:
-        conn.enable_load_extension(True)
-        conn.execute(f"SELECT load_extension('{settings.get_config().VECTOR_DB_DRIVER}')")
+        # 连接池已自动加载向量扩展，不再需要单独加载
+        
         conn.execute(f"DELETE FROM {vector_table} WHERE image_id = ?", (image_id,))
         conn.commit()
         print(f"删除{vector_table}向量成功: {image_id}")

@@ -6,7 +6,6 @@ import os
 import traceback
 import sqlite3
 
-from ...config import settings
 from ...utils.generate_vector import encode_image
 
 def add_image_vector(conn: sqlite3.Connection, image_id: int, image_path: str):
@@ -15,14 +14,11 @@ def add_image_vector(conn: sqlite3.Connection, image_id: int, image_path: str):
         print(f"图像文件不存在: {image_path}")
         return None
     
-    try:
-        # 生成向量
+    try:        # 生成向量
         vector = encode_image(image_path)
         vector_json = json.dumps(vector.tolist())
         
-        # 添加向量
-        conn.enable_load_extension(True)
-        conn.execute(f"SELECT load_extension('{settings.get_config().VECTOR_DB_DRIVER}')")
+        # 连接池已自动加载向量扩展，不再需要单独加载
         
         cursor = conn.cursor()
         

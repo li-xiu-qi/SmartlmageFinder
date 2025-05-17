@@ -115,10 +115,15 @@ export type SimilarSearchResponse = ApiResponse<SearchImageItem[]> & {
  * 搜索错误代码
  */
 export enum SearchErrorCode {
-  UNSUPPORTED_SEARCH_TYPE = 'UNSUPPORTED_SEARCH_TYPE',  // 不支持的搜索类型
+  INVALID_SEARCH_TYPE = 'INVALID_SEARCH_TYPE',          // 不支持的搜索类型
+  UNSUPPORTED_SEARCH_TYPE = 'UNSUPPORTED_SEARCH_TYPE',  // 不支持的搜索类型（兼容旧版本）
   IMAGE_NOT_FOUND = 'IMAGE_NOT_FOUND',                  // 图片不存在
   DATABASE_ERROR = 'DATABASE_ERROR',                    // 数据库错误
-  IMAGE_SEARCH_FAILED = 'IMAGE_SEARCH_FAILED'           // 图像搜索失败
+  SEARCH_ERROR = 'SEARCH_ERROR',                        // 一般性搜索错误
+  IMAGE_SEARCH_ERROR = 'IMAGE_SEARCH_ERROR',            // 图片处理或向量生成失败
+  IMAGE_SEARCH_FAILED = 'IMAGE_SEARCH_FAILED',          // 图像搜索失败（兼容旧版本）
+  VECTOR_SEARCH_ERROR = 'VECTOR_SEARCH_ERROR',          // 向量搜索过程中的错误
+  SIMILAR_SEARCH_ERROR = 'SIMILAR_SEARCH_ERROR'         // 相似图像搜索过程中的错误
 }
 
 /**

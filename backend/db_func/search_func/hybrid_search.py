@@ -37,13 +37,13 @@ def hybrid_search(
         图像信息字典的列表，按综合得分排序。
     """
     filters = filters or {}
-    
+
     # 检查查询内容是否为元组
     if isinstance(query, tuple):
         query_content, query_type = query
     else:
         query_content = query
-    
+
     # 检查参数有效性
     if query_type not in ["text", "image", "image_id"]:
         raise ValueError("查询类型必须是 'text', 'image' 或 'image_id'")
@@ -69,7 +69,8 @@ def hybrid_search(
         cursor.execute("SELECT id FROM images WHERE id = ?", (query_content,))
         if not cursor.fetchone():
             raise ValueError(f"未找到ID为 {query_content} 的图像")
-              # 使用第一个搜索目标类型的向量作为查询向量
+        
+        # 使用第一个搜索目标类型的向量作为查询向量
         if search_targets:
             target_type = search_targets[0]
             vector_table = f"{target_type}_vectors"
@@ -84,7 +85,6 @@ def hybrid_search(
     
     # 1. 首先根据过滤条件获取符合条件的图像ID
     filtered_ids = get_filtered_image_ids(conn, filters)
-    
     # 如果需要排除自身，从过滤结果中移除查询图像ID
     if query_image_id is not None and query_image_id in filtered_ids:
         filtered_ids.remove(query_image_id)
@@ -98,11 +98,11 @@ def hybrid_search(
         # 构建查询
         vector_table = f"{target_type}_vectors"
         filtered_ids_str = ','.join(str(id) for id in filtered_ids)
-        
         sql = f"""
         SELECT 
             vec.image_id, 
-            vec.distance
+            vec.distance,
+            (1 - vec.distance) AS score
         FROM 
             {vector_table} AS vec
         WHERE 
@@ -115,30 +115,24 @@ def hybrid_search(
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         cursor.execute(sql, (json.dumps(query_embedding), min(limit*2, len(filtered_ids))))
-        
-        # 保存结果
+          # 保存结果
         for row in cursor.fetchall():
-            image_id = row['image_id']
-            distance = row['distance']
+            image_id = row["image_id"]
+            distance = row["distance"]
+            score = row["score"]
             
-            # 如果需要排除自身，跳过查询图像ID
-            if exclude_self and image_id == query_image_id:
-                continue
-                
             if image_id not in results_by_type:
                 results_by_type[image_id] = {}
             
-            results_by_type[image_id][target_type] = distance
-    
-    # 3. 计算综合得分
-    # 距离越小越相似，转换为得分（1-距离）
+            results_by_type[image_id][target_type] = {"distance": distance, "score": score}
+      # 3. 计算综合得分
     scored_results = []
-    for image_id, distances in results_by_type.items():
+    for image_id, target_data in results_by_type.items():
         total_score = 0
         for target_type in search_targets:
-            if target_type in distances:
-                # 将距离转换为得分（距离越小，得分越高）
-                score = 1 - distances[target_type]
+            if target_type in target_data:
+                # 直接使用SQL计算的score
+                score = target_data[target_type]["score"]
                 total_score += score
         
         # 平均得分
@@ -192,4 +186,4 @@ def hybrid_search(
     results.sort(key=lambda x: x['score'], reverse=True)
     
     return results
-        
+

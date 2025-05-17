@@ -6,7 +6,6 @@ import MainLayout from '@/layouts/MainLayout';
 // 页面组件
 import HomePage from '@/pages/home';
 import ImagesPage from '@/pages/images/pages/list';
-import ImageDetailPage from '@/pages/images/pages/ImageDetailPage';
 import UploadPage from '@/pages/upload';
 import SearchPage from '@/pages/search';
 import TagsPage from '@/pages/tags';
@@ -32,7 +31,6 @@ function App() {
           <Route path="/" element={<MainLayout />}>
             <Route index element={<HomePage />} />
             <Route path="images" element={<ImagesPage />} />
-            <Route path="images/:id" element={<ImageDetailPage />} />
             <Route path="upload" element={<UploadPage />} />
             <Route path="search" element={<SearchPage />} />
             <Route path="tags" element={<TagsPage />} />

@@ -32,13 +32,15 @@ def find_similar_images(
         一个字典列表，其中每个字典包含有关相似图像及其与查询嵌入的距离的信息。
         示例: [{'id': 1, 'filename': '...', 'filepath': '...', 'distance': 0.123}, ...]
         如果发生错误或未找到结果，则返回空列表。
-    """
+    """  
     if not isinstance(query_embedding, list) or not all(isinstance(x, (float, int)) for x in query_embedding):
         raise ValueError("query_embedding 必须是浮点数或整数列表。")
     if vector_type not in ["title", "description", "image"]:
         raise ValueError("无效的 vector_type。必须是 'title', 'description', 或 'image'。")
     if not isinstance(k, int) or k <= 0:
         raise ValueError("k 必须是正整数。")
+    
+    # 连接池已自动加载向量扩展，不再需要单独加载
 
     vector_table_map = {
         "title": "title_vectors",
@@ -64,8 +66,7 @@ def find_similar_images(
 
         # 2. 使用过滤后的ID进行向量相似度搜索
         filtered_ids_str = ','.join(str(id) for id in filtered_ids)
-        
-        # 3. 构建向量相似度搜索查询
+          # 3. 构建向量相似度搜索查询
         sql_query = f"""
         SELECT
             img.id,
@@ -80,13 +81,14 @@ def find_similar_images(
             img.updated_at,
             img.metadata,
             img.tags,
-            vec.distance
+            vec.distance,
+            (1 - vec.distance) AS score
         FROM
             {target_vector_table} AS vec
         JOIN
-            images AS img ON vec.uuid = img.uuid
+            images AS img ON vec.image_id = img.id
         WHERE
-            vec.uuid IN ({filtered_ids_str})
+            vec.image_id IN ({filtered_ids_str})
             AND vec.embedding MATCH ? AND k = ?;
         """
         
@@ -105,6 +107,6 @@ def find_similar_images(
         raise e
     except Exception as e:
         print(f"相似度搜索期间发生意外错误: {e}")
-            
+    print("相似度搜索完成")
     return results
 

@@ -7,6 +7,9 @@ import queue
 from typing import Dict, List, Any, Optional
 from contextlib import contextmanager
 
+# 导入配置模块
+from ..config import settings
+
 class DatabaseConnectionPool:
     """SQLite数据库连接池，提供线程安全的连接管理"""
     
@@ -28,6 +31,21 @@ class DatabaseConnectionPool:
         """创建新的数据库连接"""
         connection = sqlite3.connect(self.database_path, check_same_thread=False)
         connection.row_factory = sqlite3.Row
+        
+        # 在创建连接时就加载向量扩展
+        try:
+            connection.enable_load_extension(True)
+            connection.execute(f"SELECT load_extension('{settings.get_config().VECTOR_DB_DRIVER}')")
+            # 验证扩展是否正确加载
+            cursor = connection.cursor()
+            cursor.execute("SELECT vec_version()")
+            version = cursor.fetchone()[0]
+            print(f"连接创建，成功加载sqlite-vec扩展，版本: {version}")
+        except Exception as e:
+            print(f"连接创建时加载向量扩展失败: {e}")
+            # 这里我们选择继续使用连接，但记录错误
+            # 如果要求更严格，可以在这里抛出异常
+        
         return connection
     
     def get_connection(self) -> sqlite3.Connection:
