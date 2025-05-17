@@ -57,10 +57,25 @@ def get_filtered_image_ids(conn: sqlite3.Connection, filters: Dict[str, Any]) ->
             tag_conditions = []
             for tag_value in tags_filter_values:
                 tag_conditions.append("images.tags LIKE ?")
-                filter_params.append(f"%{tag_value}%")
-            if tag_conditions:
+                filter_params.append(f"%{tag_value}%")           
+        if tag_conditions:
                 filter_query += f" AND ({ ' OR '.join(tag_conditions) })"
 
     cursor.execute(filter_query, tuple(filter_params))
-    filtered_ids = [row[0] for row in cursor.fetchall()]
+    result = cursor.fetchall()
+    
+    # 兼容处理不同类型的查询结果（元组或Row对象）
+    filtered_ids = []
+    for row in result:
+        try:
+            # 尝试作为列表/元组访问
+            filtered_ids.append(row[0])
+        except (KeyError, TypeError):
+            try:
+                # 尝试作为Row对象/字典访问
+                filtered_ids.append(row['id'])
+            except (KeyError, TypeError):
+                # 如果上述方法都失败，打印行信息以便调试
+                print(f"无法提取ID，行数据: {row}，类型: {type(row)}")
+    
     return filtered_ids

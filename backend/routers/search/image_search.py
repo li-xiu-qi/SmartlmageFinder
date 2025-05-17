@@ -54,7 +54,7 @@ async def image_search_api(
                 shutil.copyfileobj(file.file, buffer)
                 
             # 使用PIL打开图像以确保它是有效的图像
-            img = PILImage.open(temp_file_path)
+            PILImage.open(temp_file_path)
             
             # 使用multi_vector_search模块中的image_search函数
             results = image_search(
@@ -65,8 +65,7 @@ async def image_search_api(
                 limit=limit,
                 offset=offset
             )
-            
-            # 处理JSON字段
+              # 处理JSON字段
             results = process_json_fields(results)
             
             return create_paginated_response(
@@ -78,7 +77,11 @@ async def image_search_api(
         finally:
             # 清理临时文件
             if os.path.exists(temp_file_path):
-                os.unlink(temp_file_path)
+                try:
+                    os.unlink(temp_file_path)
+                except PermissionError:
+                    # 文件可能仍在使用中，稍后将被系统自动清理
+                    print(f"无法删除临时文件 {temp_file_path}，文件可能仍在使用中")
                 
     except Exception as e:
         return handle_search_error(

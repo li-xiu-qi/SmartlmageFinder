@@ -19,7 +19,7 @@ import {
 } from '@ant-design/icons';
 import { useSearchParams } from 'react-router-dom';
 import { TagInfo } from '@/types/models';
-import { TextSearchParams, VectorSearchTarget } from '@/types/search';
+import { TextSearchParams, VectorSearchTarget, SearchType } from '@/types/search';
 import { TEXT_SEARCH_TYPES, ADVANCED_SEARCH_TYPES, VECTOR_SEARCH_TARGETS } from './constants';
 import { mapToApiSearchType, parseTagsFromParam, getVectorSearchTargets } from './utils';
 
@@ -39,10 +39,9 @@ const TextSearchForm: React.FC<TextSearchFormProps> = ({ onSearch, loading, tags
   const [searchParams] = useSearchParams();
   const [form] = Form.useForm();
   const [showAdvanced, setShowAdvanced] = useState(false);
-
   // 从Form.useWatch获取当前搜索类型值
   const searchType = Form.useWatch('search_type', form);
-  const isVectorSearch = searchType === 'vector' || searchType === 'multi';
+  const isVectorSearch = searchType === SearchType.VECTOR || searchType === SearchType.MULTI;
   
   // 初始化表单值
   useEffect(() => {
@@ -79,18 +78,22 @@ const TextSearchForm: React.FC<TextSearchFormProps> = ({ onSearch, loading, tags
     }
   }, [searchParams, form, isVectorSearch]);
   
+  // 监听搜索类型变化，当选择向量搜索时自动显示高级选项
+  useEffect(() => {
+    if (isVectorSearch && !showAdvanced) {
+      setShowAdvanced(true);
+    }
+  }, [isVectorSearch, showAdvanced]);
   // 执行文本搜索
-  const handleSubmit = (values: Record<string, any>) => {
+  const handleSubmit = (values: any) => {
     // 构造搜索参数
     const params: TextSearchParams = {
       q: values.q
-    };
-
-    // 添加搜索类型
+    };// 添加搜索类型
     params.search_type = mapToApiSearchType(values.search_type);
     
     // 设置向量搜索目标
-    if (values.search_type === 'vector' || values.search_type === 'multi') {
+    if (values.search_type === SearchType.VECTOR || values.search_type === SearchType.MULTI) {
       params.vector_targets = getVectorSearchTargets(values.vector_targets);
     }
 
@@ -143,16 +146,19 @@ const TextSearchForm: React.FC<TextSearchFormProps> = ({ onSearch, loading, tags
                 allowClear
               />
             </Form.Item>
-          </Col>
-          <Col xs={24} md={6}>
+          </Col>          <Col xs={24} md={6}>
             <Form.Item name="search_type">
               <Select size="large">
-                {TEXT_SEARCH_TYPES.map(type => (
-                  <Option key={type.value} value={type.value}>{type.label}</Option>
-                ))}
-                {ADVANCED_SEARCH_TYPES.map(type => (
-                  <Option key={type.value} value={type.value}>{type.label}</Option>
-                ))}
+                <Select.OptGroup label="基础搜索">
+                  {TEXT_SEARCH_TYPES.map(type => (
+                    <Option key={type.value} value={type.value}>{type.label}</Option>
+                  ))}
+                </Select.OptGroup>
+                <Select.OptGroup label="高级搜索">
+                  {ADVANCED_SEARCH_TYPES.map(type => (
+                    <Option key={type.value} value={type.value}>{type.label}</Option>
+                  ))}
+                </Select.OptGroup>
               </Select>
             </Form.Item>
           </Col>
