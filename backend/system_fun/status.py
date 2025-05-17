@@ -108,10 +108,6 @@ def check_vector_db_driver_status() -> VectorDbDriverStatus:
 def get_database_status(conn: sqlite3.Connection = None) -> DatabaseStatus:
     """获取数据库状态信息"""
     try:
-        # 如果没有提供连接，使用临时连接
-        if conn is None:
-            with db_func.core.get_db_connection() as temp_conn:
-                return get_database_status(temp_conn)
         
         cursor = conn.cursor()
         
