@@ -54,6 +54,13 @@ const tagService: TagClient = {
       }
     }) as Promise<ImagesByMultipleTagsResponse>;
   },
+  /**
+   * 更新图片标签（覆盖方式）
+   * POST /api/v1/tags/{image_id}/update
+   */
+  async updateImageTags(imageId: number, tags: string[]): Promise<ApiResponse<{ tags: string[] }>> {
+    return apiClient.postWithTransform<{ tags: string[] }>(`/tags/${imageId}/update`, tags);
+  },
 
   /**
    * 为图片添加标签

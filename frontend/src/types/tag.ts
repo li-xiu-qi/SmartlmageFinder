@@ -147,6 +147,13 @@ export interface TagClient {
    * @returns 图片列表的Promise
    */
   getImagesByMultipleTags(params: GetImagesByMultipleTagsParams): Promise<ImagesByMultipleTagsResponse>;
+  /**
+   * 更新图片标签（覆盖方式）
+   * @param imageId 图片ID
+   * @param tags 新的标签列表（将完全替换旧的标签）
+   * @returns 更新后的标签列表Promise
+   */
+  updateImageTags(imageId: number, tags: string[]): Promise<ApiResponse<{ tags: string[] }>>;
 
   /**
    * 为图片添加标签

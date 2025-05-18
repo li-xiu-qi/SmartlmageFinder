@@ -229,11 +229,9 @@ const UploadPage: React.FC = () => {
           uploadProgress={uploadProgress}
           onUpload={handleUpload}
           onReset={handleReset}
-        />
-
-        {/* 元数据编辑模态框 */}
+        />        {/* 元数据编辑模态框 */}
         <MetadataModal
-          visible={showMetadataModal}
+          open={showMetadataModal}
           currentFile={currentFile}
           form={metadataForm}
           availableTags={availableTags}

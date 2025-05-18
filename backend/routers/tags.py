@@ -8,11 +8,7 @@ from backend.db_func.core import get_db
 from backend.db_func.images_func.get import get_images_by_tag, get_images_by_ids, get_image_by_id
 from backend.db_func.tags_func.get_tags import get_tags_count, get_all_tags
 from backend.global_schemas import ResponseModel
-
-
-# 定义请求模型
-class UpdateTagsRequest(BaseModel):
-    tags: List[str] = Field(..., description="标签列表")
+from backend.db_func.tags_func.tag_operations import update_tags
 
 
 router = APIRouter(prefix="/api/v1/tags", tags=["tags"])
@@ -119,7 +115,6 @@ async def get_images_by_multiple_tags(
     page_image_ids = image_ids[start_idx:end_idx]
     
     images = get_images_by_ids(page_image_ids, conn)
-    
     return ResponseModel.paginated_response(
         data=images,
         page=page,
@@ -133,3 +128,33 @@ async def get_images_by_multiple_tags(
     )
 
 
+@router.post("/{image_id}/update", response_model=ResponseModel)
+async def add_tags_to_image_endpoint(
+    image_id: int = Path(..., description="图片ID"),
+    tags: List[str] = Body(..., description="标签列表"),
+    conn = Depends(get_db)
+):
+    """为图片添加标签"""
+    # 检查图片是否存在
+    image = get_image_by_id(conn, image_id)
+    if not image:
+        return ResponseModel.error(
+            code="NOT_FOUND",
+            message=f"未找到ID为{image_id}的图片",
+            http_code=404
+        )
+    
+    # 验证标签列表
+    if not tags:
+        return ResponseModel.error(
+            code="INVALID_TAGS",
+            message="标签列表不能为空",
+            http_code=400
+        )
+    # 添加标签
+    tags = update_tags(conn, image_id, tags)
+    
+    return ResponseModel.success(
+        data={"tags": tags},
+        message="标签添加成功"
+    )

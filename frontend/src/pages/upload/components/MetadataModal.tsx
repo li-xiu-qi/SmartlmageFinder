@@ -7,7 +7,7 @@ import RefModal from '@/components/RefModal';
 const { TextArea } = Input;
 
 interface MetadataModalProps {
-  visible: boolean; // 控制模态框是否可见
+  open: boolean; // 控制模态框是否可见
   currentFile: UploadFile | null; // 当前正在编辑的文件
   form: FormInstance; // 表单实例，用于外部控制
   availableTags: SelectableTag[]; // 可用标签列表
@@ -20,7 +20,7 @@ interface MetadataModalProps {
  * 用于编辑单个图片的元数据，包括标题、描述、标签等
  */
 const MetadataModal: React.FC<MetadataModalProps> = ({
-  visible,
+  open,
   currentFile,
   form,
   availableTags,
@@ -32,10 +32,9 @@ const MetadataModal: React.FC<MetadataModalProps> = ({
     return currentFile 
       ? `编辑图片 "${currentFile.name}" 的元数据` 
       : '编辑图片元数据';
-  };  return (
-    <RefModal
+  };  return (    <RefModal
       title={renderTitle()}
-      open={visible}
+      open={open}
       onOk={onSave}
       onCancel={onCancel}
       okText="保存"
