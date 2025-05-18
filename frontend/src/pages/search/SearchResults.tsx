@@ -1,8 +1,12 @@
-import React from 'react';
-import { Empty, Row, Col, Card, Spin, Typography, Space, Divider } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Empty, Row, Col, Card, Spin, Typography, Space, Divider, Drawer, message } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
 import ImageCard from '@/pages/images/components/ImageCard';
+import SharedImageDetail from '@/components/SharedImageDetail';
+import { imageService } from '@/services/api';
 import { SearchImageItem } from '@/types/models';
+import { ImageDetail } from '@/types';
+import './styles/SearchResults.less'; // 导入新的样式文件
 
 const { Text, Title } = Typography;
 
@@ -23,12 +27,64 @@ interface SearchResultsProps {
  */
 const SearchResults: React.FC<SearchResultsProps> = ({
   loading,
-  results,
+  results: initialResults,
   total,
   searchTime,
   searchKeyword,
   referenceImage
 }) => {
+  const [selectedImage, setSelectedImage] = useState<ImageDetail | null>(null);
+  const [isDrawerVisible, setIsDrawerVisible] = useState(false);
+  const [drawerLoading, setDrawerLoading] = useState(false);
+  const [currentResults, setCurrentResults] = useState<SearchImageItem[]>(initialResults);
+
+  useEffect(() => {
+    setCurrentResults(initialResults);
+  }, [initialResults]);
+
+  const handleImageClick = async (imageItem: SearchImageItem) => {
+    setDrawerLoading(true);
+    setIsDrawerVisible(true);
+    try {
+      const response = await imageService.getImageDetail({ image_id: imageItem.id });
+      if (response.status === 'success' && response.data) {
+        setSelectedImage(response.data);
+      } else {
+        message.error('加载图片详情失败');
+        setIsDrawerVisible(false);
+      }
+    } catch (error) {
+      console.error('获取图片详情失败:', error);
+      message.error('加载图片详情失败');
+      setIsDrawerVisible(false);
+    } finally {
+      setDrawerLoading(false);
+    }
+  };
+
+  const handleDrawerClose = () => {
+    setIsDrawerVisible(false);
+    setSelectedImage(null);
+  };
+
+  const handleImageUpdate = (updatedImage: ImageDetail) => {
+    setSelectedImage(updatedImage);
+    setCurrentResults(prevResults => 
+      prevResults.map(item => 
+        item.id === updatedImage.id 
+          ? { ...item, title: updatedImage.title } 
+          : item
+      )
+    );
+  };
+
+  const handleImageDelete = (deletedImageId: number) => {
+    setIsDrawerVisible(false);
+    setSelectedImage(null);
+    setCurrentResults(prevResults => prevResults.filter(item => item.id !== deletedImageId));
+    message.success('图片已删除');
+  };
+
   if (loading) {
     return (
       <div className="search-loading-container">
@@ -39,7 +95,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({
   }
 
   // 如果没有搜索结果
-  if (results.length === 0) {
+  if (currentResults.length === 0 && !loading) {
     return (
       <Card className="search-results-empty">
         <Empty 
@@ -71,8 +127,8 @@ const SearchResults: React.FC<SearchResultsProps> = ({
       </Card>
       
       <Row gutter={[16, 16]} className="search-results-grid">
-        {results.map(image => (
-          <Col xs={24} sm={12} md={8} lg={6} key={image.id}>
+        {currentResults.map(image => (
+          <Col xs={24} sm={12} md={8} lg={6} key={image.id} onClick={() => handleImageClick(image)}>
             <ImageCard 
               image={image} 
               showSimilarity={true}
@@ -80,6 +136,31 @@ const SearchResults: React.FC<SearchResultsProps> = ({
           </Col>
         ))}
       </Row>
+
+      {selectedImage && (
+        <Drawer
+          title={selectedImage.title || "图片详情"}
+          placement="right"
+          width={640} // 修改宽度为 640
+          onClose={handleDrawerClose}
+          open={isDrawerVisible}
+          destroyOnClose
+        >
+          {drawerLoading ? (
+            <div className="drawer-loading-indicator"> {/* 使用 CSS 类替代内联样式 */}
+              <Spin />
+              <p>正在加载详情...</p>
+            </div>
+          ) : (
+            <SharedImageDetail
+              image={selectedImage}
+              onUpdate={handleImageUpdate}
+              onDelete={handleImageDelete}
+              onClose={handleDrawerClose}
+            />
+          )}
+        </Drawer>
+      )}
     </div>
   );
 };
