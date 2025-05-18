@@ -145,7 +145,7 @@ async def upload_images(
                     message=f"处理图像失败: {str(e)}",
                     http_code=400
                 )
-                  # 准备图像数据，tags 和 metadata 将由 add_image_to_database 处理序列化
+            # 准备图像数据，tags 和 metadata 将由 add_image_to_database 处理序列化
             image_data = {
                 "filename": original_filename,
                 "filepath": file_path,
@@ -283,64 +283,3 @@ async def delete_image(
             http_code=500
         )
 
-
-@router.post("/upload/temp", response_model=ResponseModel)
-async def upload_temp_files(
-    files: List[UploadFile] = File(..., description="要上传到临时目录的文件"),
-    db: sqlite3.Connection = Depends(get_db),
-):
-    """
-    上传文件到临时目录，不存储到数据库。
-    用于前端需要先上传文件进行处理，但尚未决定是否永久保存的场景。
-    """
-    try:
-        # 确保临时目录存在
-        temp_dir = settings.get_config().TEMP_DIR
-        os.makedirs(temp_dir, exist_ok=True)
-        
-        temp_files = []
-        for file in files:
-            # 生成临时文件名和路径
-            original_filename = file.filename
-            file_ext = original_filename.split(".")[-1] if "." in original_filename else ""
-            unique_filename = f"{uuid.uuid4().hex}.{file_ext}" if file_ext else f"{uuid.uuid4().hex}"
-            file_path = os.path.join(temp_dir, unique_filename)
-            
-            # 保存文件到临时目录
-            with open(file_path, "wb") as buffer:
-                shutil.copyfileobj(file.file, buffer)
-            
-            # 获取基本文件信息
-            file_size = os.path.getsize(file_path)
-            
-            # 如果是图像，获取尺寸信息
-            width = height = None
-            try:
-                if file_ext.lower() in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp']:
-                    with PILImage.open(file_path) as img:
-                        width, height = img.size
-            except Exception as e:
-                print(f"无法处理图像尺寸: {str(e)}")
-            
-            # 添加到结果列表
-            temp_files.append({
-                "original_filename": original_filename,
-                "temp_filename": unique_filename,
-                "temp_filepath": file_path,
-                "file_size": file_size,
-                "file_type": file_ext,
-                "width": width,
-                "height": height,
-                "upload_time": datetime.now().isoformat()
-            })
-        
-        return ResponseModel.success(
-            data=temp_files,
-            message=f"成功上传 {len(temp_files)} 个临时文件"
-        )
-    except Exception as e:
-        return ResponseModel.error(
-            code="TEMP_UPLOAD_ERROR",
-            message=f"上传临时文件失败: {str(e)}",
-            http_code=500
-        )

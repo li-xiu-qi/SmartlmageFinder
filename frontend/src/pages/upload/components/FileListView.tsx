@@ -1,8 +1,9 @@
 import React from 'react';
 import { List, Space, Tag, Card, Typography, Empty } from 'antd';
-import { PictureOutlined } from '@ant-design/icons';
 import { UploadFile, ImageMetadata } from '../types';
 import FileListItemActions from './FileListItemActions';
+import FilePreview from './FilePreview';
+import '../styles/fileList.css';
 
 const { Text, Paragraph } = Typography;
 
@@ -59,24 +60,24 @@ const FileListView: React.FC<FileListViewProps> = ({
               style={{ width: '100%' }}
               bodyStyle={{ padding: '12px' }}
             >
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                {/* 文件图标和名称 */}
-                <div style={{ marginRight: 16 }}>
-                  <PictureOutlined style={{ fontSize: 24, marginRight: 8 }} />
-                  <Text strong>{file.name}</Text>
-                </div>
+              <div className="file-item-container">                {/* 文件图标和名称或预览图 */}
+                <FilePreview file={file} />
 
                 {/* 文件元数据信息概览 */}
-                <div style={{ flex: 1, marginRight: 16 }}>
+                <div className="file-metadata-container">
+                  <div className="file-name">
+                    <Text strong>{file.name}</Text>
+                  </div>
+                  
                   {metadata.title && (
-                    <Paragraph ellipsis={{ rows: 1 }} style={{ marginBottom: 4 }}>
+                    <Paragraph ellipsis={{ rows: 1 }} className="file-metadata-item">
                       <Text type="secondary">标题: </Text>
                       <Text>{metadata.title}</Text>
                     </Paragraph>
                   )}
                   
                   {metadata.tags && metadata.tags.length > 0 && (
-                    <Space size={[0, 4]} wrap>
+                    <Space size={[0, 4]} wrap className="file-tags-container">
                       {metadata.tags.map(tag => (
                         <Tag key={tag}>{tag}</Tag>
                       ))}

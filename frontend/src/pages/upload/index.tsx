@@ -21,6 +21,10 @@ import {
   batchAnalyzeImages,
   uploadImages
 } from './utils';
+import { getImagePreviewUrl } from './previewUtils';
+
+// 导入样式
+import './styles/uploadPage.css';
 
 // 样式
 const styles = {
@@ -33,8 +37,7 @@ const styles = {
  */
 const UploadPage: React.FC = () => {
   // 表单实例，用于元数据编辑
-  const [metadataForm] = Form.useForm();
-  const navigate = useNavigate();
+  const [metadataForm] = Form.useForm();  const navigate = useNavigate();
   
   // 状态管理
   const [fileList, setFileList] = useState<UploadFile[]>([]);
@@ -46,6 +49,8 @@ const UploadPage: React.FC = () => {
   const [currentFile, setCurrentFile] = useState<UploadFile | null>(null);
   const [imageMetadataMap, setImageMetadataMap] = useState<Record<string, ImageMetadata>>({});
   const [hasUploaded, setHasUploaded] = useState(false);
+  // 添加预览URL状态
+  const [imagePreviewMap, setImagePreviewMap] = useState<Record<string, string>>({});
   
   // AI分析相关状态
   const [analyzingFile, setAnalyzingFile] = useState<UploadFile | null>(null);
@@ -60,7 +65,6 @@ const UploadPage: React.FC = () => {
   useEffect(() => {
     fetchTagsData(setAvailableTags);
   }, []);
-
   // 处理文件列表变化
   const handleFileListChange: UploadProps['onChange'] = ({ fileList }) => {
     const newList = [...fileList] as UploadFile[];
@@ -76,6 +80,16 @@ const UploadPage: React.FC = () => {
             tags: [],
           }
         }));
+      }
+      
+      // 生成图片预览URL
+      if (file.originFileObj && !imagePreviewMap[file.uid]) {
+        getImagePreviewUrl(file.originFileObj).then(url => {
+          setImagePreviewMap(prev => ({
+            ...prev,
+            [file.uid]: url
+          }));
+        });
       }
     });
     
@@ -162,7 +176,6 @@ const UploadPage: React.FC = () => {
   const handleViewUploaded = () => {
     navigate('/images');
   };
-
   // 重置上传表单
   const handleReset = () => {
     setFileList([]);
@@ -170,6 +183,8 @@ const UploadPage: React.FC = () => {
     setUploadResult(null);
     setUploadProgress(0);
     setHasUploaded(false);
+    // 清除图片预览URL
+    setImagePreviewMap({});
   };
 
   return (
@@ -184,8 +199,7 @@ const UploadPage: React.FC = () => {
         />
 
         {/* 文件列表 */}
-        <div className="file-list-container" style={styles.fileListContainer}>
-          <FileListView
+        <div className="file-list-container" style={styles.fileListContainer}>          <FileListView
             fileList={fileList}
             imageMetadataMap={imageMetadataMap}
             isAnalyzing={isAnalyzing}
