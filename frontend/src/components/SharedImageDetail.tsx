@@ -9,7 +9,7 @@ import FileInfoSection from '@/components/FileInfoSection';
 import TagsSection from '@/components/TagsSection';
 import MetadataSection from '@/components/MetadataSection';
 import ActionsPanel from '@/components/ActionsPanel';
-import SimilarImagesModal from '@/pages/images/components/SimilarImagesModal';
+import SimilarImagesModal from '@/components/SimilarImagesModal';
 import './shared-image-detail.less';
 
 interface SharedImageDetailProps {

@@ -1,9 +1,10 @@
-import React from 'react';
-import { Select, Button, Row, Col, Card, Tag, Spin, Empty } from 'antd';
-import { SearchOutlined } from '@ant-design/icons';
+import React, { useState } from 'react';
+import { Select, Button, Row, Col, Card, Tag, Spin, Empty, Typography } from 'antd';
+import { SearchOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { SearchImageItem } from '@/types/models';
 import { VectorSearchTarget } from '@/types/search';
 import RefModal from '@/components/RefModal';
+import ImagePreview from '@/components/ImagePreview';
 
 const { Option } = Select;
 
@@ -35,7 +36,18 @@ const SimilarImagesModal: React.FC<SimilarImagesModalProps> = ({
   onSearchTargetChange,
   onSearch,
   similarImages
-}) => {  return (
+}) => {
+  const [selectedPreviewImage, setSelectedPreviewImage] = useState<SearchImageItem | null>(null);
+
+  const handleImageClick = (image: SearchImageItem) => {
+    setSelectedPreviewImage(image);
+  };
+
+  const handleBackToList = () => {
+    setSelectedPreviewImage(null);
+  };
+
+  return (
     <RefModal
       title={`相似图片 (基于${searchTypeOptions.find(opt => opt.value === searchTarget)?.label || '图像向量'})`}
       open={open}
@@ -54,10 +66,10 @@ const SimilarImagesModal: React.FC<SimilarImagesModalProps> = ({
             <Option key={option.value} value={option.value}>{option.label}</Option>
           ))}
         </Select>
-        
-        <Button 
-          type="primary" 
-          icon={<SearchOutlined />} 
+
+        <Button
+          type="primary"
+          icon={<SearchOutlined />}
           onClick={onSearch}
           loading={loading}
         >
@@ -65,7 +77,31 @@ const SimilarImagesModal: React.FC<SimilarImagesModalProps> = ({
         </Button>
       </div>
 
-      {loading ? (
+      {selectedPreviewImage ? (
+        <div>
+          <Button
+            icon={<ArrowLeftOutlined />}
+            onClick={handleBackToList}
+            style={{ marginBottom: 16 }}
+          >
+            返回列表
+          </Button>
+          <ImagePreview image={selectedPreviewImage as any} />
+          <Typography.Title level={4} style={{ marginTop: 16 }}>{selectedPreviewImage.title}</Typography.Title>
+          <div style={{ marginTop: 8 }}>
+            {selectedPreviewImage.score !== undefined ?
+              `相关度: ${Math.round(selectedPreviewImage.score * 100)}%` :
+              selectedPreviewImage.distance !== undefined ?
+                `距离: ${selectedPreviewImage.distance.toFixed(4)}` :
+                '相似度: N/A'}
+          </div>
+          <div style={{ marginTop: 8 }}>
+            {selectedPreviewImage.tags.map(tag => (
+              <Tag key={tag} style={{ marginRight: 4 }}>{tag}</Tag>
+            ))}
+          </div>
+        </div>
+      ) : loading ? (
         <div style={{ textAlign: 'center', padding: '40px 0' }}>
           <Spin size="large" />
           <p style={{ marginTop: 16 }}>正在查找相似图片，请稍候...</p>
@@ -76,12 +112,13 @@ const SimilarImagesModal: React.FC<SimilarImagesModalProps> = ({
             <Col xs={12} sm={8} md={8} key={img.id}>
               <Card
                 hoverable
+                onClick={() => handleImageClick(img)} // Add onClick handler
                 cover={
                   <div style={{ height: 160, overflow: 'hidden' }}>
-                    <img 
-                      alt={img.title} 
-                      src={img.filepath} 
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                    <img
+                      alt={img.title}
+                      src={img.filepath}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
                   </div>
                 }
@@ -92,11 +129,11 @@ const SimilarImagesModal: React.FC<SimilarImagesModalProps> = ({
                   description={
                     <>
                       <div>
-                        {img.score !== undefined ? 
-                          `相关度: ${Math.round(img.score * 100)}%` : 
-                          img.distance !== undefined ? 
-                          `距离: ${img.distance.toFixed(4)}` : 
-                          '相似度: N/A'}
+                        {img.score !== undefined ?
+                          `相关度: ${Math.round(img.score * 100)}%` :
+                          img.distance !== undefined ?
+                            `距离: ${img.distance.toFixed(4)}` :
+                            '相似度: N/A'}
                       </div>
                       <div style={{ marginTop: 4 }}>
                         {img.tags.slice(0, 2).map(tag => (
@@ -112,7 +149,7 @@ const SimilarImagesModal: React.FC<SimilarImagesModalProps> = ({
           ))}
         </Row>
       ) : (
-        <Empty description="未找到相似图片" />      )}
+        <Empty description="未找到相似图片" />)}
     </RefModal>
   );
 };
