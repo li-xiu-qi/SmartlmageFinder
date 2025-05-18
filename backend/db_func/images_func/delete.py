@@ -3,7 +3,7 @@
 """
 import sqlite3
 
-from ..vector_func import delete_vectors
+from ..vector_func.delete_vectors import delete_vectors
 
 
 def delete_image( conn: sqlite3.Connection, image_id: int,) -> bool:

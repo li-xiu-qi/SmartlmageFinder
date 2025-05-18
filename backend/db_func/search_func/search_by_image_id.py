@@ -6,8 +6,11 @@ from typing import List, Dict, Any, Optional
 import json
 import traceback
 
+from backend.db_func.search_func.basic_search import get_filtered_image_ids
+
+from ..utils import json_from_db_to_python, row_to_dict
+
 # 导入图像工具函数来处理JSON字段
-from ..images_func.utils import json_from_db_to_python
 
 def search_by_image_id(
     conn: sqlite3.Connection,
@@ -39,17 +42,12 @@ def search_by_image_id(
     """
     cursor = conn.cursor()
     results = []
-    
     try:
         # 保存原始的row_factory
         original_row_factory = conn.row_factory
         
-        # 设置行工厂函数以返回字典格式结果
-        def dict_factory(cursor, row):
-            d = {}
-            for idx, col in enumerate(cursor.description):
-                d[col[0]] = row[idx]
-            return d
+        # 设置row_factory为sqlite3.Row以便能够使用row_to_dict函数
+        conn.row_factory = sqlite3.Row
         
         # 首先验证查询的图像ID是否存在
         cursor = conn.cursor()
@@ -62,13 +60,11 @@ def search_by_image_id(
         # 处理过滤条件
         # 在调用get_filtered_image_ids前确保使用原始的row_factory
         conn.row_factory = original_row_factory
-        
-        # 使用 basic_search 中的函数获取过滤后的图像ID
-        from .basic_search import get_filtered_image_ids
+          # 使用 basic_search 中的函数获取过滤后的图像ID
         filtered_ids = get_filtered_image_ids(conn, filters or {})
         
-        # 查询完成后设置为dict_factory用于后续查询
-        conn.row_factory = dict_factory
+        # 重新设置row_factory为sqlite3.Row
+        conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         
         # 如果需要排除自己，从过滤ID中移除
@@ -141,13 +137,13 @@ def search_by_image_id(
             
             # 执行查询
             cursor.execute(sql_query, (image_id, k))
-            
-            # 获取结果
+              # 获取结果
             raw_results = cursor.fetchall()
             
             # 处理结果
             for row in raw_results:
-                result = dict(row)
+                # 使用row_to_dict转换Row对象为字典
+                result = row_to_dict(row)
                 
                 # 使用统一的JSON处理函数来处理tags和metadata字段
                 result = json_from_db_to_python(result)

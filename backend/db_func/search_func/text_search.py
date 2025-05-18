@@ -5,7 +5,7 @@ import sqlite3
 import json
 from typing import List, Dict, Any, Optional, Literal
 
-from ..core import dict_factory
+from ..utils import row_to_dict, rows_to_dicts
 from .basic_search import get_filtered_image_ids
 
 def search_by_text(
@@ -37,15 +37,16 @@ def search_by_text(
     Returns:
         图像信息字典的列表，每个字典包含图像的所有字段。
         如果未找到结果或发生错误，则返回空列表。
-    """      
-
+    """          
     filters = filters or {}
     results = []    
     if not text.strip():
         return results  # 如果搜索文本为空，直接返回空结果
     
+    # 设置row_factory以便正确处理查询结果
+    conn.row_factory = sqlite3.Row
+    
     try:
-        conn.row_factory = dict_factory
         cursor = conn.cursor()
         
         # 构建查询条件
@@ -93,25 +94,15 @@ def search_by_text(
             LIMIT ? OFFSET ?
             """
             params = search_params + [limit, offset]
-        
-        # 执行查询
+          # 执行查询
         cursor.execute(query, params)
-        results = cursor.fetchall()
+        raw_results = cursor.fetchall()
+          # 使用rows_to_dicts函数将结果转换为字典列表
+        results = rows_to_dicts(raw_results)
         
-        # 处理标签字段，将JSON字符串转换为Python列表
-        for result in results:
-            if result.get('tags') and isinstance(result['tags'], str):
-                try:
-                    result['tags'] = json.loads(result['tags'])
-                except:
-                    result['tags'] = []
-                    
-            # 处理metadata字段
-            if result.get('metadata') and isinstance(result['metadata'], str):
-                try:
-                    result['metadata'] = json.loads(result['metadata'])
-                except:
-                    result['metadata'] = {}
+        # 处理JSON字段
+        from ..utils import json_from_db_to_python
+        results = [json_from_db_to_python(result) for result in results]
     
     except sqlite3.Error as e:
         print(f"数据库文本搜索错误: {e}")

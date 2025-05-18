@@ -26,7 +26,6 @@ class DatabaseConnectionPool:
         self.connections = queue.Queue(maxsize=max_connections)
         self.connection_count = 0
         self._lock = threading.Lock()
-        
     def _create_connection(self) -> sqlite3.Connection:
         """创建新的数据库连接"""
         connection = sqlite3.connect(self.database_path, check_same_thread=False)
@@ -39,12 +38,11 @@ class DatabaseConnectionPool:
             # 验证扩展是否正确加载
             cursor = connection.cursor()
             cursor.execute("SELECT vec_version()")
-            version = cursor.fetchone()[0]
+            result = cursor.fetchone()
+            version = result[0] if result else "未知"
             print(f"连接创建，成功加载sqlite-vec扩展，版本: {version}")
         except Exception as e:
             print(f"连接创建时加载向量扩展失败: {e}")
-            # 这里我们选择继续使用连接，但记录错误
-            # 如果要求更严格，可以在这里抛出异常
         
         return connection
     

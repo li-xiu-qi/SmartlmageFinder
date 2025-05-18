@@ -7,8 +7,7 @@ import json
 from typing import Dict, Any
 from datetime import datetime
 
-from backend.db_func.core import get_current_time
-from .utils import python_to_json_for_db
+from backend.db_func.utils import python_to_json_for_db
 from ..vector_func.add_image_vectors import add_image_vector
 from ..vector_func.add_text_vectors import add_title_vector, add_description_vector
 
@@ -24,8 +23,8 @@ def add_image_to_database(conn: sqlite3.Connection, image_data: Dict[str, Any]) 
     """
     cursor = conn.cursor()
     
-    # 确保时间字段使用标准格式
-    current_time = get_current_time()
+    # 确保时间字段使用标准 ISO 8601 格式 (包含微秒)
+    current_time_iso = datetime.now().isoformat(timespec='microseconds')
     
     # 插入图片元数据
     sql = """
@@ -45,8 +44,8 @@ def add_image_to_database(conn: sqlite3.Connection, image_data: Dict[str, Any]) 
         image_data.get("file_type", ""),
         image_data.get("width", 0),
         image_data.get("height", 0),
-        image_data.get("created_at", current_time),
-        current_time,
+        image_data.get("created_at", current_time_iso), # Use ISO format
+        current_time_iso, # Use ISO format for updated_at
         python_to_json_for_db(image_data.get("metadata", {}), {}),
         python_to_json_for_db(image_data.get("tags", []), [])
     )

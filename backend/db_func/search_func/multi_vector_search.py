@@ -5,9 +5,9 @@ import sqlite3
 import json
 from typing import List, Dict, Any, Optional, Union
 
-from ..core import dict_factory
 from .basic_search import get_filtered_image_ids
 from ...utils.generate_vector import encode_text, encode_image
+from ..utils import json_from_db_to_python, rows_to_dicts
 
 
 def text_search(
@@ -32,6 +32,9 @@ def text_search(
     Returns:
         图像信息字典的列表，按综合得分排序
     """
+    # 设置 row_factory 以便能够正确处理查询结果
+    conn.row_factory = sqlite3.Row
+    
     # 将文本转换为向量
     query_embedding = encode_text(text_query).tolist()
     
@@ -69,6 +72,9 @@ def image_search(
     Returns:
         图像信息字典的列表，按综合得分排序
     """
+    # 设置 row_factory 以便能够正确处理查询结果
+    conn.row_factory = sqlite3.Row
+    
     # 将图像转换为向量
     query_embedding = encode_image(image_path).tolist()
     
@@ -108,6 +114,9 @@ def image_id_search(
     Returns:
         图像信息字典的列表，按综合得分排序
     """
+    # 设置 row_factory 以便能够正确处理查询结果
+    conn.row_factory = sqlite3.Row
+    
     # 检查图像是否存在
     cursor = conn.cursor()
     cursor.execute("SELECT id FROM images WHERE id = ?", (image_id,))
@@ -167,6 +176,9 @@ def _vector_search(
     Returns:
         图像信息字典的列表，按综合得分排序
     """
+    # 设置 row_factory 以便能够正确处理查询结果
+    conn.row_factory = sqlite3.Row
+    
     filters = filters or {}
       # 检查参数有效性
     if not search_targets or not all(t in ["title", "description", "image"] for t in search_targets):
@@ -253,11 +265,9 @@ def _vector_search(
     # 添加排序和分页
     sql += f"""
     ORDER BY avg_score DESC
-    LIMIT {limit} OFFSET {offset}
-    """
+    LIMIT {limit} OFFSET {offset}    """
     
     # 执行SQL查询
-    conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     cursor.execute(sql)
     
@@ -278,16 +288,17 @@ def _vector_search(
         return []
     
     # 4. 获取完整的图像信息
-    conn.row_factory = dict_factory
     cursor = conn.cursor()
     
     placeholders = ','.join(['?'] * len(paged_image_ids))
     cursor.execute(f"""
     SELECT * FROM images WHERE id IN ({placeholders})
     """, paged_image_ids)
+      # 获取所有结果
+    raw_results = cursor.fetchall()
     
-    # 获取所有结果
-    results = cursor.fetchall()
+    # 将查询结果转换为字典列表
+    results = rows_to_dicts(raw_results)
     
     # 使用查询结果中的得分对结果进行排序
     # 创建 ID 到得分的映射
@@ -298,18 +309,8 @@ def _vector_search(
         # 添加得分
         result['score'] = id_to_score.get(result['id'], 0)
         
-        # 处理 JSON 字段
-        if result.get('tags') and isinstance(result['tags'], str):
-            try:
-                result['tags'] = json.loads(result['tags'])
-            except:
-                result['tags'] = []
-        
-        if result.get('metadata') and isinstance(result['metadata'], str):
-            try:
-                result['metadata'] = json.loads(result['metadata'])
-            except:
-                result['metadata'] = {}
+        # 处理 JSON 字段（tags 和 metadata）
+        result = json_from_db_to_python(result)
     
     # 根据得分排序
     results.sort(key=lambda x: x['score'], reverse=True)

@@ -10,28 +10,12 @@ from datetime import datetime
 from contextlib import contextmanager
 
 from backend.db_func.connection_pool import get_db_connection_from_pool
+from backend.db_func.utils import row_to_dict
 
 # 导入配置
 from ..config import settings
 from ..utils.generate_vector import get_embedding_dimension
 
-def dict_factory(cursor, row):
-    """
-    SQLite Row转换为字典的工厂函数
-    将查询结果每行转换为字典格式，便于JSON序列化
-    """
-    d = {}
-    for idx, col in enumerate(cursor.description):
-        d[col[0]] = row[idx]
-    return d
-
-def format_datetime(dt):
-    """将datetime对象格式化为标准格式字符串"""
-    return dt.strftime("%Y-%m-%d %H:%M:%S")
-
-def get_current_time():
-    """获取当前时间，格式化为标准格式"""
-    return format_datetime(datetime.now())
 
 @contextmanager
 def get_db_connection():
@@ -71,7 +55,8 @@ def init_db():
             conn.enable_load_extension(True)
             conn.execute(f"SELECT load_extension('{settings.get_config().VECTOR_DB_DRIVER}')")
             cursor.execute("SELECT vec_version()")
-            version = cursor.fetchone()[0]
+            result = cursor.fetchone()
+            version = result[0] if result else "未知"
             print(f"成功加载sqlite-vec扩展，版本: {version}")
         except Exception as e:
             print(f"加载sqlite-vec扩展失败: {e}")
@@ -137,9 +122,9 @@ def init_db():
     
     print("数据库初始化完成")
 
-def dict_factory(cursor, row):
-    """将sqlite3.Row转换为dict"""
-    d = {}
-    for idx, col in enumerate(cursor.description):
-        d[col[0]] = row[idx]
-    return d
+def rows_to_dicts(rows):
+    """将 sqlite3.Row 对象列表转换为字典列表"""
+    if rows is None:
+        return []
+    return [row_to_dict(row) for row in rows]
+

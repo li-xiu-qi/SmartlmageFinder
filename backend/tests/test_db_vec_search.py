@@ -31,9 +31,9 @@ try:
     conn.enable_load_extension(True)
     # 根据操作系统加载不同的扩展文件
     conn.execute("SELECT load_extension('./vec0.dll')")
-    # 测试扩展是否成功加载
-    cursor.execute("SELECT vec_version()")
-    version = cursor.fetchone()[0]
+    # 测试扩展是否成功加载    cursor.execute("SELECT vec_version()")
+    result = cursor.fetchone()
+    version = result[0] if result else "未知"
     print(f"成功加载sqlite-vec扩展，版本: {version}")
 except Exception as e:
     print(f"加载sqlite-vec扩展失败: {e}")

@@ -5,10 +5,10 @@ import sqlite3
 from typing import Dict, Any, List
 from datetime import datetime
 
+from backend.db_func.utils import python_to_json_for_db
 from backend.db_func.vector_func.add_text_vectors import add_description_vector, add_title_vector
 
 from ..vector_func.delete_vectors import delete_vector_by_type
-from .utils import python_to_json_for_db
 
 def update_image(conn: sqlite3.Connection, image_id: int, update_data: Dict[str, Any]) -> bool:
     """
@@ -63,7 +63,7 @@ def update_image(conn: sqlite3.Connection, image_id: int, update_data: Dict[str,
     
     # 更新时间戳
     update_fields.append("updated_at = ?")
-    params.append(datetime.now().isoformat())
+    params.append(datetime.now().isoformat(timespec='microseconds')) # Ensure microseconds
     
     # 添加ID参数
     params.append(image_id)

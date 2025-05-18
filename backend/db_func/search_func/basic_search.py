@@ -5,9 +5,8 @@ import sqlite3
 from typing import List, Dict, Any
 from datetime import datetime
 
-def format_datetime(dt):
-    """将datetime对象格式化为标准格式字符串"""
-    return dt.strftime("%Y-%m-%d %H:%M:%S")
+from ..utils import rows_to_dicts
+
 
 def get_filtered_image_ids(conn: sqlite3.Connection, filters: Dict[str, Any]) -> List[int]:
     """
@@ -21,11 +20,12 @@ def get_filtered_image_ids(conn: sqlite3.Connection, filters: Dict[str, Any]) ->
             - description: 按描述模糊匹配
             - tags: 按标签过滤 (列表，对JSON数组成员进行OR逻辑匹配)
             - start_date: 按创建时间过滤（起始时间 YYYY-MM-DD HH:MM:SS）
-            - end_date: 按创建时间过滤（结束时间 YYYY-MM-DD HH:MM:SS）
-
-    Returns:
+            - end_date: 按创建时间过滤（结束时间 YYYY-MM-DD HH:MM:SS）    Returns:
         一个符合条件的图像ID列表。
     """
+    # 设置 row_factory 以便能够正确处理查询结果
+    conn.row_factory = sqlite3.Row
+    
     cursor = conn.cursor()
     filter_query = "SELECT images.id FROM images WHERE 1=1"
     filter_params = []
@@ -58,24 +58,15 @@ def get_filtered_image_ids(conn: sqlite3.Connection, filters: Dict[str, Any]) ->
             for tag_value in tags_filter_values:
                 tag_conditions.append("images.tags LIKE ?")
                 filter_params.append(f"%{tag_value}%")           
-        if tag_conditions:
-                filter_query += f" AND ({ ' OR '.join(tag_conditions) })"
+        if tag_conditions:                filter_query += f" AND ({ ' OR '.join(tag_conditions) })"
 
     cursor.execute(filter_query, tuple(filter_params))
-    result = cursor.fetchall()
+    raw_results = cursor.fetchall()
     
-    # 兼容处理不同类型的查询结果（元组或Row对象）
-    filtered_ids = []
-    for row in result:
-        try:
-            # 尝试作为列表/元组访问
-            filtered_ids.append(row[0])
-        except (KeyError, TypeError):
-            try:
-                # 尝试作为Row对象/字典访问
-                filtered_ids.append(row['id'])
-            except (KeyError, TypeError):
-                # 如果上述方法都失败，打印行信息以便调试
-                print(f"无法提取ID，行数据: {row}，类型: {type(row)}")
+    # 将查询结果转换为字典列表
+    results_dicts = rows_to_dicts(raw_results)
+    
+    # 从字典列表中提取ID
+    filtered_ids = [row['id'] for row in results_dicts] if results_dicts else []
     
     return filtered_ids

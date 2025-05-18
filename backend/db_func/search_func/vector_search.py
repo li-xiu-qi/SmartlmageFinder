@@ -1,7 +1,8 @@
 import sqlite3
 import json
 from typing import List, Dict, Any, Literal
-from ..core import dict_factory
+
+from ..utils import row_to_dict
 from .basic_search import get_filtered_image_ids
 
 def find_similar_images(
@@ -40,7 +41,6 @@ def find_similar_images(
     if not isinstance(k, int) or k <= 0:
         raise ValueError("k 必须是正整数。")
     
-    # 连接池已自动加载向量扩展，不再需要单独加载
 
     vector_table_map = {
         "title": "title_vectors",
@@ -48,13 +48,12 @@ def find_similar_images(
         "image": "image_vectors"
     }
     target_vector_table = vector_table_map[vector_type]
-    filters = filters or {}
-
-    results = []
+    filters = filters or {}   
+    results = []    
     try:
+        # 设置row_factory以便能够通过row_to_dict处理结果
+        conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        conn.row_factory = dict_factory
-
         query_embedding_json = json.dumps(query_embedding)
 
         # 1. 首先根据过滤条件查询符合的图像ID
@@ -66,7 +65,8 @@ def find_similar_images(
 
         # 2. 使用过滤后的ID进行向量相似度搜索
         filtered_ids_str = ','.join(str(id) for id in filtered_ids)
-          # 3. 构建向量相似度搜索查询
+        
+        # 3. 构建向量相似度搜索查询
         sql_query = f"""
         SELECT
             img.id,
@@ -97,9 +97,9 @@ def find_similar_images(
         
         cursor.execute(sql_query, (query_embedding_json, actual_k))
         
+        # 使用我们的辅助函数将 sqlite3.Row 结果转换为字典
         raw_results = cursor.fetchall()
-        for row in raw_results:
-            results.append(dict(row))
+        results = [row_to_dict(r) for r in raw_results]
 
     except sqlite3.Error as e:
         print(f"数据库相似度搜索错误: {e}")
@@ -107,6 +107,6 @@ def find_similar_images(
         raise e
     except Exception as e:
         print(f"相似度搜索期间发生意外错误: {e}")
+    
     print("相似度搜索完成")
     return results
-

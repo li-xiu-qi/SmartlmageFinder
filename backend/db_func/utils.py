@@ -1,8 +1,17 @@
-"""
-图片数据库操作的工具函数
-"""
 import json
 from typing import Dict, List, Any, Optional
+
+def row_to_dict(row):
+    """将 sqlite3.Row 对象转换为字典"""
+    if row is None:
+        return None
+    return {key: row[key] for key in row.keys()} if hasattr(row, 'keys') else dict(row)
+
+
+def rows_to_dicts(rows):
+    """将 sqlite3.Row 对象列表转换为字典列表"""
+    return [row_to_dict(row) for row in rows] if rows else []
+
 
 def json_from_db_to_python(image: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     """处理图片记录中的JSON字段，将数据库中存储的JSON字符串转换为Python对象

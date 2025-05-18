@@ -4,8 +4,10 @@
 import sqlite3
 import json
 from typing import List, Dict, Any
+import datetime # Ensure datetime is imported
 
-from backend.db_func.images_func.utils import python_to_json_for_db
+from backend.db_func.utils import python_to_json_for_db
+
 
 
 def get_image_tags(conn: sqlite3.Connection, image_id: int) -> List[str]:
@@ -50,11 +52,14 @@ def update_tags(conn: sqlite3.Connection, image_id: int, tags: List[str]) -> Lis
     # 去重
     unique_tags = list(set(tags))
     
+    # Generate timestamp in YYYY-MM-DDTHH:MM:SS.ffffff format
+    current_time_iso = datetime.datetime.now().isoformat(timespec='microseconds')
+    
     # 更新数据库
     cursor = conn.cursor()
     cursor.execute(
-        "UPDATE images SET tags = ?, updated_at = datetime('now') WHERE id = ?",
-        (python_to_json_for_db(unique_tags, []), image_id)
+        "UPDATE images SET tags = ?, updated_at = ? WHERE id = ?", 
+        (python_to_json_for_db(unique_tags, []), current_time_iso, image_id)
     )
     conn.commit()
     

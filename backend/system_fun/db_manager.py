@@ -8,7 +8,7 @@ import traceback
 from typing import Dict, Tuple, Any, Optional
 
 from ..config import settings
-from ..db_func.core import get_db_connection, dict_factory
+from ..db_func.utils import row_to_dict, rows_to_dicts
 
 
 def check_table_exists(conn: sqlite3.Connection, table_name: str) -> bool:
@@ -22,15 +22,23 @@ def get_image_statistics(conn: sqlite3.Connection) -> Tuple[int, int]:
     """获取图片统计信息：数量和总大小"""
     cursor = conn.cursor()
     
+    image_count = 0
+    total_size = 0
+    
     if check_table_exists(conn, 'images'):
-        cursor.execute("SELECT COUNT(*) FROM images")
-        image_count = cursor.fetchone()[0]    
+        print("表 images 存在，获取图片统计信息")
+        cursor.execute("SELECT COUNT(*) AS count FROM images")
+        image_count_row = cursor.fetchone()
+        if image_count_row:
+            image_count = row_to_dict(image_count_row)['count']
         
-        cursor.execute("SELECT SUM(file_size) FROM images")
-        total_size = cursor.fetchone()[0] or 0
+        cursor.execute("SELECT SUM(file_size) AS total_size FROM images")
+        total_size_row = cursor.fetchone()
+        if total_size_row:
+            size_val = row_to_dict(total_size_row)['total_size']
+            total_size = size_val if size_val is not None else 0
     else:
-        image_count = 0
-        total_size = 0
+        print("表 images 不存在，无法获取图片统计信息")
         
     return image_count, total_size
 
@@ -60,8 +68,10 @@ def check_vector_db_status(conn: sqlite3.Connection) -> bool:
 def get_db_version(conn: sqlite3.Connection) -> str:
     """获取SQLite数据库版本"""
     cursor = conn.cursor()
-    cursor.execute("SELECT sqlite_version()")
-    return cursor.fetchone()[0]
+    cursor.execute("SELECT sqlite_version() AS version")
+    result = cursor.fetchone()
+    result_dict = row_to_dict(result) 
+    return result_dict["version"]
 
 
 def get_tables_info(conn: sqlite3.Connection) -> Dict[str, int]:
@@ -71,13 +81,17 @@ def get_tables_info(conn: sqlite3.Connection) -> Dict[str, int]:
     
     # 获取所有表名
     cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
-    tables = [row[0] for row in cursor.fetchall()]
+    table_name_rows = cursor.fetchall()
+    table_name_dicts = rows_to_dicts(table_name_rows)
+    tables = [d['name'] for d in table_name_dicts]
     
     # 获取每个表的记录数
     for table in tables:
         try:
-            cursor.execute(f"SELECT COUNT(*) FROM {table}")
-            count = cursor.fetchone()[0]
+            cursor.execute(f"SELECT COUNT(*) AS count FROM {table}")
+            count_row = cursor.fetchone()
+            # COUNT(*) on an existing table always returns one row.
+            count = row_to_dict(count_row)['count']
             tables_info[table] = count
         except sqlite3.Error as e:
             print(f"Error counting rows in table {table}: {e}")
@@ -95,12 +109,9 @@ def get_database_info(conn: Optional[sqlite3.Connection] = None) -> Dict[str, An
     Returns:
         Dict[str, Any]: 数据库状态信息
     """
-    # 如果没有传入连接，则创建新连接
-    connection_created = False
-    if conn is None:
-        conn = get_db_connection()
-        connection_created = True
-        conn.row_factory = dict_factory  # 确保使用字典工厂
+    
+    # 设置统一的row_factory确保数据访问一致性
+    conn.row_factory = sqlite3.Row
 
     try:
         config = settings.get_config()
@@ -141,11 +152,7 @@ def get_database_info(conn: Optional[sqlite3.Connection] = None) -> Dict[str, An
             "tables_info": {},
             "error": str(e)
         }
-    finally:
-        # 只关闭我们自己创建的连接
-        if connection_created and conn:
-            conn.close()
-            
+
             
 def get_storage_info(conn: Optional[sqlite3.Connection] = None) -> Dict[str, Any]:
     """获取存储统计信息

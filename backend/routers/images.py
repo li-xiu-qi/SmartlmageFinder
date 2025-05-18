@@ -1,16 +1,14 @@
 from fastapi import (
     APIRouter,
-    HTTPException,
     Query,
     Path,
     UploadFile,
     File,
     Form,
-    BackgroundTasks,
     Depends,
 )
 import sqlite3
-from typing import List, Optional, Dict, Any, Callable
+from typing import List, Optional
 import os
 import shutil
 from datetime import datetime
@@ -24,7 +22,6 @@ from ..db_func.images_func.create import add_image_to_database
 from ..db_func.images_func.get import get_image_by_id, get_images
 from ..db_func.images_func.update import update_image as db_update_image
 from ..db_func.images_func.delete import delete_image as db_delete_image
-from ..db_func.images_func.utils import python_to_json_for_db
 from ..global_schemas import ResponseModel, ErrorModel
 
 # 添加配置导入

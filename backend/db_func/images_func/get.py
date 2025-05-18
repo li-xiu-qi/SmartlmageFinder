@@ -5,8 +5,7 @@
 import sqlite3
 from typing import Dict, List, Any, Optional, Tuple
 
-from ..core import dict_factory
-from .utils import json_from_db_to_python
+from ..utils import json_from_db_to_python, rows_to_dicts, row_to_dict
 
 
 def get_image_by_id(
@@ -14,11 +13,11 @@ def get_image_by_id(
     image_id: int,
 ) -> Optional[Dict[str, Any]]:
     """通过ID获取图片信息"""
-    conn.row_factory = dict_factory
-    cursor = conn.cursor()
-
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()    
     cursor.execute("SELECT * FROM images WHERE id = ?", (image_id,))
-    image = cursor.fetchone()
+    raw_image = cursor.fetchone()
+    image = row_to_dict(raw_image) if raw_image else None
     # 处理JSON字段
     return json_from_db_to_python(image)
 
@@ -35,7 +34,7 @@ def get_images(
 ) -> Tuple[List[Dict[str, Any]], int]:
     """获取图片列表，支持分页和过滤"""
 
-    conn.row_factory = dict_factory
+    conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
 
     query = "SELECT * FROM images"
@@ -70,15 +69,15 @@ def get_images(
 
     # 添加排序和分页
     query += f" ORDER BY {sort_by} {order}"
-    query += f" LIMIT {page_size} OFFSET {(page - 1) * page_size}"
-
-    # 执行查询
+    query += f" LIMIT {page_size} OFFSET {(page - 1) * page_size}"    # 执行查询
     cursor.execute(query, params)
-    images = cursor.fetchall()
+    raw_images = cursor.fetchall()
+    images = rows_to_dicts(raw_images)
 
     # 执行计数查询
     cursor.execute(count_query, params)
-    total_count = cursor.fetchone()["count"]
+    count_result = cursor.fetchone()
+    total_count = row_to_dict(count_result)["count"]
 
     # 处理JSON字段
     processed_images = [json_from_db_to_python(image) for image in images]
@@ -92,14 +91,14 @@ def get_images_by_ids(
     if not image_ids:
         return []
 
-    conn.row_factory = dict_factory
+    conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
 
     placeholders = ", ".join(["?"] * len(image_ids))
-    query = f"SELECT * FROM images WHERE id IN ({placeholders})"
-
+    query = f"SELECT * FROM images WHERE id IN ({placeholders})"    
     cursor.execute(query, image_ids)
-    images = cursor.fetchall()
+    raw_images = cursor.fetchall()
+    images = rows_to_dicts(raw_images)
 
     # 处理JSON字段并返回
     return [json_from_db_to_python(image) for image in images]
