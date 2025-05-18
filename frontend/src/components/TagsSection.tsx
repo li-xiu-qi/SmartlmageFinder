@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import { Tag, Input, Button, Typography, message, Modal, Select, Space } from 'antd';
+import { Tag, Input, Button, Typography, message, Modal, Space } from 'antd';
 import { PlusOutlined, EditOutlined } from '@ant-design/icons';
 import { tagService } from '@/services/api';
 
 const { Title } = Typography;
-const { Option } = Select;
 
 interface TagsSectionProps {
   imageId: number;
@@ -69,51 +68,7 @@ const TagsSection: React.FC<TagsSectionProps> = ({ imageId, tags, onTagsUpdate }
     setEditableTags(editableTags.filter(tag => tag !== tagToRemove));
   };
 
-  // 添加标签
-  const handleAddTag = async () => {
-    if (newTag.trim() === '') {
-      return;
-    }
 
-    try {
-      setLoading(true);
-      // 检查标签是否已存在
-      if (tags.includes(newTag)) {
-        message.warning('该标签已存在');
-        setNewTag('');
-        return;
-      }
-
-      const response = await tagService.addTagsToImage(imageId, [newTag]);
-      if (response.status === 'success') {
-        message.success('标签添加成功');
-        setNewTag('');
-        onTagsUpdate(response.data.tags);
-      }
-    } catch (error) {
-      console.error('添加标签失败:', error);
-      message.error('添加标签失败');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 删除标签
-  const handleDeleteTag = async (tag: string) => {
-    try {
-      setLoading(true);
-      const response = await tagService.removeTagFromImage(imageId, tag);
-      if (response.status === 'success') {
-        message.success('标签删除成功');
-        onTagsUpdate(response.data.tags);
-      }
-    } catch (error) {
-      console.error('删除标签失败:', error);
-      message.error('删除标签失败');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="detail-section">

@@ -6,7 +6,7 @@ import time
 import uvicorn
 import os
 
-from backend.routers import ai_router, images, search, tags,system
+from backend.routers import ai_router, images, search, tags, system, metadata # 导入配置
 from backend.config import settings  # 导入配置
 from backend.db_func.core import init_db  # 导入数据库初始化函数
 from backend.db_func.connection_pool import initialize_connection_pool  # 导入连接池初始化函数
@@ -53,6 +53,7 @@ app.include_router(search.router)
 app.include_router(tags.router)
 app.include_router(ai_router)
 app.include_router(system.router)
+app.include_router(metadata.router)
 
 # 请求处理时间中间件
 @app.middleware("http")
@@ -112,4 +113,3 @@ async def root():
 if __name__ == "__main__":
     # 启动FastAPI应用
     uvicorn.run("main:app", host=settings.get_config().HOST, port=settings.get_config().PORT, log_level="info",reload=True)
-    

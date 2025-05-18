@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Spin, message } from 'antd';
-import { imageService, searchService } from '@/services/api';
+import { imageService, searchService, metadataService } from '@/services/api'; // 确保 metadataService 已导入
 import { ImageDetail, ImageSearchResult } from '@/types';
 import { VectorSearchTarget, SearchType } from '@/types/search';
 import ImagePreview from '@/components/ImagePreview';
@@ -77,6 +77,41 @@ const SharedImageDetail: React.FC<SharedImageDetailProps> = ({
       setLoading(false);
     }
   };
+
+  // 更新元数据
+  const handleMetadataUpdate = async (updatedMetadata: Record<string, string>) => {
+    try {
+      setLoading(true);
+      const response = await metadataService.updateMetadata({ 
+        image_id: image.id, 
+        metadata: updatedMetadata 
+      });
+      if (response.status === 'success' && response.data) {
+        message.success('元数据更新成功');
+        onUpdate({ ...image, metadata: response.data.metadata }); // 使用返回的图片数据中的元数据
+      } else {
+        message.error(response.error?.message || '元数据更新失败');
+      }
+    } catch (error: unknown) { // 使用 unknown 类型以提高类型安全性
+      console.error('更新元数据失败:', error);
+      let errorMessage = '更新元数据时发生未知错误';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      } else if (typeof error === 'object' && error !== null && 'message' in error) {
+        // 安全地尝试访问 error.message
+        const errObj = error as { message?: unknown };
+        if (typeof errObj.message === 'string') {
+          errorMessage = errObj.message;
+        }
+      }
+      message.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // 获取相似图片
   const fetchSimilarImages = async () => {
     try {
@@ -162,7 +197,11 @@ const SharedImageDetail: React.FC<SharedImageDetailProps> = ({
         />
         
         {/* 元数据展示 */}
-        <MetadataSection metadata={image.metadata || {}} />
+        <MetadataSection 
+          metadata={image.metadata || {}} 
+          onMetadataUpdate={handleMetadataUpdate} // 传递处理函数
+          loading={loading} // 传递 loading 状态
+        />
           {/* 操作按钮 */}
         <ActionsPanel 
           image={image}

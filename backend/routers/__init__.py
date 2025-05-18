@@ -5,3 +5,4 @@ from .images import router as images_router
 from .system import router as system_router
 from .tags import router as tags_router
 from .ai_router import router as ai_router
+from .metadata import router as metadata_router

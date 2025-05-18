@@ -9,11 +9,13 @@ import imageService from './imageService';
 import searchService from './searchService';
 import systemService from './systemService';
 import tagService from './tagService';
+import metadataService from './metadataService'; // 导入 metadataService
 
 export {
   aiService,
   imageService,
   searchService,
   systemService,
-  tagService
+  tagService,
+  metadataService // 导出 metadataService
 };
