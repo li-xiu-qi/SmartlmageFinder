@@ -3,7 +3,6 @@ import { Spin } from 'antd';
 
 // 导入类型定义
 import { ImageModel, TagInfo } from '@/types/models';
-import { SystemStatusData } from '@/types/system';
 import { SystemStats } from './types';
 
 // 导入服务
@@ -13,7 +12,6 @@ import systemService from '@/services/systemService';
 
 // 导入子组件
 import StatusCards from './components/home_detail/StatusCards';
-import SystemDetails from './components/home_detail/SystemDetails';
 import RecentImages from './components/home_detail/RecentImages';
 import PopularTags from './components/home_detail/PopularTags';
 
@@ -24,12 +22,10 @@ import './index.less';
  * SmartImageFinder 首页组件
  * 展示系统概览、最近上传图片和热门标签
  */
-const HomePage: React.FC = () => {
-  // 状态定义
+const HomePage: React.FC = () => {  // 状态定义
   const [loading, setLoading] = useState(true);
   const [recentImages, setRecentImages] = useState<ImageModel[]>([]);
   const [popularTags, setPopularTags] = useState<TagInfo[]>([]);
-  const [systemStatus, setSystemStatus] = useState<SystemStatusData | null>(null);
   const [systemStats, setSystemStats] = useState<SystemStats>({
     totalImages: 0,
     status: 'unknown',
@@ -41,9 +37,8 @@ const HomePage: React.FC = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        
-        // 并行请求数据
-        const [imagesResponse, tagsResponse, systemResponse] = await Promise.all([
+          // 并行请求数据
+        const [imagesResponse, tagsResponse, infoResponse, databaseResponse, storageResponse, cacheResponse] = await Promise.all([
           imageService.getImagesList({ 
             page: 1, 
             page_size: 8, 
@@ -51,7 +46,10 @@ const HomePage: React.FC = () => {
             order: 'desc' 
           }),
           tagService.getPopularTags({ limit: 20 }),
-          systemService.getSystemStatus(),
+          systemService.getSystemInfo(),
+          systemService.getDatabaseInfo(),
+          systemService.getStorageInfo(),
+          systemService.getCacheInfo(),
         ]);
 
         // 处理图片数据
@@ -62,17 +60,18 @@ const HomePage: React.FC = () => {
         // 处理标签数据
         if (tagsResponse.status === 'success' && tagsResponse.data) {
           setPopularTags(tagsResponse.data);
-        }
-
-        // 处理系统状态数据
-        if (systemResponse.status === 'success' && systemResponse.data) {
-          setSystemStatus(systemResponse.data);
+        }        // 处理系统状态数据 - 提取需要的信息
+        if (infoResponse.status === 'success' && 
+            storageResponse.status === 'success' && 
+            databaseResponse.status === 'success' && 
+            cacheResponse.status === 'success') {
+          
+          // 更新系统统计数据
           setSystemStats({
-            totalImages: systemResponse.data.storage.total_images,
-            status: systemResponse.data.system.status,
-            totalTags: systemResponse.data.storage.total_tags,
-          });
-        } else {
+            totalImages: storageResponse.data.total_images,
+            status: infoResponse.data.status,
+            totalTags: storageResponse.data.total_tags,
+          });} else {
           // 如果获取系统状态失败，设置错误状态
           setSystemStats(prev => ({
             ...prev,
@@ -96,17 +95,11 @@ const HomePage: React.FC = () => {
 
     fetchData();
   }, []);
-
   return (
     <div className="home-page">
       <Spin spinning={loading}>
         {/* 状态卡片 */}
         <StatusCards stats={systemStats} />
-        
-        {/* 系统详情 */}
-        <div className="system-details">
-          <SystemDetails systemStatus={systemStatus} />
-        </div>
 
         {/* 最近上传图片 */}
         <div className="recent-images">

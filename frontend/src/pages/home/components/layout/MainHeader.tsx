@@ -1,9 +1,10 @@
 import React from 'react';
-import { Layout, Input, Badge, Avatar, Dropdown } from 'antd';
+import { Layout, Input, Badge, Avatar, Dropdown, Tooltip } from 'antd';
 import { SearchOutlined, SettingOutlined, MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { MainHeaderProps } from '../../types';
 import { theme } from 'antd';
+import './styles.less';
 
 const { Header } = Layout;
 const { Search } = Input;
@@ -17,8 +18,7 @@ const MainHeader: React.FC<MainHeaderProps> = ({ collapsed, toggleCollapse, syst
     if (value.trim()) {
       navigate(`/search?q=${encodeURIComponent(value)}`);
     }
-  };
-  
+  };  
   // 系统状态指示器
   const statusBadgeColor = 
     systemStatus === 'healthy' 
@@ -26,6 +26,14 @@ const MainHeader: React.FC<MainHeaderProps> = ({ collapsed, toggleCollapse, syst
       : systemStatus === 'error' 
         ? 'error' 
         : 'warning';
+
+  // 设置状态显示文本
+  const statusText = 
+    systemStatus === 'healthy' 
+      ? '正常' 
+      : systemStatus === 'error' 
+        ? '异常' 
+        : '警告';
 
   // 设置下拉菜单项
   const settingsMenu = {
@@ -56,11 +64,11 @@ const MainHeader: React.FC<MainHeaderProps> = ({ collapsed, toggleCollapse, syst
           size="middle"
           onSearch={onSearch}
         />
-      </div>
-
-      <div className="header-right">
+      </div>      <div className="header-right">
         <div className="system-status">
-          <Badge status={statusBadgeColor} text={`系统: ${systemStatus || '加载中'}`} />
+          <Tooltip title={systemStatus === 'healthy' ? '系统运行正常' : systemStatus === 'error' ? '系统存在错误' : '系统需要注意'}>
+            <Badge status={statusBadgeColor} text={`系统: ${statusText}`} />
+          </Tooltip>
         </div>
 
         <Dropdown menu={settingsMenu} placement="bottomRight">

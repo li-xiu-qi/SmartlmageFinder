@@ -1,0 +1,39 @@
+/* 系统运行时监控组件样式 */
+.system-runtime-card {
+  margin-bottom: 16px;
+}
+
+.system-runtime-icon {
+  margin-left: 8px;
+  color: #1890ff;
+}
+
+.system-runtime-loading {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.system-runtime-full-width {
+  width: 100%;
+}
+
+.system-runtime-margin-bottom {
+  margin-bottom: 8px;
+}
+
+/* 新增样式以替换内联样式 */
+.system-runtime-card-style {
+  margin-bottom: 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.system-runtime-loading-container {
+  text-align: center;
+  padding: 30px 0;
+}
+
+.system-runtime-icon-style {
+  margin-left: 8px;
+  color: #1890ff;
+  cursor: help;
+}

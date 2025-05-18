@@ -1,8 +1,9 @@
 import React from 'react';
-import { Modal, Select, Button, Row, Col, Card, Tag, Spin, Empty } from 'antd';
+import { Select, Button, Row, Col, Card, Tag, Spin, Empty } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import { SearchImageItem } from '@/types/models';
 import { VectorSearchTarget } from '@/types/search';
+import RefModal from '@/components/RefModal';
 
 const { Option } = Select;
 
@@ -34,9 +35,8 @@ const SimilarImagesModal: React.FC<SimilarImagesModalProps> = ({
   onSearchTargetChange,
   onSearch,
   similarImages
-}) => {
-  return (
-    <Modal
+}) => {  return (
+    <RefModal
       title={`相似图片 (基于${searchTypeOptions.find(opt => opt.value === searchTarget)?.label || '图像向量'})`}
       open={open}
       onCancel={onClose}
@@ -112,9 +112,8 @@ const SimilarImagesModal: React.FC<SimilarImagesModalProps> = ({
           ))}
         </Row>
       ) : (
-        <Empty description="未找到相似图片" />
-      )}
-    </Modal>
+        <Empty description="未找到相似图片" />      )}
+    </RefModal>
   );
 };
 

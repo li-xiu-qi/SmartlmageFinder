@@ -1,6 +1,7 @@
 import React from 'react';
-import { Modal, Form, Input, Select, FormInstance } from 'antd';
+import { Form, Input, Select, FormInstance } from 'antd';
 import { UploadFile, ImageMetadata, SelectableTag } from '../types';
+import RefModal from '@/components/RefModal';
 
 // 自动调整大小的文本域
 const { TextArea } = Input;
@@ -32,9 +33,8 @@ const MetadataModal: React.FC<MetadataModalProps> = ({
       ? `编辑图片 "${currentFile.name}" 的元数据` 
       : '编辑图片元数据';
   };
-
   return (
-    <Modal
+    <RefModal
       title={renderTitle()}
       open={visible}
       onOk={onSave}
@@ -95,9 +95,8 @@ const MetadataModal: React.FC<MetadataModalProps> = ({
           label="相关事件"
         >
           <Input placeholder="输入相关事件（可选）" />
-        </Form.Item>
-      </Form>
-    </Modal>
+        </Form.Item>      </Form>
+    </RefModal>
   );
 };
 

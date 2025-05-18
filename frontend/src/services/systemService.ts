@@ -1,19 +1,46 @@
 import apiClient from './apiClient';
 import { ApiResponse } from '../types/api'; // Changed from @/types
 import {
-  SystemStatusData,
+  SystemInfo,
   SystemConfig,
-  CacheStatsData,
-  CacheClearData
+  SimplifiedCacheClearData,
+  RuntimeInfo,
+  DatabaseInfo,
+  StorageInfo,
+  CacheInfo
 } from '../types/system';
 
 const systemService = {
   /**
-   * 获取系统状态
-   * GET /api/v1/system/status
+   * 获取基本系统信息
+   * GET /api/v1/system/info
    */
-  getSystemStatus: (): Promise<ApiResponse<SystemStatusData>> => {
-    return apiClient.getWithTransform<SystemStatusData>('/system/status');
+  getSystemInfo: (): Promise<ApiResponse<SystemInfo>> => {
+    return apiClient.getWithTransform<SystemInfo>('/system/info');
+  },
+  
+  /**
+   * 获取数据库状态信息
+   * GET /api/v1/system/database
+   */
+  getDatabaseInfo: (): Promise<ApiResponse<DatabaseInfo>> => {
+    return apiClient.getWithTransform<DatabaseInfo>('/system/database');
+  },
+  
+  /**
+   * 获取存储信息
+   * GET /api/v1/system/storage
+   */
+  getStorageInfo: (): Promise<ApiResponse<StorageInfo>> => {
+    return apiClient.getWithTransform<StorageInfo>('/system/storage');
+  },
+  
+  /**
+   * 获取缓存信息
+   * GET /api/v1/system/cache
+   */
+  getCacheInfo: (): Promise<ApiResponse<CacheInfo>> => {
+    return apiClient.getWithTransform<CacheInfo>('/system/cache');
   },
 
   /**
@@ -23,29 +50,35 @@ const systemService = {
   getSystemConfig: (): Promise<ApiResponse<SystemConfig>> => {
     return apiClient.getWithTransform<SystemConfig>('/system/config');
   },
-
   /**
    * 更新系统配置
-   * POST /api/v1/system/update-config
+   * POST /api/v1/system/config/update
    */
   updateSystemConfig: (config: SystemConfig): Promise<ApiResponse<{ message: string }>> => {
-    return apiClient.postWithTransform<{ message: string }>('/system/update-config', config);
+    return apiClient.postWithTransform<{ message: string }>('/system/config/update', config);
   },
-
-  /**
-   * 获取缓存统计信息
-   * GET /api/v1/system/cache-stats
-   */
-  getCacheStats: (): Promise<ApiResponse<CacheStatsData>> => {
-    return apiClient.getWithTransform<CacheStatsData>('/system/cache-stats');
-  },
-
   /**
    * 清除系统缓存
-   * POST /api/v1/system/clear-cache
+   * POST /api/v1/system/cache/clear
+   * @param textCache 是否清除文本缓存，默认为true
+   * @param imageCache 是否清除图像缓存，默认为true
    */
-  clearCache: (): Promise<ApiResponse<CacheClearData>> => {
-    return apiClient.postWithTransform<CacheClearData>('/system/clear-cache', {});
+  clearCache: (textCache: boolean = true, imageCache: boolean = true): Promise<ApiResponse<SimplifiedCacheClearData>> => {
+    const params = new URLSearchParams();
+    params.append('text_cache', textCache.toString());
+    params.append('image_cache', imageCache.toString());
+    
+    return apiClient.postWithTransform<SimplifiedCacheClearData>('/system/cache/clear', {}, {
+      params
+    });
+  },
+
+  /**
+   * 获取系统运行时间信息
+   * GET /api/v1/system/runtime
+   */
+  getRuntime: (): Promise<ApiResponse<RuntimeInfo>> => {
+    return apiClient.getWithTransform<RuntimeInfo>('/system/runtime');
   }
 };
 

@@ -1,6 +1,5 @@
 // 导出页面组件
 export { default as StatusCards } from './home_detail/StatusCards';
-export { default as SystemDetails } from './home_detail/SystemDetails';
 export { default as RecentImages } from './home_detail/RecentImages';
 export { default as PopularTags } from './home_detail/PopularTags';
 

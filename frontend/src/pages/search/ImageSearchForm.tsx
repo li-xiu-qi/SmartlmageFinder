@@ -82,45 +82,48 @@ const ImageSearchForm: React.FC<ImageSearchFormProps> = ({ onSearch, loading, ta
     
     setSelectedSearchTargets(targets);
   };
-  
-  // 执行图片搜索
-  const handleSearch = () => {
+    // 执行图片搜索
+  const handleSearch = async () => {
     if (!searchFile) {
       message.error('请先上传一张图片');
       return;
     }
 
-    // 获取表单值
-    const values = form.getFieldsValue();
-    
-    // 构造搜索参数
-    const params: ImageSearchParams = {
-      file: searchFile
-    };
+    try {
+      // 获取表单值
+      const values = await form.validateFields();
+      
+      // 构造搜索参数
+      const params: ImageSearchParams = {
+        file: searchFile
+      };
 
-    // 设置搜索目标
-    if (selectedSearchTargets.length > 0) {
-      params.search_targets = getVectorSearchTargets(selectedSearchTargets);
+      // 设置搜索目标
+      if (selectedSearchTargets.length > 0) {
+        params.search_targets = getVectorSearchTargets(selectedSearchTargets);
+      }
+
+      // 添加高级搜索参数（如果有）
+      if (values.tags && values.tags.length > 0) {
+        params.tags = values.tags;
+      }
+
+      if (values.filename) {
+        params.filename = values.filename;
+      }
+
+      if (values.date_range && values.date_range.length === 2) {
+        const startDate = new Date(values.date_range[0]);
+        const endDate = new Date(values.date_range[1]);
+        params.start_date = startDate.toISOString();
+        params.end_date = endDate.toISOString();
+      }
+
+      // 调用搜索
+      onSearch(params);
+    } catch (error) {
+      console.error('表单验证失败:', error);
     }
-
-    // 添加高级搜索参数（如果有）
-    if (values.tags && values.tags.length > 0) {
-      params.tags = values.tags;
-    }
-
-    if (values.filename) {
-      params.filename = values.filename;
-    }
-
-    if (values.date_range && values.date_range.length === 2) {
-      const startDate = new Date(values.date_range[0]);
-      const endDate = new Date(values.date_range[1]);
-      params.start_date = startDate.toISOString();
-      params.end_date = endDate.toISOString();
-    }
-
-    // 调用搜索
-    onSearch(params);
   };
 
   // 上传组件配置
@@ -134,13 +137,13 @@ const ImageSearchForm: React.FC<ImageSearchFormProps> = ({ onSearch, loading, ta
   };
 
   return (
-    <Card className="search-form-card">
-      <Form
+    <Card className="search-form-card">      <Form
         form={form}
         layout="vertical"
         initialValues={{
           search_type: 'vector'
         }}
+        style={{ width: '100%' }}
       >
         <div className="upload-container">
           {fileList.length === 0 ? (

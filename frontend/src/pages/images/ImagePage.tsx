@@ -45,12 +45,12 @@ const ImagesPage: React.FC = () => {
 
     fetchTags();
   }, []);
-
   // 处理URL中的查询参数
   useEffect(() => {
     const tagsParam = searchParams.get('tags');
     if (tagsParam) {
-      const tagsArray = tagsParam.split(',').map(tag => tag.trim());
+      // 将URL编码的标签解码并分割成数组
+      const tagsArray = decodeURIComponent(tagsParam).split(',').map(tag => tag.trim());
       setFilterValues(prev => ({ ...prev, tags: tagsArray }));
     }
   }, [searchParams]);
@@ -85,18 +85,24 @@ const ImagesPage: React.FC = () => {
     };
 
     fetchImages();
-  }, [page, pageSize, filterValues]);
-
-  // 处理筛选表单提交
+  }, [page, pageSize, filterValues]);  // 处理筛选表单提交
   const handleFilterSubmit = (values: GetImagesListParams) => {
     setFilterValues(values);
     setPage(1); // 重置为第一页
+    
+    // 更新URL参数，以便分享和保存状态
+    if (values.tags && Array.isArray(values.tags) && values.tags.length > 0) {
+      navigate(`/images?tags=${encodeURIComponent(values.tags.join(','))}`, { replace: true });
+    } else {
+      navigate('/images', { replace: true });
+    }
   };
-
   // 重置筛选条件
   const resetFilters = () => {
     setFilterValues({});
     setPage(1);
+    // 重置URL
+    navigate('/images', { replace: true });
   };
 
   // 处理图片点击事件，打开详情抽屉
@@ -160,8 +166,7 @@ const ImagesPage: React.FC = () => {
           : img
       )
     );
-  };
-  // 处理标签点击
+  };  // 处理标签点击
   const handleTagClick = (tag: string) => {
     // 设置筛选条件
     const updatedTags = [...(filterValues.tags || [])];
@@ -169,6 +174,9 @@ const ImagesPage: React.FC = () => {
       updatedTags.push(tag);
       setFilterValues(prev => ({ ...prev, tags: updatedTags }));
       setPage(1);
+      
+      // 更新URL，方便分享和保存状态
+      navigate(`/images?tags=${encodeURIComponent(updatedTags.join(','))}`, { replace: true });
     }
   };
 

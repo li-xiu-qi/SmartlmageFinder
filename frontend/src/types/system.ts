@@ -1,4 +1,3 @@
-// filepath: c:\Users\k\Documents\project\programming_project\python_project\importance\SmartImageFinder\frontend\src\types\system.ts
 /**
  * SmartImageFinder 系统管理功能相关类型定义
  * 基于系统管理 API 文档
@@ -11,7 +10,8 @@ import { ApiResponse } from './api';
  */
 export interface SystemInfo {
   version: string;             // 系统版本号
-  uptime: number;              // 系统运行时间(秒)
+  app_uptime: number;          // 系统运行时间(秒)
+  app_uptime_formatted: string; // 格式化的运行时间
   status: 'healthy' | 'warning' | 'error'; // 系统健康状态
   platform: string;            // 操作系统平台
   python_version: string;      // Python版本
@@ -20,10 +20,17 @@ export interface SystemInfo {
 /**
  * 数据库状态信息
  */
-export interface DatabaseStatus {
+export interface DatabaseInfo {
   status: 'connected' | 'disconnected' | 'error'; // 数据库连接状态
   type: 'sqlite' | 'postgres' | 'mysql';          // 数据库类型
   path: string;                                   // 数据库文件路径(SQLite)或连接字符串
+  image_count: number;                            // 图片总数
+  total_size: number;                             // 总大小(字节)
+  tag_count: number;                              // 标签总数
+  vector_status: boolean;                         // 向量功能状态
+  db_version: string;                             // 数据库版本
+  tables_info: Record<string, number>;            // 表信息(表名:记录数)
+  error: string | null;                           // 错误信息(如果有)
 }
 
 /**
@@ -49,7 +56,7 @@ export interface MultimodalApiStatus {
  * 组件状态信息
  */
 export interface ComponentsStatus {
-  database: DatabaseStatus;                        // 数据库状态
+  database: DatabaseInfo;                        // 数据库状态
   vector_db_driver: VectorDbDriverStatus;          // 向量数据库驱动状态
   multimodal_api: MultimodalApiStatus;             // 多模态API状态
 }
@@ -79,6 +86,8 @@ export interface CacheStats {
 export interface CacheInfo {
   enabled: boolean;                                // 是否启用缓存
   max_size_gb: number;                             // 最大缓存大小(GB)
+  total_entries: number;                           // 总缓存条目数
+  total_size_mb: number;                           // 总缓存大小(MB)
   text_vector_cache: CacheStats;                   // 文本向量缓存信息
   image_vector_cache: CacheStats;                  // 图像向量缓存信息
 }
@@ -153,35 +162,13 @@ export interface SystemConfig {
 }
 
 /**
- * 缓存清除结果
+ * 简化版的缓存清除结果 - 适配新的API响应
  */
-export interface CacheClearResult {
+export interface SimplifiedCacheClearData {
   cleared: boolean;                                // 是否成功清除
-  entries_removed: number;                         // 移除的条目数
-  size_freed_mb: number;                           // 释放的空间大小(MB)
-  error: string | null;                            // 错误信息(如果有)
-}
-
-/**
- * 缓存清除响应数据
- */
-export interface CacheClearData {
-  text_vector_cache: CacheClearResult;             // 文本向量缓存清除结果
-  image_vector_cache: CacheClearResult;            // 图像向量缓存清除结果
-}
-
-/**
- * 缓存统计信息
- */
-export interface CacheStatsData {
-  text_vector_cache: {
-    entries: number;                               // 缓存条目数量
-    size_mb: number;                               // 缓存大小(MB)
-  };
-  image_vector_cache: {
-    entries: number;                               // 缓存条目数量
-    size_mb: number;                               // 缓存大小(MB)
-  };
+  text_cache_entries_removed: number;              // 移除的文本缓存条目数
+  image_cache_entries_removed: number;             // 移除的图像缓存条目数
+  total_size_freed_mb: number;                     // 释放的总空间大小(MB)
 }
 
 /**
@@ -190,13 +177,36 @@ export interface CacheStatsData {
 export enum SystemErrorCode {
   CONFIG_UPDATE_ERROR = 'CONFIG_UPDATE_ERROR',     // 配置更新失败
   CACHE_CLEAR_ERROR = 'CACHE_CLEAR_ERROR',         // 缓存清除失败
-  SYSTEM_STATUS_ERROR = 'SYSTEM_STATUS_ERROR'      // 获取系统状态失败
+  SYSTEM_STATUS_ERROR = 'SYSTEM_STATUS_ERROR',     // 获取系统状态失败
+  DATABASE_ERROR = 'DATABASE_ERROR',               // 数据库状态错误  
+  STORAGE_ERROR = 'STORAGE_ERROR',                 // 存储信息错误
+  CACHE_ERROR = 'CACHE_ERROR'                      // 缓存信息错误
 }
 
 /**
  * 系统状态响应
  */
 export type SystemStatusResponse = ApiResponse<SystemStatusData>;
+
+/**
+ * 系统基本信息响应
+ */
+export type SystemInfoResponse = ApiResponse<SystemInfo>;
+
+/**
+ * 数据库信息响应
+ */
+export type DatabaseInfoResponse = ApiResponse<DatabaseInfo>;
+
+/**
+ * 存储信息响应
+ */
+export type StorageInfoResponse = ApiResponse<StorageInfo>;
+
+/**
+ * 缓存信息响应
+ */
+export type CacheInfoResponse = ApiResponse<CacheInfo>;
 
 /**
  * 系统配置响应
@@ -209,24 +219,50 @@ export type SystemConfigResponse = ApiResponse<SystemConfig>;
 export type UpdateConfigResponse = ApiResponse<{ message: string }>;
 
 /**
- * 缓存统计响应
- */
-export type CacheStatsResponse = ApiResponse<CacheStatsData>;
-
-/**
  * 缓存清除响应
  */
-export type ClearCacheResponse = ApiResponse<CacheClearData>;
+export type ClearCacheResponse = ApiResponse<SimplifiedCacheClearData>;
+
+/**
+ * 运行时间信息
+ */
+export interface RuntimeInfo {
+  app_uptime_formatted: string;                    // 格式化的运行时间
+  current_time: string;                            // 当前服务器时间(ISO格式)
+}
+
+/**
+ * 运行时间响应
+ */
+export type RuntimeInfoResponse = ApiResponse<RuntimeInfo>;
 
 /**
  * 系统管理服务客户端接口
  */
 export interface SystemClient {
   /**
-   * 获取系统状态
-   * @returns 系统状态信息的 Promise
+   * 获取基本系统信息
+   * @returns 系统基本信息的 Promise
    */
-  getSystemStatus(): Promise<SystemStatusResponse>;
+  getSystemInfo(): Promise<ApiResponse<SystemInfo>>;
+  
+  /**
+   * 获取数据库状态信息
+   * @returns 数据库状态信息的 Promise
+   */
+  getDatabaseInfo(): Promise<ApiResponse<DatabaseInfo>>;
+  
+  /**
+   * 获取存储信息
+   * @returns 存储信息的 Promise
+   */
+  getStorageInfo(): Promise<ApiResponse<StorageInfo>>;
+  
+  /**
+   * 获取缓存信息
+   * @returns 缓存信息的 Promise
+   */
+  getCacheInfo(): Promise<ApiResponse<CacheInfo>>;
   
   /**
    * 获取系统配置
@@ -242,14 +278,16 @@ export interface SystemClient {
   updateSystemConfig(config: SystemConfig): Promise<UpdateConfigResponse>;
   
   /**
-   * 获取缓存统计信息
-   * @returns 缓存统计的 Promise
-   */
-  getCacheStats(): Promise<CacheStatsResponse>;
-  
-  /**
    * 清除系统缓存
+   * @param textCache 是否清除文本缓存
+   * @param imageCache 是否清除图像缓存
    * @returns 缓存清除结果的 Promise
    */
-  clearCache(): Promise<ClearCacheResponse>;
+  clearCache(textCache?: boolean, imageCache?: boolean): Promise<ClearCacheResponse>;
+
+  /**
+   * 获取运行时间信息
+   * @returns 运行时间信息的 Promise
+   */
+  getRuntime(): Promise<RuntimeInfoResponse>;
 }

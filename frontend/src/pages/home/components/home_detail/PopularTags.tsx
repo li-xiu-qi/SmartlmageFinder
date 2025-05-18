@@ -1,7 +1,8 @@
 import React from 'react';
-import { Tag, Empty } from 'antd';
+import { Tag, Empty, Tooltip } from 'antd';
 import { Link } from 'react-router-dom';
 import { PopularTagsProps } from '../../types';
+import './styles.less';
 
 /**
  * 热门标签组件
@@ -27,16 +28,18 @@ const PopularTags: React.FC<PopularTagsProps> = ({ tags }) => {
     <div className="hot-tags">
       <h2 className="section-title">热门标签</h2>
       {tags.length > 0 ? (
-        <div>
+        <div className="tags-container">
           {tags.map(tag => (
-            <Link to={`/images?tags=${tag.tag}`} key={tag.tag}>
-              <Tag 
-                color={getTagColor(tag.count)} 
-                className="tag-item"
-              >
-                {tag.tag} ({tag.count})
-              </Tag>
-            </Link>
+            <Tooltip title={`${tag.count} 张图片使用此标签`} key={tag.tag}>
+              <Link to={`/images?tags=${tag.tag}`}>
+                <Tag 
+                  color={getTagColor(tag.count)} 
+                  className="tag-item"
+                >
+                  {tag.tag} ({tag.count})
+                </Tag>
+              </Link>
+            </Tooltip>
           ))}
         </div>
       ) : (
