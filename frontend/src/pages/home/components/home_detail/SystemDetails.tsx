@@ -33,6 +33,4 @@ const SystemDetails: React.FC<SystemDetailsProps> = ({ systemStatus }) => {
 };
 
 export default SystemDetails;
-};
 
-export default SystemDetails;
