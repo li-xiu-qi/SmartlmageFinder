@@ -1,17 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Spin, message, Drawer, Pagination } from 'antd';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { imageService, tagService, searchService, aiService } from '@/services/api';
+import { imageService, tagService } from '@/services/api';
 import { TagInfo, ImageModel } from '@/types/models';
 import { GetImagesListParams } from '@/types/image';
 import { ImageCardModel, convertToImageCardModel } from '@/utils/typeConverters';
-import { VectorSearchTarget, SearchType } from '@/types/search';
-import { AnalysisDetailLevel } from '@/types/ai';
-import FilterForm from '../components/FilterForm';
-import ViewControls, { ViewMode } from '../components/ViewControls';
-import ImageList from '../components/ImageList';
+import FilterForm from './components/FilterForm';
+import ViewControls, { ViewMode } from './components/ViewControls';
+import ImageList from './components/ImageList';
 import SharedImageDetail from '@/components/SharedImageDetail';
-import '../styles/components.less';
+import './styles/components.less';
 
 const ImagesPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -163,69 +161,6 @@ const ImagesPage: React.FC = () => {
       )
     );
   };
-
-  // 查找相似图片
-  const handleFindSimilar = async (imageId: number, searchTarget: VectorSearchTarget) => {
-    try {
-      const params = {
-        search_type: SearchType.VECTOR,
-        search_targets: [searchTarget],
-        limit: 12
-      };
-      
-      const response = await searchService.similarSearch(imageId, params);
-      if (response.status === 'success' && response.data) {
-        return response.data;
-      }
-      return [];
-    } catch (error) {
-      console.error('查找相似图片失败:', error);
-      throw error;
-    }
-  };
-
-  // AI分析生成内容
-  const handleAIAnalyze = async (imageId: number) => {
-    try {
-      const response = await aiService.analyzeExistingImage(
-        imageId, 
-        { detail: AnalysisDetailLevel.HIGH }
-      );
-      
-      if (response.status === 'success' && response.data) {
-        return {
-          title: response.data.title,
-          description: response.data.description,
-          tags: response.data.tags
-        };
-      }
-      
-      throw new Error('AI分析失败');
-    } catch (error) {
-      console.error('AI分析失败:', error);
-      throw error;
-    }
-  };
-
-  // 更新标签
-  const handleUpdateTags = async (id: number, tags: string[]) => {
-    try {
-      const response = await imageService.updateImage({
-        image_id: id,
-        tags: tags
-      });
-      
-      if (response.status === 'success' && response.data) {
-        return response.data.tags;
-      }
-      
-      throw new Error('更新标签失败');
-    } catch (error) {
-      console.error('更新标签失败:', error);
-      throw error;
-    }
-  };
-
   // 处理标签点击
   const handleTagClick = (tag: string) => {
     // 设置筛选条件

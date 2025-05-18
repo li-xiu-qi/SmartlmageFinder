@@ -3,12 +3,12 @@ import { Spin, message } from 'antd';
 import { imageService, searchService } from '@/services/api';
 import { ImageDetail, ImageSearchResult } from '@/types';
 import { VectorSearchTarget, SearchType } from '@/types/search';
-import ImagePreview from '@/pages/images/components/ImagePreview';
-import EditableField from '@/pages/images/components/EditableField';
-import FileInfoSection from '@/pages/images/components/FileInfoSection';
-import TagsSection from '@/pages/images/components/TagsSection';
-import MetadataSection from '@/pages/images/components/MetadataSection';
-import ActionsPanel from '@/pages/images/components/ActionsPanel';
+import ImagePreview from '@/components/ImagePreview';
+import EditableField from '@/components/EditableField';
+import FileInfoSection from '@/components/FileInfoSection';
+import TagsSection from '@/components/TagsSection';
+import MetadataSection from '@/components/MetadataSection';
+import ActionsPanel from '@/components/ActionsPanel';
 import SimilarImagesModal from '@/pages/images/components/SimilarImagesModal';
 import './shared-image-detail.less';
 

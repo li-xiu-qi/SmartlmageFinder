@@ -1,25 +1,26 @@
 import React from 'react';
 import { Modal, Select, Button, Row, Col, Card, Tag, Spin, Empty } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
-import { ImageSearchResult } from '@/types';
+import { SearchImageItem } from '@/types/models';
+import { VectorSearchTarget } from '@/types/search';
 
 const { Option } = Select;
 
 // 定义搜索类型选项
 const searchTypeOptions = [
-  { value: 'image', label: '图像向量' },
-  { value: 'title', label: '标题向量' },
-  { value: 'description', label: '描述向量' },
+  { value: VectorSearchTarget.IMAGE, label: '图像向量' },
+  { value: VectorSearchTarget.TITLE, label: '标题向量' },
+  { value: VectorSearchTarget.DESCRIPTION, label: '描述向量' },
 ];
 
 interface SimilarImagesModalProps {
   open: boolean;
   onClose: () => void;
   loading: boolean;
-  searchType: string;
-  onSearchTypeChange: (value: string) => void;
+  searchTarget: VectorSearchTarget;
+  onSearchTargetChange: (value: VectorSearchTarget) => void;
   onSearch: () => void;
-  similarImages: ImageSearchResult[];
+  similarImages: SearchImageItem[];
 }
 
 /**
@@ -29,14 +30,14 @@ const SimilarImagesModal: React.FC<SimilarImagesModalProps> = ({
   open,
   onClose,
   loading,
-  searchType,
-  onSearchTypeChange,
+  searchTarget,
+  onSearchTargetChange,
   onSearch,
   similarImages
 }) => {
   return (
     <Modal
-      title={`相似图片 (基于${searchTypeOptions.find(opt => opt.value === searchType)?.label || '图像向量'})`}
+      title={`相似图片 (基于${searchTypeOptions.find(opt => opt.value === searchTarget)?.label || '图像向量'})`}
       open={open}
       onCancel={onClose}
       footer={null}
@@ -45,8 +46,8 @@ const SimilarImagesModal: React.FC<SimilarImagesModalProps> = ({
     >
       <div style={{ marginBottom: 16 }}>
         <Select
-          value={searchType}
-          onChange={onSearchTypeChange}
+          value={searchTarget}
+          onChange={onSearchTargetChange}
           style={{ width: 150, marginRight: 16 }}
         >
           {searchTypeOptions.map(option => (
@@ -72,7 +73,7 @@ const SimilarImagesModal: React.FC<SimilarImagesModalProps> = ({
       ) : similarImages.length > 0 ? (
         <Row gutter={[16, 16]}>
           {similarImages.map(img => (
-            <Col xs={12} sm={8} md={8} key={img.uuid}>
+            <Col xs={12} sm={8} md={8} key={img.id}>
               <Card
                 hoverable
                 cover={
@@ -90,17 +91,13 @@ const SimilarImagesModal: React.FC<SimilarImagesModalProps> = ({
                   title={img.title}
                   description={
                     <>
-                      <div>相似度: {Math.round(img.score * 100)}%</div>
-                      {(img.score_components || img.similarity_components) && (
-                        <div style={{ fontSize: '12px', color: '#888', marginTop: 2 }}>
-                          {Object.entries(img.score_components || img.similarity_components || {}).map(([mode, score]) => (
-                            <div key={mode}>
-                              {mode === 'image' ? '图像' : mode === 'title' ? '标题' : mode === 'description' ? '描述' : mode}: 
-                              {Math.round(score * 100)}%
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                      <div>
+                        {img.score !== undefined ? 
+                          `相关度: ${Math.round(img.score * 100)}%` : 
+                          img.distance !== undefined ? 
+                          `距离: ${img.distance.toFixed(4)}` : 
+                          '相似度: N/A'}
+                      </div>
                       <div style={{ marginTop: 4 }}>
                         {img.tags.slice(0, 2).map(tag => (
                           <Tag key={tag} style={{ marginRight: 4 }}>{tag}</Tag>

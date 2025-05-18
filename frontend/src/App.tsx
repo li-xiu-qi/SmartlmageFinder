@@ -5,7 +5,7 @@ import MainLayout from '@/layouts/MainLayout';
 
 // 页面组件
 import HomePage from '@/pages/home';
-import ImagesPage from '@/pages/images/pages/list';
+import ImagesPage from '@/pages/images/ImagePage';
 import UploadPage from '@/pages/upload';
 import SearchPage from '@/pages/search';
 import TagsPage from '@/pages/tags';
