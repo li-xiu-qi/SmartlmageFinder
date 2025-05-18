@@ -33,6 +33,10 @@ class CommonFilterParams:
         limit: int = 20,
         offset: int = 0,
     ):
+        print("CommonFilterParams目前接收到的tags:",tags)
+        # 打印tags的数据类型
+        print("tags的数据类型：",type(tags))
+        
         self.filename = filename
         self.title = title
         self.description = description

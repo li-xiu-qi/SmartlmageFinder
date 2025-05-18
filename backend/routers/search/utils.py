@@ -2,6 +2,30 @@
 from typing import Dict, List, Any, Optional, Union
 import json
 from ...global_schemas import ResponseModel
+import traceback # 确保导入 traceback
+
+def _process_tags(tags: Optional[List[str]]) -> Optional[List[str]]:
+    """
+    处理和规范化标签列表。
+    将逗号分隔的标签字符串拆分为独立的标签，并去除重复项。
+    """
+    if not tags:
+        return None
+    
+    processed_tags = []
+    for tag_item in tags:
+        if isinstance(tag_item, str):
+            processed_tags.extend([t.strip() for t in tag_item.split(',') if t.strip()])
+        # 可以选择性地处理更复杂的嵌套列表情况，如果需要的话
+        # elif isinstance(tag_item, list):
+        #     for sub_tag_item in tag_item:
+        #         if isinstance(sub_tag_item, str):
+        #             processed_tags.extend([t.strip() for t in sub_tag_item.split(',') if t.strip()])
+
+    if not processed_tags:
+        return None
+    
+    return list(set(processed_tags))
 
 def build_filters(
     filename: Optional[str] = None,
@@ -34,8 +58,11 @@ def build_filters(
         filters["title"] = title
     if description:
         filters["description"] = description
-    if tags:
-        filters["tags"] = tags
+    
+    processed_tags_list = _process_tags(tags)
+    if processed_tags_list:
+        filters["tags"] = processed_tags_list
+        
     if start_date:
         filters["start_date"] = start_date
     if end_date:
@@ -120,7 +147,6 @@ def handle_search_error(e: Exception, limit: int, offset: int, error_code: str =
     Returns:
         Dict[str, Any]: 错误响应
     """
-    import traceback
     traceback.print_exc()
     
     return ResponseModel.paginated_error(

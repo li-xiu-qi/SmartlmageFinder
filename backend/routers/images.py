@@ -40,9 +40,12 @@ async def list_images(
     order: str = Query("desc", description="排序方向"),
     start_date: Optional[str] = Query(None, description="开始日期过滤"),
     end_date: Optional[str] = Query(None, description="结束日期过滤"),
-    tags: Optional[List[str]] = Query(None, description="标签过滤，可以是数组形式"),
+    tags: Optional[List[str]] = Query(None, alias="tags[]", description="标签过滤，可以是数组形式"),
     db: sqlite3.Connection = Depends(get_db),
 ):
+    print("list_images函数目前接收到的tags:",tags)
+    # 打印tags的数据类型
+    print("tags的数据类型：",type(tags))
     """获取图片列表，支持分页和各种过滤条件"""
     try:
         # 获取图片列表和总数
