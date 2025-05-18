@@ -2,25 +2,25 @@ import React, { useState } from 'react';
 import { Select, Button, Row, Col, Card, Tag, Spin, Empty, Typography } from 'antd';
 import { SearchOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { SearchImageItem } from '@/types/models';
-import { VectorSearchTarget } from '@/types/search';
+import { VectorType } from '@/types/search'; // Changed from VectorSearchTarget to VectorType
 import RefModal from '@/components/RefModal';
 import ImagePreview from '@/components/ImagePreview';
 
 const { Option } = Select;
 
-// 定义搜索类型选项
+// 定义搜索类型选项，使用 VectorType
 const searchTypeOptions = [
-  { value: VectorSearchTarget.IMAGE, label: '图像向量' },
-  { value: VectorSearchTarget.TITLE, label: '标题向量' },
-  { value: VectorSearchTarget.DESCRIPTION, label: '描述向量' },
+  { value: VectorType.IMAGE, label: '图像向量' },
+  { value: VectorType.TITLE, label: '标题向量' },
+  { value: VectorType.DESCRIPTION, label: '描述向量' },
 ];
 
 interface SimilarImagesModalProps {
   open: boolean;
   onClose: () => void;
   loading: boolean;
-  searchTarget: VectorSearchTarget;
-  onSearchTargetChange: (value: VectorSearchTarget) => void;
+  searchTarget: VectorType; // Changed from VectorSearchTarget to VectorType
+  onSearchTargetChange: (value: VectorType) => void; // Changed from VectorSearchTarget to VectorType
   onSearch: () => void;
   similarImages: SearchImageItem[];
 }

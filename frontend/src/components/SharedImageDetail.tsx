@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Spin, message } from 'antd';
-import { imageService, searchService, metadataService } from '@/services/api'; // 确保 metadataService 已导入
+import { imageService, searchService, metadataService } from '@/services/api';
 import { ImageDetail, ImageSearchResult } from '@/types';
-import { VectorSearchTarget, SearchType } from '@/types/search';
+import { VectorType } from '@/types/search'; // Changed from VectorSearchTarget to VectorType
 import ImagePreview from '@/components/ImagePreview';
 import EditableField from '@/components/EditableField';
 import FileInfoSection from '@/components/FileInfoSection';
@@ -32,11 +32,12 @@ const SharedImageDetail: React.FC<SharedImageDetailProps> = ({
   const [loading, setLoading] = useState(false);
   const [similarImages, setSimilarImages] = useState<ImageSearchResult[]>([]);
   const [showSimilarModal, setShowSimilarModal] = useState(false);
-  const [searchType, setSearchType] = useState<string>('image');
+  // Changed type and initial value to use VectorType
+  const [searchTarget, setSearchTarget] = useState<VectorType>(VectorType.IMAGE); 
   
-  // 处理搜索类型变更
-  const handleSearchTypeChange = (value: string) => {
-    setSearchType(value);
+  // Changed parameter type to VectorType
+  const handleSearchTargetChange = (value: VectorType) => { 
+    setSearchTarget(value);
   };
   
   // 更新标题
@@ -118,25 +119,11 @@ const SharedImageDetail: React.FC<SharedImageDetailProps> = ({
       setLoading(true);
       setShowSimilarModal(true);
       
-      // 将searchType字符串映射到VectorSearchTarget枚举
-      let targetType: VectorSearchTarget;
-      switch (searchType) {
-        case 'title':
-          targetType = VectorSearchTarget.TITLE;
-          break;
-        case 'description':
-          targetType = VectorSearchTarget.DESCRIPTION;
-          break;
-        case 'image':
-        default:
-          targetType = VectorSearchTarget.IMAGE;
-          break;
-      }
-      
+      // 使用新的 vector_type 参数调用相似图片搜索服务
       const response = await searchService.similarSearch(image.id, { 
-        search_targets: [targetType], 
-        limit: 12,
-        search_type: SearchType.VECTOR // 使用向量搜索
+        vector_type: searchTarget, // 使用 searchTarget 作为 vector_type 的值
+        limit: 12
+        // 移除了 search_targets 和 search_type
       });
       
       if (response.status === 'success' && response.data) {
@@ -205,8 +192,9 @@ const SharedImageDetail: React.FC<SharedImageDetailProps> = ({
           {/* 操作按钮 */}
         <ActionsPanel 
           image={image}
-          searchType={searchType}
-          onSearchTypeChange={handleSearchTypeChange}
+          searchType={searchTarget as string} 
+          // Changed cast to VectorType
+          onSearchTypeChange={(value) => handleSearchTargetChange(value as VectorType)} 
           onFindSimilar={fetchSimilarImages}
           onDelete={handleDelete}
           onUpdate={onUpdate}
@@ -218,8 +206,8 @@ const SharedImageDetail: React.FC<SharedImageDetailProps> = ({
           open={showSimilarModal}
           onClose={() => setShowSimilarModal(false)}
           loading={loading}
-          searchType={searchType}
-          onSearchTypeChange={handleSearchTypeChange}
+          searchTarget={searchTarget} // 修改属性名
+          onSearchTargetChange={handleSearchTargetChange} // 修改属性名和传递的函数
           onSearch={fetchSimilarImages}
           similarImages={similarImages}
         />

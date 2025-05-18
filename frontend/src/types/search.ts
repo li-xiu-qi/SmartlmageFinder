@@ -72,10 +72,12 @@ export interface SimilarSearchPathParams {
 
 /**
  * 相似图片搜索查询参数
+ * 此接口已更新以匹配后端API：
+ * - 使用 `vector_type` 指定单一的搜索向量类型。
+ * - 移除了 `search_targets` 和 `search_type`。
  */
 export interface SimilarSearchQueryParams {
-  search_targets?: VectorSearchTarget[];         // 搜索目标，默认为 image
-  search_type?: SearchType.VECTOR;               // 搜索类型，仅支持向量搜索
+  vector_type: VectorType;                       // 搜索时使用的向量类型 (e.g., 'image', 'title', 'description')
   filename?: string;                             // 按文件名过滤
   tags?: string[];                               // 按标签过滤
   start_date?: string;                           // 开始日期

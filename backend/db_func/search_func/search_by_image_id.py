@@ -40,6 +40,8 @@ def search_by_image_id(
     Returns:
         相似图像列表，按相似度排序
     """
+    print(f"开始使用图像ID {image_id} 进行向量搜索")
+    print("向量类型：",vector_type)
     cursor = conn.cursor()
     results = []
     try:

@@ -86,9 +86,14 @@ const searchService: SearchClient = {
 
   /**
    * 相似图片搜索
+   * 后端此接口已更新，现在使用单一的 `vector_type` 参数来指定搜索时使用的向量类型。
    * @param imageId 图片ID
-   * @param params 相似搜索查询参数
-   */  similarSearch: (imageId: number | string, queryParams?: SimilarSearchQueryParams): Promise<SimilarSearchResponse> => {
+   * @param queryParams 相似搜索查询参数。应包含 `vector_type` (例如: 'image', 'title', 'description') 
+   *                    以及可选的过滤参数 (如 `limit`, `offset`, `tags` 等)。
+   *                    `SimilarSearchQueryParams` 类型定义 (在 ../types/search.ts 中) 
+   *                    已更新以反映此变化 (包含 `vector_type`，移除了旧的 `search_targets` 和 `search_type`)。
+   */
+  similarSearch: (imageId: number | string, queryParams?: SimilarSearchQueryParams): Promise<SimilarSearchResponse> => {
     let apiParams: Record<string, unknown> | undefined = undefined;
 
     if (queryParams) {
