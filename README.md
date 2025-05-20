@@ -167,29 +167,52 @@ npm run dev
 ![backend_config](backend/config_files/config.yaml)
 默认会加载系统配置文件，你也可以去掉从默认文件里面加载配置，然后使用[config.py](backend/config.py)里面的配置。
 
-## 系统架构
+## 效果演示
 
-![SmartImageFinder-项目架构图-v3.png](assets/images/SmartImageFinder-项目架构图-v3.png)
+### 系统架构
 
-## 扩展开发
+![系统架构图](assets/images/SmartImageFinder-项目架构图-v3.png)
 
-### 添加新功能
+### 首页展示
 
-- 见 `docs/` 目录下的开发指南文档
+![首页](assets/images/首页.png)
+![首页图片侧边栏展示](assets/images/首页图片侧边栏展示.png)
 
-### 自定义模型
+### 图片上传和分析
 
-- 系统支持自定义替换向量模型和视觉模型
-- 修改 `config.yaml` 中的相关配置
+![图片上传](assets/images/图片上传.png)
+![上传的时候可以编辑图片分析内容](assets/images/上传的时候可以编辑图片分析内容.png)
+![上传完成的结果显示](assets/images/上传完成的结果显示.png)
+![AI自动分析图片内容](assets/images/AI自动分析图片内容.png)
+![AI自动分析图片内容效果](assets/images/AI自动分析图片内容效果.png)
 
-## 文档
+### 标签管理系统
 
-详细的系统文档:
+![标签管理](assets/images/标签管理.png)
+![标签编辑](assets/images/标签编辑.png)
+![标签编辑效果](assets/images/标签编辑效果.png)
+![标签搜索及过滤](assets/images/标签搜索及过滤.png)
+![点击标签可以直接跳转到对应的图片展示部分并过滤图片](assets/images/点击标签可以直接跳转到对应的图片展示部分并过滤图片.png)
+![基于标签的过滤搜索](assets/images/基于标签的过滤搜索.png)
 
-- [系统配置指南](docs/config_guide.md)
-- [数据库设计](docs/database_design.md)
-- [系统设计指南](docs/design_guide.md)
-- [API文档](docs/api_docs/main.md)
+### 智能搜索功能
+
+![基于模糊搜索的图片搜索](assets/images/基于模糊搜索的图片搜索.png)
+![标题向量搜索](assets/images/标题向量搜索.png)
+![标题向量和描述向量混合搜索](assets/images/标题向量和描述向量混合搜索.png)
+![三种混合搜索的搜索效果](assets/images/三种混合搜索的搜索效果.png)
+![使用图搜索图](assets/images/使用图搜索图.png)
+
+### 元数据管理
+
+![元数据编辑](assets/images/元数据编辑.png)
+![元数据编辑效果](assets/images/元数据编辑效果.png)
+![图片描述更新](assets/images/图片描述更新.png)
+
+### 系统管理
+
+![系统设置](assets/images/系统设置.png)
+![系统状态查看](assets/images/系统状态查看.png)
 
 ## 许可证
 
