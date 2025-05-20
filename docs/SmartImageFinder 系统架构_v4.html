@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sm        <!-- Right Side: Backend Modules -->
+        <g transform="translate(750,100)">
+            <text x="350" y="30" text-anchor="middle" fill="#FFFFFF" font-size="24" font-weight="bold">
+                后端模块设计mageFinder 项目架构图 v4 (左右布局)</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #080B11;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        svg {
+            background: linear-gradient(135deg, #0A1625 0%, #0D1B2A 100%);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.8);
+        }
+        @keyframes glowing {
+            0% { filter: drop-shadow(0 0 2px rgba(138,43,226,0.2)); }
+            50% { filter: drop-shadow(0 0 8px rgba(138,43,226,0.4)); }
+            100% { filter: drop-shadow(0 0 2px rgba(138,43,226,0.2)); }
+        }
+        .glow-effect {
+            animation: glowing 3s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body>
+    <svg width="1600" height="900" viewBox="0 0 1600 900">
+        <defs>
+            <!-- 渐变定义 -->
+            <linearGradient id="header-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" style="stop-color:#4B0082;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#8A2BE2;stop-opacity:1" />
+            </linearGradient>
+            <linearGradient id="frontend-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#1E3B8C;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#2E5CB8;stop-opacity:1" />
+            </linearGradient>
+            <linearGradient id="backend-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#4A1B7A;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#6A3AA6;stop-opacity:1" />
+            </linearGradient>
+            <linearGradient id="db-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#1B4B78;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#2E6BA4;stop-opacity:1" />
+            </linearGradient>
+            
+            <!-- 滤镜定义 -->
+            <filter id="glow" height="300%" width="300%" x="-100%" y="-100%">
+                <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                <feMerge>
+                    <feMergeNode in="coloredBlur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+            </filter>
+            <filter id="shadow" height="200%" width="200%" x="-50%" y="-50%">
+                <feDropShadow dx="2" dy="4" stdDeviation="4" flood-color="rgba(0,0,0,0.5)"/>
+            </filter>
+
+            <!-- 箭头标记 -->
+            <marker id="arrow-main" viewBox="0 0 10 10" refX="9" refY="5" 
+                markerWidth="6" markerHeight="6" orient="auto">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#BD93F9"/>
+            </marker>
+            <marker id="arrow-sub" viewBox="0 0 10 10" refX="9" refY="5" 
+                markerWidth="5" markerHeight="5" orient="auto">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#A569BD"/>
+            </marker>
+        </defs>        <!-- Main Title -->
+        <text x="800" y="70" text-anchor="middle" fill="#FFFFFF" font-size="42" font-weight="bold" class="glow-effect">
+            SmartImageFinder 智能图片搜索系统
+        </text>        <!-- Left Side: System Architecture -->
+        <g transform="translate(50,120)">
+            <text x="350" y="30" text-anchor="middle" fill="#FFFFFF" font-size="24" font-weight="bold">
+                系统整体架构
+            </text>
+
+            <!-- Frontend -->
+            <g transform="translate(50,60)" class="glow-effect">
+                <rect width="600" height="120" rx="15" ry="15" 
+                    fill="url(#frontend-gradient)" stroke="#81A1C1" stroke-width="2" filter="url(#shadow)"/>
+                <text x="300" y="35" text-anchor="middle" fill="#FFFFFF" font-size="18" font-weight="bold">
+                    前端层 (React + Ant Design)
+                </text>
+                <text x="150" y="70" fill="#E6E6FA" font-size="14">• 图片管理界面</text>
+                <text x="150" y="95" fill="#E6E6FA" font-size="14">• 图片上传与编辑</text>
+                <text x="400" y="70" fill="#E6E6FA" font-size="14">• 搜索界面</text>
+                <text x="400" y="95" fill="#E6E6FA" font-size="14">• 系统管理</text>
+            </g>
+
+            <!-- Backend -->
+            <g transform="translate(50,220)" class="glow-effect">
+                <rect width="600" height="120" rx="15" ry="15" 
+                    fill="url(#backend-gradient)" stroke="#B39DDB" stroke-width="2" filter="url(#shadow)"/>
+                <text x="300" y="35" text-anchor="middle" fill="#FFFFFF" font-size="18" font-weight="bold">
+                    后端层 (FastAPI)
+                </text>
+                <text x="150" y="70" fill="#E6E6FA" font-size="14">• REST API 实现</text>
+                <text x="150" y="95" fill="#E6E6FA" font-size="14">• 业务逻辑处理</text>
+                <text x="400" y="70" fill="#E6E6FA" font-size="14">• 数据流处理</text>
+                <text x="400" y="95" fill="#E6E6FA" font-size="14">• 系统集成</text>
+            </g>
+
+            <!-- Services -->
+            <g transform="translate(50,380)">
+                <!-- Database -->
+                <g class="glow-effect">
+                    <rect width="180" height="160" rx="15" ry="15" 
+                        fill="url(#db-gradient)" stroke="#81A1C1" stroke-width="2" filter="url(#shadow)"/>
+                    <text x="90" y="35" text-anchor="middle" fill="#FFFFFF" font-size="16" font-weight="bold">
+                        数据库
+                    </text>
+                    <text x="90" y="65" text-anchor="middle" fill="#E6E6FA" font-size="12">SQLite + sqlite-vec</text>
+                    <text x="20" y="95" fill="#E6E6FA" font-size="12">• 元数据存储</text>
+                    <text x="20" y="120" fill="#E6E6FA" font-size="12">• 向量存储</text>
+                    <text x="20" y="145" fill="#E6E6FA" font-size="12">• 标签管理</text>
+                </g>
+
+                <!-- AI Service -->
+                <g transform="translate(210,0)" class="glow-effect">
+                    <rect width="180" height="160" rx="15" ry="15" 
+                        fill="url(#backend-gradient)" stroke="#B39DDB" stroke-width="2" filter="url(#shadow)"/>
+                    <text x="90" y="35" text-anchor="middle" fill="#FFFFFF" font-size="16" font-weight="bold">
+                        AI 服务
+                    </text>
+                    <text x="90" y="65" text-anchor="middle" fill="#E6E6FA" font-size="12">CLIP V2 + 多模态API</text>
+                    <text x="20" y="95" fill="#E6E6FA" font-size="12">• 特征提取</text>
+                    <text x="20" y="120" fill="#E6E6FA" font-size="12">• 内容生成</text>
+                    <text x="20" y="145" fill="#E6E6FA" font-size="12">• 向量计算</text>
+                </g>
+
+                <!-- File System -->
+                <g transform="translate(420,0)" class="glow-effect">
+                    <rect width="180" height="160" rx="15" ry="15" 
+                        fill="url(#db-gradient)" stroke="#81A1C1" stroke-width="2" filter="url(#shadow)"/>
+                    <text x="90" y="35" text-anchor="middle" fill="#FFFFFF" font-size="16" font-weight="bold">
+                        文件系统
+                    </text>
+                    <text x="90" y="65" text-anchor="middle" fill="#E6E6FA" font-size="12">本地存储</text>
+                    <text x="20" y="95" fill="#E6E6FA" font-size="12">• 图片存储</text>
+                    <text x="20" y="120" fill="#E6E6FA" font-size="12">• 缓存管理</text>
+                    <text x="20" y="145" fill="#E6E6FA" font-size="12">• 文件组织</text>
+                </g>
+            </g>
+
+            <!-- Connections -->
+            <path d="M 350 180 L 350 220" stroke="#BD93F9" stroke-width="2" 
+                marker-end="url(#arrow-main)" fill="none"/>
+            <path d="M 350 340 L 140 380" stroke="#BD93F9" stroke-width="2" 
+                marker-end="url(#arrow-main)" fill="none"/>
+            <path d="M 350 340 L 350 380" stroke="#BD93F9" stroke-width="2" 
+                marker-end="url(#arrow-main)" fill="none"/>
+            <path d="M 350 340 L 510 380" stroke="#BD93F9" stroke-width="2" 
+                marker-end="url(#arrow-main)" fill="none"/>
+        </g>        <!-- Right Side: Backend Modules -->
+        <g transform="translate(800,120)">
+            <text x="350" y="30" text-anchor="middle" fill="#FFFFFF" font-size="24" font-weight="bold">
+                后端模块设计
+            </text>
+
+            <!-- Core Modules -->
+            <g transform="translate(0,60)">
+                <!-- Routers -->
+                <g class="glow-effect">
+                    <rect width="200" height="120" rx="10" ry="10" 
+                        fill="rgba(41, 128, 185, 0.2)" stroke="#81A1C1" stroke-width="1"/>
+                    <text x="100" y="30" text-anchor="middle" fill="#E6E6FA" font-size="16" font-weight="bold">
+                        路由层 (Routers)
+                    </text>
+                    <text x="20" y="60" fill="#E6E6FA" font-size="12">• API端点定义</text>
+                    <text x="20" y="80" fill="#E6E6FA" font-size="12">• 请求验证与处理</text>
+                    <text x="20" y="100" fill="#E6E6FA" font-size="12">• 响应封装</text>
+                </g>
+
+                <!-- AI Function -->
+                <g transform="translate(250,0)" class="glow-effect">
+                    <rect width="200" height="120" rx="10" ry="10" 
+                        fill="rgba(142, 68, 173, 0.2)" stroke="#B39DDB" stroke-width="1"/>
+                    <text x="100" y="30" text-anchor="middle" fill="#E6E6FA" font-size="16" font-weight="bold">
+                        AI功能层
+                    </text>
+                    <text x="20" y="60" fill="#E6E6FA" font-size="12">• 图像分析</text>
+                    <text x="20" y="80" fill="#E6E6FA" font-size="12">• 特征提取</text>
+                    <text x="20" y="100" fill="#E6E6FA" font-size="12">• 内容生成</text>
+                </g>
+
+                <!-- DB Function -->
+                <g transform="translate(500,0)" class="glow-effect">
+                    <rect width="200" height="120" rx="10" ry="10" 
+                        fill="rgba(41, 128, 185, 0.2)" stroke="#81A1C1" stroke-width="1"/>
+                    <text x="100" y="30" text-anchor="middle" fill="#E6E6FA" font-size="16" font-weight="bold">
+                        DB功能层
+                    </text>
+                    <text x="20" y="60" fill="#E6E6FA" font-size="12">• CRUD操作</text>
+                    <text x="20" y="80" fill="#E6E6FA" font-size="12">• 向量搜索</text>
+                    <text x="20" y="100" fill="#E6E6FA" font-size="12">• 事务管理</text>
+                </g>
+            </g>
+
+            <!-- Support Modules -->
+            <g transform="translate(0,220)">
+                <!-- System Function -->
+                <g class="glow-effect">
+                    <rect width="200" height="120" rx="10" ry="10" 
+                        fill="rgba(142, 68, 173, 0.2)" stroke="#B39DDB" stroke-width="1"/>
+                    <text x="100" y="30" text-anchor="middle" fill="#E6E6FA" font-size="16" font-weight="bold">
+                        系统功能层
+                    </text>
+                    <text x="20" y="60" fill="#E6E6FA" font-size="12">• 配置管理</text>
+                    <text x="20" y="80" fill="#E6E6FA" font-size="12">• 缓存管理</text>
+                    <text x="20" y="100" fill="#E6E6FA" font-size="12">• 运行时管理</text>
+                </g>
+
+                <!-- Utils -->
+                <g transform="translate(250,0)" class="glow-effect">
+                    <rect width="200" height="120" rx="10" ry="10" 
+                        fill="rgba(41, 128, 185, 0.2)" stroke="#81A1C1" stroke-width="1"/>
+                    <text x="100" y="30" text-anchor="middle" fill="#E6E6FA" font-size="16" font-weight="bold">
+                        工具层
+                    </text>
+                    <text x="20" y="60" fill="#E6E6FA" font-size="12">• 图像处理</text>
+                    <text x="20" y="80" fill="#E6E6FA" font-size="12">• 文本处理</text>
+                    <text x="20" y="100" fill="#E6E6FA" font-size="12">• 通用工具</text>
+                </g>
+
+                <!-- Connection Pool -->
+                <g transform="translate(500,0)" class="glow-effect">
+                    <rect width="200" height="120" rx="10" ry="10" 
+                        fill="rgba(142, 68, 173, 0.2)" stroke="#B39DDB" stroke-width="1"/>
+                    <text x="100" y="30" text-anchor="middle" fill="#E6E6FA" font-size="16" font-weight="bold">
+                        数据库连接池
+                    </text>
+                    <text x="20" y="60" fill="#E6E6FA" font-size="12">• 连接管理</text>
+                    <text x="20" y="80" fill="#E6E6FA" font-size="12">• 状态监控</text>
+                    <text x="20" y="100" fill="#E6E6FA" font-size="12">• 错误处理</text>
+                </g>
+            </g>
+
+            <!-- Core Components -->
+            <g transform="translate(125,380)">
+                <!-- Config -->
+                <g class="glow-effect">
+                    <rect width="450" height="80" rx="10" ry="10" 
+                        fill="rgba(41, 128, 185, 0.2)" stroke="#81A1C1" stroke-width="1"/>
+                    <text x="225" y="35" text-anchor="middle" fill="#E6E6FA" font-size="16" font-weight="bold">
+                        配置模块 (config.py)
+                    </text>
+                    <text x="225" y="60" text-anchor="middle" fill="#E6E6FA" font-size="12">
+                        配置加载、环境变量管理、动态更新
+                    </text>
+                </g>
+            </g>
+
+            <!-- FastAPI Main -->
+            <g transform="translate(125,500)">
+                <rect width="450" height="60" rx="10" ry="10" 
+                    fill="rgba(147, 112, 219, 0.2)" stroke="#B39DDB" stroke-width="1" 
+                    stroke-dasharray="4,4"/>
+                <text x="225" y="35" text-anchor="middle" fill="#FFFFFF" font-size="16" font-weight="bold">
+                    FastAPI 应用入口 (main.py)
+                </text>
+            </g>
+
+            <!-- Internal Connections -->
+            <path d="M 100 180 L 100 220" stroke="#A569BD" stroke-width="1.5" 
+                marker-end="url(#arrow-sub)" fill="none"/>
+            <path d="M 350 180 L 350 220" stroke="#A569BD" stroke-width="1.5" 
+                marker-end="url(#arrow-sub)" fill="none"/>
+            <path d="M 600 180 L 600 220" stroke="#A569BD" stroke-width="1.5" 
+                marker-end="url(#arrow-sub)" fill="none"/>
+        </g>        <!-- Bottom Text -->
+        <text x="800" y="850" font-size="12" text-anchor="middle" fill="#546E7A">
+            本地桌面 Web 应用-个人版
+        </text>
+
+    </svg>
+</body>
+</html>

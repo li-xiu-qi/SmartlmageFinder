@@ -1,149 +1,177 @@
-# SmartImageFinder 数据库设计文档
+# 数据库设计文档
 
-## 目录
+本文档详细描述了 SmartImageFinder 项目的数据库结构、连接方式以及相关的设计考量。
 
-1. [数据库概述](#数据库概述)
-2. [数据库连接管理](#数据库连接管理)
-3. [表结构设计](#表结构设计)
-   - [images 表](#images-表)
-   - [向量表](#向量表)
-     - [title_vectors 表](#title_vectors-表)
-     - [description_vectors 表](#description_vectors-表)
-     - [image_vectors 表](#image_vectors-表)
-4. [索引设计](#索引设计)
-5. [关键函数](#关键函数)
-6. [初始化流程](#初始化流程)
-7. [向量扩展](#向量扩展)
+## 一、数据库表结构
 
-## 数据库概述
+数据库采用 SQLite，并利用 `sqlite-vec` 扩展来支持向量搜索功能。
 
-SmartImageFinder 项目使用 SQLite 作为数据库存储引擎，同时结合向量数据库扩展(sqlite-vec)来支持图像向量检索功能。数据库主要存储图像元数据信息以及对应的向量表示，用于实现基于语义的图像检索。
+### 1. `images` 表
 
-数据库文件路径通过配置文件中的 `DB_PATH` 配置项指定，而向量数据库驱动程序通过 `VECTOR_DB_DRIVER` 配置项指定。
+该表是核心表，用于存储图片的基本信息和元数据。
 
-## 数据库连接管理
+| 字段名        | 类型                          | 约束                | 描述                                       |
+|---------------|-------------------------------|---------------------|--------------------------------------------|
+| `id`          | INTEGER                       | PRIMARY KEY, AUTOINCREMENT | 图片的唯一标识符                           |
+| `filename`    | TEXT                          | NOT NULL            | 图片的原始文件名                           |
+| `filepath`    | TEXT                          | NOT NULL            | 图片在服务器上的存储路径                   |
+| `title`       | TEXT                          |                     | 图片的标题                                 |
+| `description` | TEXT                          |                     | 图片的描述信息                             |
+| `file_size`   | INTEGER                       | NOT NULL            | 文件大小（字节）                           |
+| `file_type`   | TEXT                          | NOT NULL            | 文件类型 (例如, 'image/jpeg', 'image/png') |
+| `width`       | INTEGER                       |                     | 图片宽度（像素）                           |
+| `height`      | INTEGER                       |                     | 图片高度（像素）                           |
+| `created_at`  | TEXT                          | NOT NULL            | 图片记录的创建时间                         |
+| `updated_at`  | TEXT                          | NOT NULL            | 图片记录的最后更新时间                     |
+| `metadata`    | TEXT                          |                     | 存储额外的元数据 (例如, EXIF 信息, 通常为 JSON 字符串) |
+| `tags`        | TEXT                          |                     | 图片的标签 (通常是逗号分隔的字符串或 JSON 数组) |
 
-数据库连接采用上下文管理器模式，确保连接在使用后正确关闭，避免资源泄漏：
+**索引**:
 
-```python
-@contextmanager
-def get_db_connection():
-    """获取数据库连接，使用上下文管理器确保连接正确关闭"""
-    conn = None
-    try:
-        conn = sqlite3.connect(settings.get_config().DB_PATH)
-        conn.row_factory = sqlite3.Row
-        yield conn
-    finally:
-        if conn:
-            conn.close()
+* `idx_images_created_at`: 在 `created_at` 字段上创建，用于加速按创建时间排序和查询。
 
-def get_db():
-    with get_db_connection() as conn:
-        yield conn
+### 2. 向量表
+
+这些表是使用 `sqlite-vec` 扩展创建的虚拟表，用于存储从图片标题、描述和图片内容本身提取的特征向量，以支持语义搜索。
+
+* **向量维度 (`embedding_dim`)**: 由 `backend.utils.generate_vector.get_embedding_dimension()` 函数动态获取。
+* **距离度量 (`DISTANCE_METRIC`)**: `cosine` (余弦相似度)，适用于比较文本或图像特征向量。
+
+#### a. `title_vectors` 表
+
+存储图片标题的特征向量。
+
+| 字段名      | 类型                          | 约束                               | 描述                                     |
+|-------------|-------------------------------|------------------------------------|------------------------------------------|
+| `id`        | INTEGER                       | PRIMARY KEY, AUTOINCREMENT         | 向量记录的唯一标识                       |
+| `image_id`  | INTEGER                       | UNIQUE, NOT NULL                   | 关联到 `images` 表的 `id`                |
+| `embedding` | FLOAT[`embedding_dim`]        |                                    | 存储标题文本的特征向量                   |
+
+#### b. `description_vectors` 表
+
+存储图片描述的特征向量。
+
+| 字段名      | 类型                          | 约束                               | 描述                                     |
+|-------------|-------------------------------|------------------------------------|------------------------------------------|
+| `id`        | INTEGER                       | PRIMARY KEY, AUTOINCREMENT         | 向量记录的唯一标识                       |
+| `image_id`  | INTEGER                       | UNIQUE, NOT NULL                   | 关联到 `images` 表的 `id`                |
+| `embedding` | FLOAT[`embedding_dim`]        |                                    | 存储描述文本的特征向量                   |
+
+#### c. `image_vectors` 表
+
+存储图片内容本身的特征向量。
+
+| 字段名      | 类型                          | 约束                               | 描述                                     |
+|-------------|-------------------------------|------------------------------------|------------------------------------------|
+| `id`        | INTEGER                       | PRIMARY KEY, AUTOINCREMENT         | 向量记录的唯一标识                       |
+| `image_id`  | INTEGER                       | UNIQUE, NOT NULL                   | 关联到 `images` 表的 `id`                |
+| `embedding` | FLOAT[`embedding_dim`]        |                                    | 存储图片内容的特征向量                   |
+
+### 3. 表关系图 (ERD)
+
+```mermaid
+erDiagram
+    images {
+        INTEGER id PK "图片唯一ID"
+        TEXT filename "原始文件名"
+        TEXT filepath "存储路径"
+        TEXT title "标题"
+        TEXT description "描述"
+        INTEGER file_size "文件大小"
+        TEXT file_type "文件类型"
+        INTEGER width "宽度"
+        INTEGER height "高度"
+        TEXT created_at "创建时间"
+        TEXT updated_at "更新时间"
+        TEXT metadata "元数据 (JSON)"
+        TEXT tags "标签 (TEXT/JSON)"
+    }
+
+    title_vectors {
+        INTEGER id PK "向量记录ID"
+        INTEGER image_id FK "关联images.id"
+        TEXT embedding "标题向量"
+    }
+
+    description_vectors {
+        INTEGER id PK "向量记录ID"
+        INTEGER image_id FK "关联images.id"
+        TEXT embedding "描述向量"
+    }
+
+    image_vectors {
+        INTEGER id PK "向量记录ID"
+        INTEGER image_id FK "关联images.id"
+        TEXT embedding "图像向量"
+    }
+
+    images ||--o{ title_vectors : "has one"
+    images ||--o{ description_vectors : "has one"
+    images ||--o{ image_vectors : "has one"
 ```
 
-这种设计模式允许开发者使用 `with` 语句安全地获取和释放数据库连接。
+## 二、数据库连接方式
 
-## 表结构设计
+项目采用了两种主要的数据库连接方式，均基于 SQLite：
 
-### images 表
+### 1. 单连接模式
 
-`images` 表存储图像的基本信息和元数据，是系统的核心数据表。
+* **实现**: `backend.db_func.core.get_db_connection`
+* **机制**: 直接使用 `sqlite3.connect(DB_PATH, check_same_thread=False)` 创建连接。
+  * `check_same_thread=False`: 允许在多线程环境中使用同一连接对象，但要求应用代码自行确保线程安全。
+* **管理**: 通过 Python 的上下文管理器 (`@contextmanager`) 确保连接在使用完毕后正确关闭。
+* **用途**: 主要用于数据库初始化 (`init_db`) 或在连接池不可用时的备选方案。
 
-| 字段名       | 类型    | 说明                     |
-|-------------|--------|------------------------|
-| id          | INTEGER| 主键，自增               |
-| filename    | TEXT   | 图像文件名               |
-| filepath    | TEXT   | 图像文件路径             |
-| title       | TEXT   | 图像标题                 |
-| description | TEXT   | 图像描述                 |
-| file_size   | INTEGER| 文件大小（字节）         |
-| file_type   | TEXT   | 文件类型（如jpg, png等） |
-| width       | INTEGER| 图像宽度（像素）         |
-| height      | INTEGER| 图像高度（像素）         |
-| created_at  | TEXT   | 记录创建时间             |
-| updated_at  | TEXT   | 记录更新时间             |
-| metadata    | TEXT   | 额外元数据（JSON格式）   |
-| tags        | TEXT   | 图像标签（JSON格式的标签数组）|
+### 2. 连接池模式
 
-### 向量表
+* **实现**: `backend.db_func.connection_pool.DatabaseConnectionPool`
+* **目的**: 提高高并发场景下的性能和资源利用率，通过复用连接避免频繁创建和关闭连接的开销。
+* **工作方式**:
+  * 初始化时可配置最大连接数。
+  * 请求连接时，从池中获取；若池空且未达上限则创建新连接；若池满则等待。
+  * 连接使用完毕后归还到池中。
+* **线程安全**: 连接池使用 `threading.Lock` 和 `queue.Queue` 实现线程安全。
+* **FastAPI 集成**:
+  * `backend.db_func.core.get_db` 函数作为 FastAPI 依赖项。
+  * 优先从已初始化的连接池 (`get_db_connection_from_pool`) 获取连接。
+  * 若连接池未初始化，则回退到单连接模式。
 
-系统使用三个向量表存储不同类型的向量表示，这些表都是使用 sqlite-vec 扩展实现的虚拟表，支持向量相似度搜索。
+## 三、设计原因与考量
 
-#### title_vectors 表
+### 1. 技术选型
 
-存储图像标题对应的向量表示。
+* **SQLite**:
+  * **优点**: 轻量级、文件型数据库，易于部署和管理，无需独立数据库服务器，适合中小型应用或原型开发。
+  * **考虑**: 对于极大规模或极高并发写入的场景可能不是最佳选择，但对于本项目目标（个人或小团队的智能图片管理）是合适的。
+* **`sqlite-vec` 扩展**:
+  * **优点**: 使 SQLite 能够原生支持高效的向量存储和相似度搜索，避免了引入和维护更复杂的专用向量数据库（如 Faiss, Milvus, Weaviate 等）的成本和复杂性。
+  * **考虑**: 这是一个相对较新的扩展，社区和生态可能不如成熟的向量数据库完善，但其提供的功能对于本项目已足够。
 
-| 字段名     | 类型    | 说明                     |
-|-----------|--------|------------------------|
-| id        | INTEGER| 主键，自增               |
-| image_id  | INTEGER| 关联到 images 表的外键，唯一 |
-| embedding | FLOAT[] | 标题的向量表示，维度由配置决定 |
+### 2. 表结构设计
 
-#### description_vectors 表
+* **`images` 表的规范化**:
+  * 将图片的基本属性和元数据（如 EXIF、用户自定义标签）集中存储，便于进行常规的属性查询、筛选和排序。
+* **分离向量表**:
+  * 将不同来源（标题、描述、图像内容）的向量存储在各自的表中，并通过 `image_id` 与 `images` 表进行一对一关联。
+  * **查询效率**: 允许针对特定类型的向量进行更精确和可能更快的搜索。例如，用户可能只想基于图片标题进行语义搜索。
+  * **逻辑清晰**: 结构上更清晰，易于理解和维护不同类型向量数据的生成和使用逻辑。
+  * **灵活性**: 未来如果需要对不同类型的向量采用不同的嵌入模型、更新策略或索引参数，分表设计提供了更大的灵活性。例如，图像内容的向量可能比文本描述的向量更新得更频繁或使用不同的模型。
+* **使用 `image_id` 作为外键和唯一约束**:
+  * 确保了向量数据与图片信息的一一对应关系和数据完整性。
+* **索引**:
+  * 在 `images.created_at` 上创建索引是为了优化按时间筛选或排序图片的常见查询场景，提高用户体验。
 
-存储图像描述对应的向量表示。
+### 3. 连接方式设计
 
-| 字段名     | 类型    | 说明                     |
-|-----------|--------|------------------------|
-| id        | INTEGER| 主键，自增               |
-| image_id  | INTEGER| 关联到 images 表的外键，唯一 |
-| embedding | FLOAT[] | 描述的向量表示，维度由配置决定 |
+* **连接池**:
+  * **性能**: 在 Web 应用（如本项目基于 FastAPI 的后端）中，并发用户请求是常态。连接池通过复用已建立的数据库连接，显著减少了连接建立和断开的系统开销和延迟，从而提升应用的整体响应速度和吞吐量。
+  * **资源控制**: 通过设置最大连接数，可以防止应用因过多的并发请求而耗尽数据库连接资源，保证系统的稳定性和可靠性。
+* **FastAPI 依赖注入 (`get_db`)**:
+  * **代码简洁与可维护性**: FastAPI 的依赖注入系统使得在路由处理函数中获取和管理数据库连接变得非常简单和标准化，减少了样板代码，提高了代码的可读性和可维护性。
+  * **生命周期管理**: 确保每个 HTTP 请求都能获得一个独立的数据库会话（通过从池中获取连接），并在请求处理完成后自动将连接释放回池中，有效防止了连接泄漏。
+* **单连接作为备选**:
+  * 提供了在连接池不适用或未初始化时的基本数据库连接能力。这对于执行一次性脚本（如数据库初始化 `init_db`）、单元测试或简单的命令行工具非常有用。
+* **`check_same_thread=False` (SQLite 特定)**:
+  * SQLite 默认情况下不允许在不同的线程中共享同一个连接对象。设置此参数是为了在某些特定情况下（例如，FastAPI 的后台任务或某些测试场景中，如果确实需要在不同线程间传递同一个连接实例）提供灵活性。
+  * **重要**: 尽管设置了 `check_same_thread=False`，但在连接池的设计中，通常推荐的做法是每个线程从池中获取自己的连接，并在使用完毕后归还。这样可以更好地利用连接池的并发管理能力，并从根本上避免 SQLite 连接的线程安全问题。项目中的连接池实现遵循了这一原则。
 
-#### image_vectors 表
-
-存储图像内容对应的向量表示。
-
-| 字段名     | 类型    | 说明                     |
-|-----------|--------|------------------------|
-| id        | INTEGER| 主键，自增               |
-| image_id  | INTEGER| 关联到 images 表的外键，唯一 |
-| embedding | FLOAT[] | 图像的向量表示，维度由配置决定 |
-
-## 索引设计
-
-为了提高查询性能，系统在 `images` 表的 `created_at` 字段上创建了索引：
-
-```sql
-CREATE INDEX IF NOT EXISTS idx_images_created_at ON images(created_at)
-```
-
-这使得按时间顺序检索图像时性能得到优化。
-
-向量表使用 sqlite-vec 扩展提供的向量索引，支持基于余弦相似度（DISTANCE_METRIC=cosine）的高效相似度搜索。
-
-## 关键函数
-
-系统提供了以下关键数据库操作函数：
-
-1. **`init_db()`**: 初始化数据库结构，包括创建表、加载向量扩展、创建索引等
-2. **`get_db_connection()`**: 获取数据库连接的上下文管理器
-3. **`get_db()`**: 获取数据库连接的生成器函数
-4. **`dict_factory()`**: 将 sqlite3.Row 转换为字典的工具函数
-5. **`format_datetime()`**: 格式化日期时间
-6. **`get_current_time()`**: 获取当前时间的标准格式字符串
-
-## 初始化流程
-
-数据库初始化流程包括以下步骤：
-
-1. 创建数据库连接
-2. 加载 sqlite-vec 向量扩展
-3. 获取配置的向量维度
-4. 创建 images 表
-5. 创建三个向量表（title_vectors, description_vectors, image_vectors）
-6. 创建必要的索引
-7. 提交事务
-
-## 向量扩展
-
-系统依赖 sqlite-vec 扩展提供向量存储和检索功能。该扩展允许：
-
-1. 存储高维向量数据
-2. 执行基于余弦相似度的向量检索
-3. 高效地进行最近邻搜索
-
-向量维度通过 `get_embedding_dimension()` 函数从配置或模型中获取，确保向量表的维度与实际使用的嵌入模型匹配。
-
-在初始化数据库时，系统会尝试加载向量扩展，如果加载失败，将无法使用向量相关功能，但基本的图像元数据存储功能不受影响。

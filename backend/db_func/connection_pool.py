@@ -26,6 +26,7 @@ class DatabaseConnectionPool:
         self.connections = queue.Queue(maxsize=max_connections)
         self.connection_count = 0
         self._lock = threading.Lock()
+
     def _create_connection(self) -> sqlite3.Connection:
         """创建新的数据库连接"""
         connection = sqlite3.connect(self.database_path, check_same_thread=False)
