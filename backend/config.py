@@ -25,7 +25,6 @@ class AppConfig(BaseModel):
             "Pro/Qwen/Qwen2.5-VL-7B-Instruct",
         ]
     )
-    AI_ENABLED: bool = True
     HOST: str = "0.0.0.0"
     PORT: int = 1000  # 根据当前 config.yaml 设置
 
