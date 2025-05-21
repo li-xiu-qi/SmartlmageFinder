@@ -1,6 +1,26 @@
-# SmartImageFinder
+<div align="center">
+  <img src="assets/images/logo.png" alt="SmartImageFinder Logo" width="200">
+  <h1>SmartImageFinder</h1>
 
-一个基于多模态向量模型及视觉多模态模型构建的智能图片搜索引擎和管理系统，实现精准的以文搜图、以图搜图等多种智能检索方式，并提供完整的图片管理解决方案。本项目采用 FastAPI + React 技术栈，集成 Jina CLIP V2 和多模态大语言模型，为个人图片管理提供一站式解决方案。
+  <p>基于多模态向量模型及视觉多模态模型构建的智能图片搜索引擎和管理系统</p>
+
+  <div>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License"></a>
+    <img src="https://img.shields.io/badge/version-1.0.0-green.svg" alt="Version">
+    <img src="https://img.shields.io/badge/Python-3.8+-blue.svg" alt="Python">
+    <img src="https://img.shields.io/badge/FastAPI-0.100+-orange.svg" alt="FastAPI">
+    <img src="https://img.shields.io/badge/React-18-61DAFB.svg" alt="React">
+  </div>
+
+  <div>
+    <a href="README.md">中文</a> | 
+    <a href="README_EN.md">English</a>
+  </div>
+</div>
+
+## 项目简介
+
+一个智能图片搜索引擎和管理系统，实现精准的以文搜图、以图搜图等多种智能检索方式，并提供完整的图片管理解决方案。本项目采用 FastAPI + React 技术栈，集成 Jina CLIP V2 和多模态大语言模型，为个人图片管理提供一站式解决方案。
 
 ## 功能特点
 
@@ -100,7 +120,7 @@ cp backend/config/config.example.yaml backend/config/config.yaml
 
 ---
 
-```json
+```yaml
 AVAILABLE_VISION_MODELS: # 可用的视觉模型列表,可以自己加，只要对应的厂商支持
 - Qwen/Qwen2.5-VL-32B-Instruct
 - Pro/Qwen/Qwen2.5-VL-7B-Instruct 
