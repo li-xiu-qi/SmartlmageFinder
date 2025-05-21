@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/images/logo.png" alt="SmartImageFinder Logo" width="200">
+  <img src="assets/logo/logo.png" alt="SmartImageFinder Logo" width="200">
   <h1>SmartImageFinder</h1>
 
   <p>基于多模态向量模型及视觉多模态模型构建的智能图片搜索引擎和管理系统</p>
