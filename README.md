@@ -237,3 +237,12 @@ npm run dev
 ## 许可证
 
 本项目采用 [Apache 许可证 2.0](LICENSE) 进行许可。
+
+## 联系方式
+
+如果您在使用过程中遇到任何问题或有任何建议，欢迎通过以下方式联系我：
+
+<div align="center">
+  <img src="assets/wechat/筱可AI研习社_258.jpg" alt="筱可AI研习社" width="200">
+  <p>扫码关注「筱可AI研习社」公众号</p>
+</div>

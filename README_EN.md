@@ -235,3 +235,12 @@ The system will load the configuration file by default. You can also remove load
 ## License
 
 This project is licensed under the [Apache License 2.0](LICENSE).
+
+## Contact
+
+If you encounter any issues or have any suggestions during use, feel free to contact me through:
+
+<div align="center">
+  <img src="assets/wechat/筱可AI研习社_258.jpg" alt="Xiaoke AI Research Society" width="200">
+  <p>Scan to follow "Xiaoke AI Research Society" WeChat Official Account</p>
+</div>
