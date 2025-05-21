@@ -18,6 +18,7 @@ class AppConfig(BaseModel):
     MAX_CACHE_SIZE_GB: float = 1.5
     OPENAI_API_KEY: Optional[str] = None
     OPENAI_API_BASE: Optional[str] = None
+    
     VISION_MODEL: Optional[str] = None
     AVAILABLE_VISION_MODELS: List[str] = Field(
         default_factory=lambda: [

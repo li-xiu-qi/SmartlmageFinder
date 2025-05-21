@@ -11,9 +11,10 @@ interface VectorDbSettingsProps {
 const VectorDbSettings: React.FC<VectorDbSettingsProps> = ({ 
   systemStatus,
   loading = false
-}) => {
-  // 获取向量数据库状态
+}) => {  // 获取向量数据库状态
   const driverStatus = systemStatus?.components.vector_db_driver.status || 'unknown';
+  // 获取驱动路径
+  const driverPath = systemStatus?.components.vector_db_driver.path || '';
   // 状态映射
   const statusMap: Record<string, { status: 'success' | 'error' | 'default' | 'warning' | 'processing'; text: string }> = {
     'available': { status: 'success', text: '正常' },
@@ -54,18 +55,19 @@ const VectorDbSettings: React.FC<VectorDbSettingsProps> = ({
       )}
       
       <Row>
-        <Col span={24}>
-          <Form.Item 
+        <Col span={24}>          <Form.Item 
             label="驱动路径" 
             name={['vectorDb', 'driverPath']}
             rules={[{ required: true, message: '请输入向量数据库驱动路径' }]}
             tooltip="向量数据库驱动文件的路径，通常为.dll或.so文件"
+            initialValue={driverPath}
             extra="更改此设置后需要重启服务才能生效"
           >
             <Input 
               placeholder="例如: ./backend/config_files/vector_db_driver/vec0.dll" 
               disabled={loading}
               prefix={<DatabaseOutlined />}
+              title={driverPath} // 添加完整路径的悬停提示
             />
           </Form.Item>
         </Col>

@@ -22,22 +22,12 @@
   "code": 200,
   "message": "操作成功",
   "data": {
-    "system": {
-      "name": "SmartImageFinder",
-      "version": "1.0.0",
-      "environment": "production",
-      "python_version": "3.10.6",
-      "os": "Windows 11"
-    },
-    "features": {
-      "ai_enabled": true,
-      "vector_search_enabled": true,
-      "advanced_filters_enabled": true
-    },
-    "api": {
-      "version": "v1",
-      "endpoints_count": 28
-    }
+    "version": "1.0.0",
+    "app_uptime": 878415,
+    "app_uptime_formatted": "10天 3小时 20分钟 15秒",
+    "status": "healthy",
+    "platform": "Windows",
+    "python_version": "3.10.0"
   },
   "timestamp": "2023-05-19T12:34:56.789Z",
   "request_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
@@ -60,24 +50,8 @@
   "code": 200,
   "message": "操作成功",
   "data": {
-    "uptime": {
-      "days": 10,
-      "hours": 5,
-      "minutes": 30,
-      "seconds": 15,
-      "total_seconds": 878415
-    },
-    "resources": {
-      "cpu_usage_percent": 25.4,
-      "memory_usage_mb": 512.7,
-      "memory_available_mb": 7680.3,
-      "memory_percent": 6.3
-    },
-    "requests": {
-      "total": 12500,
-      "per_minute": 4.5,
-      "average_response_time_ms": 150
-    }
+    "app_uptime_formatted": "10天 3小时 20分钟 15秒",
+    "current_time": "2023-05-19T12:34:56.789Z"
   },
   "timestamp": "2023-05-19T12:34:56.789Z",
   "request_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
@@ -100,23 +74,15 @@
   "code": 200,
   "message": "操作成功",
   "data": {
-    "database_type": "SQLite",
-    "version": "3.39.4",
-    "file_size_mb": 256.5,
-    "connection_pool": {
-      "active_connections": 3,
-      "idle_connections": 5,
-      "max_connections": 20
-    },
-    "statistics": {
-      "tables_count": 12,
-      "indices_count": 28,
-      "last_vacuum": "2023-05-15T00:00:00Z"
-    },
-    "performance": {
-      "average_query_time_ms": 12.5,
-      "slow_queries_count": 5
-    }
+    "status": "connected",
+    "type": "sqlite",
+    "path": "c:\\\\Users\\\\k\\\\Documents\\\\project\\\\programming_project\\\\python_project\\\\importance\\\\SmartImageFinder\\\\data\\\\db\\\\smartimagefinder.db",
+    "image_count": 100,
+    "total_size": 10485760, // 单位: 字节
+    "tag_count": 50,
+    "vector_status": true,
+    "db_version": "3.39.4",
+    "error": null
   },
   "timestamp": "2023-05-19T12:34:56.789Z",
   "request_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
@@ -139,30 +105,10 @@
   "code": 200,
   "message": "操作成功",
   "data": {
-    "images": {
-      "total_count": 10000,
-      "total_size_mb": 5120,
-      "average_size_kb": 512,
-      "by_month": [
-        { "month": "2023-05", "count": 1250 },
-        { "month": "2023-04", "count": 1300 },
-        { "month": "2023-03", "count": 1150 }
-      ]
-    },
-    "tags": {
-      "unique_tags": 500,
-      "most_used": [
-        { "tag": "自然", "count": 1250 },
-        { "tag": "风景", "count": 1100 },
-        { "tag": "城市", "count": 950 }
-      ]
-    },
-    "disk": {
-      "total_gb": 500,
-      "used_gb": 120,
-      "available_gb": 380,
-      "usage_percent": 24
-    }
+    "total_images": 100,
+    "total_size_mb": 10.00,
+    "total_tags": 50,
+    "upload_dir": "c:\\\\Users\\\\k\\\\Documents\\\\project\\\\programming_project\\\\python_project\\\\importance\\\\SmartImageFinder\\\\data\\\\images"
   },
   "timestamp": "2023-05-19T12:34:56.789Z",
   "request_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
@@ -185,27 +131,19 @@
   "code": 200,
   "message": "操作成功",
   "data": {
-    "text_cache": {
-      "items": 5000,
-      "size_mb": 25.8,
-      "hit_rate": 0.85,
-      "miss_rate": 0.15
+    "enabled": true,
+    "max_size_gb": 1.0,
+    "total_entries": 120,
+    "total_size_mb": 5.5,
+    "text_vector_cache": {
+      "path": "c:\\\\Users\\\\k\\\\Documents\\\\project\\\\programming_project\\\\python_project\\\\importance\\\\SmartImageFinder\\\\data\\\\caches\\\\text_vector_cache",
+      "entries": 100,
+      "size_mb": 5.0
     },
-    "image_cache": {
-      "items": 1200,
-      "size_mb": 450.5,
-      "hit_rate": 0.78,
-      "miss_rate": 0.22
-    },
-    "vector_cache": {
-      "items": 8000,
-      "size_mb": 120.3,
-      "hit_rate": 0.92,
-      "miss_rate": 0.08
-    },
-    "total": {
-      "size_mb": 596.6,
-      "hit_rate": 0.85
+    "image_vector_cache": {
+      "path": "c:\\\\Users\\\\k\\\\Documents\\\\project\\\\programming_project\\\\python_project\\\\importance\\\\SmartImageFinder\\\\data\\\\caches\\\\image_vector_cache",
+      "entries": 20,
+      "size_mb": 0.5
     }
   },
   "timestamp": "2023-05-19T12:34:56.789Z",
@@ -219,7 +157,7 @@
 
 **路径**: `/api/v1/system/cache/clear`
 
-**说明**: 清除系统缓存
+**说明**: 清除系统缓存。此操作会清除所有文本和图像向量缓存。查询参数 `text_cache` 和 `image_cache` 控制响应中是否报告相应缓存类型的清除条目数，但不会阻止缓存被清除。`total_size_freed_mb` 始终反映所有缓存释放的总空间。
 
 #### 查询参数
 
@@ -237,9 +175,9 @@
   "message": "操作成功",
   "data": {
     "cleared": true,
-    "text_cache_entries_removed": 5000,
-    "image_cache_entries_removed": 1200,
-    "total_size_freed_mb": 596.6
+    "text_cache_entries_removed": 100,
+    "image_cache_entries_removed": 20,
+    "total_size_freed_mb": 5.5
   },
   "timestamp": "2023-05-19T12:34:56.789Z",
   "request_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
@@ -262,25 +200,22 @@
   "code": 200,
   "message": "操作成功",
   "data": {
-    "frontend": {
-      "theme": "light",
-      "language": "zh-CN",
-      "items_per_page": 20,
-      "thumbnail_size": "medium",
-      "features": {
-        "enable_ai_analysis": true,
-        "enable_vector_search": true
-      }
+    "api": {
+      "apiKey": "sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "baseUrl": "https://api.openai.com/v1"
     },
-    "upload": {
-      "max_file_size_mb": 10,
-      "allowed_extensions": ["jpg", "jpeg", "png", "gif", "webp"],
-      "auto_generate_thumbnails": true
+    "storage": {
+      "rootDirectory": "c:\\\\Users\\\\k\\\\Documents\\\\project\\\\programming_project\\\\python_project\\\\importance\\\\SmartImageFinder\\\\data\\\\images",
+      "cacheDirectory": "c:\\\\Users\\\\k\\\\Documents\\\\project\\\\programming_project\\\\python_project\\\\importance\\\\SmartImageFinder\\\\data\\\\caches\\\\text_vector_cache",
+      "maxCacheSize": 1.0
     },
-    "search": {
-      "default_search_mode": "text",
-      "min_score_threshold": 0.5,
-      "max_results": 100
+    "model": {
+      "vectorModel": "X:\\\\models\\\\bge-large-zh-v1.5",
+      "visionModel": "gpt-4-vision-preview",
+      "availableModels": ["gpt-4-vision-preview", "gemini-pro-vision"]
+    },
+    "vectorDb": {
+      "driverPath": "c:\\\\Users\\\\k\\\\Documents\\\\project\\\\programming_project\\\\python_project\\\\importance\\\\SmartImageFinder\\\\backend\\\\config_files\\\\vector_db_driver\\\\vec.dll"
     }
   },
   "timestamp": "2023-05-19T12:34:56.789Z",
@@ -300,13 +235,21 @@
 
 ```json
 {
-  "frontend": {
-    "theme": "dark",
-    "language": "en-US",
-    "items_per_page": 30
+  "storage": {
+    "rootDirectory": "/new/path/to/uploads",
+    "cacheDirectory": "/new/path/to/caches_base",
+    "maxCacheSize": 20.0
   },
-  "upload": {
-    "max_file_size_mb": 20
+  "api": {
+    "apiKey": "new-api-key",
+    "baseUrl": "https://new.api.base/url"
+  },
+  "model": {
+    "visionModel": "new-vision-model",
+    "vectorModel": "/new/path/to/vector/model.bin"
+  },
+  "vectorDb": {
+    "driverPath": "/new/path/to/driver.dll"
   }
 }
 ```

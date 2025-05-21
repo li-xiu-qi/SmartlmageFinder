@@ -19,11 +19,16 @@ const ApiSettings: React.FC<ApiSettingsProps> = ({ loading = false }) => {
         </span>
       } 
       style={{ marginBottom: 16 }}
-    >
-      <Alert
+    >      <Alert
         message="API密钥是敏感信息，请妥善保管"
         description="密钥将仅保存在服务器端配置文件中，不会被传输到任何第三方服务"
         type="warning"
+        showIcon
+        style={{ marginBottom: 16 }}
+      />      <Alert
+        message="API变更提醒"
+        description="更改API密钥或基础URL后，请在模型设置中更新可用模型列表"
+        type="info"
         showIcon
         style={{ marginBottom: 16 }}
       />

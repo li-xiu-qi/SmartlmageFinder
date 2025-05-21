@@ -12,10 +12,10 @@ import {
   Tabs,
   FloatButton
 } from 'antd';
-import { 
-  SaveOutlined, 
-  ReloadOutlined, 
-  SettingOutlined, 
+import {
+  SaveOutlined,
+  ReloadOutlined,
+  SettingOutlined,
   ExclamationCircleFilled,
   SyncOutlined,
   QuestionCircleOutlined,
@@ -25,11 +25,11 @@ import {
 } from '@ant-design/icons';
 import systemService from '@/services/systemService';
 import { SystemStatusData, SystemConfig } from '@/types/system';
-import { 
-  SystemStatus, 
-  StorageSettings, 
-  ApiSettings, 
-  ModelSettings, 
+import {
+  SystemStatus,
+  StorageSettings,
+  ApiSettings,
+  ModelSettings,
   VectorDbSettings,
   SystemRuntime
 } from './components';
@@ -49,55 +49,78 @@ const SettingsPage: React.FC = () => {
   const [saveConfirmVisible, setSaveConfirmVisible] = useState(false);
   const [settingsToSave, setSettingsToSave] = useState<SystemConfig | null>(null);
   const [activeTab, setActiveTab] = useState('status');
-  
+
   // 使用useCallback包装fetchSystemInfo函数以便可以在useEffect依赖数组中使用
   const fetchSystemInfo = useCallback(async () => {
     try {
       setLoading(true);
-      
-      // 获取系统状态 - 注意这里使用多个API调用组合获取完整状态
-      const infoResponse = await systemService.getSystemInfo();
-      const databaseResponse = await systemService.getDatabaseInfo();
-      const storageResponse = await systemService.getStorageInfo();
-      const cacheResponse = await systemService.getCacheInfo();
-      
-      // 如果所有请求成功，组合数据
-      if (infoResponse.status === 'success' && 
-          databaseResponse.status === 'success' && 
-          storageResponse.status === 'success' && 
-          cacheResponse.status === 'success') {
-        
-        // 组合成一个完整的系统状态对象
-        const combinedStatus: SystemStatusData = {
-          system: infoResponse.data,
-          components: {
-            database: databaseResponse.data,
-            vector_db_driver: { status: 'available', path: '', error: null }, // 简化处理
-            multimodal_api: { status: 'enabled', model: 'default', available_models: [], api_base: '' }
-          },
-          storage: storageResponse.data,
-          cache: cacheResponse.data,
-          models: {
-            embedding_model: 'text-embedding-3-small'
-          },
-          server: {
-            host: 'localhost',
-            port: 8000
-          }
-        };
-        
-        setSystemStatus(combinedStatus);
-        
-        // 获取系统配置
-        const configResponse = await systemService.getSystemConfig();
-        
-        if (configResponse.status === 'success' && configResponse.data) {
-          // 设置表单值
-          form.setFieldsValue(configResponse.data);
-        }
-      } else {
-        message.error('获取系统信息失败');
+
+      // 1. 获取系统配置信息
+      const configResponse = await systemService.getSystemConfig();
+      if (configResponse.status !== 'success') {
+        message.error('获取系统配置失败');
+        return;
       }
+
+      // 2. 获取各种系统状态信息
+      const [infoResponse, databaseResponse, storageResponse, cacheResponse, vectorDriverResponse] = 
+        await Promise.all([
+          systemService.getSystemInfo(),
+          systemService.getDatabaseInfo(),
+          systemService.getStorageInfo(),
+          systemService.getCacheInfo(),
+          systemService.getVectorDbDriverStatus()
+        ]);
+
+      // 3. 检查所有请求是否成功
+      if (infoResponse.status !== 'success' || 
+          databaseResponse.status !== 'success' || 
+          storageResponse.status !== 'success' || 
+          cacheResponse.status !== 'success' ||
+          vectorDriverResponse.status !== 'success') {
+        message.error('获取系统状态信息失败');
+        return;
+      }
+
+      // 4. 从配置中获取多模态API信息
+      const apiStatus = configResponse.data.api.apiKey ? 'enabled' as const : 'disabled' as const;
+      
+      // 确保我们能获取到视觉模型设置
+      console.log('配置中的视觉模型:', configResponse.data.model.visionModel);
+      console.log('配置中的可用模型:', configResponse.data.model.availableModels);
+      
+      const multimodalApi = {
+        status: apiStatus,
+        model: configResponse.data.model.visionModel || 'default',
+        available_models: configResponse.data.model.availableModels || [],
+        api_base: configResponse.data.api.baseUrl || ''
+      };
+
+      // 5. 组装系统状态对象
+      const combinedStatus: SystemStatusData = {
+        system: infoResponse.data,
+        components: {
+          database: databaseResponse.data,
+          vector_db_driver: vectorDriverResponse.data,
+          multimodal_api: multimodalApi
+        },
+        storage: storageResponse.data,
+        cache: cacheResponse.data,
+        models: {
+          embedding_model: infoResponse.data.models_info?.embedding_model || '未知',
+          embedding_dimension: infoResponse.data.models_info?.embedding_dimension
+        },
+        server: {
+          host: 'localhost',
+          port: 8000
+        }
+      };
+      
+      setSystemStatus(combinedStatus);
+      
+      // 6. 设置表单初始值
+      form.setFieldsValue(configResponse.data);
+      
     } catch (error) {
       console.error('获取系统信息失败:', error);
       message.error('获取系统信息失败');
@@ -105,7 +128,7 @@ const SettingsPage: React.FC = () => {
       setLoading(false);
     }
   }, [form]);
-  
+
   // 加载系统配置和状态
   useEffect(() => {
     fetchSystemInfo();
@@ -113,6 +136,13 @@ const SettingsPage: React.FC = () => {
 
   // 保存设置
   const handleSaveSettings = async (values: SystemConfig) => {
+    // 打印表单值，验证视觉模型是否正确保存
+    if (import.meta.env.DEV) {
+      console.log('保存的表单值:', values);
+      console.log('保存的视觉模型:', values.model?.visionModel);
+      console.log('保存的可用视觉模型列表:', values.model?.availableModels);
+    }
+    
     // 保存要提交的值
     setSettingsToSave(values);
     // 显示确认对话框
@@ -122,13 +152,13 @@ const SettingsPage: React.FC = () => {
   // 确认保存设置
   const handleConfirmSave = async () => {
     if (!settingsToSave) return;
-    
+
     try {
       setSaveLoading(true);
-      
+
       // 调用API保存配置
       const response = await systemService.updateSystemConfig(settingsToSave);
-      
+
       if (response.status === 'success') {
         message.success('设置保存成功');
         // 重新获取系统信息以更新状态
@@ -154,17 +184,17 @@ const SettingsPage: React.FC = () => {
   const showClearCacheConfirm = () => {
     setConfirmModalVisible(true);
   };
-  
+
   // 确认清除缓存
   const handleConfirmClearCache = async () => {
     try {
       setClearCacheLoading(true);
-      
+
       const response = await systemService.clearCache();
-      
+
       if (response.status === 'success') {
         message.success(`缓存清除成功，释放了 ${response.data?.total_size_freed_mb.toFixed(2)} MB 空间`);
-        
+
         // 重新获取系统状态以更新缓存信息
         fetchSystemInfo();
       } else {
@@ -194,7 +224,7 @@ const SettingsPage: React.FC = () => {
       message.error('获取系统状态失败');
     }
   };
-  
+
   return (
     <div className="settings-page">
       <Row gutter={[0, 16]}>
@@ -213,31 +243,31 @@ const SettingsPage: React.FC = () => {
       <Spin spinning={loading}>
         <Row gutter={[0, 16]}>
           <Col span={24}>
-            <Tabs 
-              defaultActiveKey="status" 
+            <Tabs
+              defaultActiveKey="status"
               activeKey={activeTab}
               onChange={setActiveTab}
               tabPosition="top"
               type="card"
               tabBarExtraContent={
-                <Button 
-                  type="primary" 
-                  icon={<SyncOutlined />} 
+                <Button
+                  type="primary"
+                  icon={<SyncOutlined />}
                   onClick={refreshSystemStatus}
                 >
                   刷新状态
                 </Button>
               }
             >
-              <TabPane 
-                tab={<span><HddOutlined /> 系统状态</span>} 
+              <TabPane
+                tab={<span><HddOutlined /> 系统状态</span>}
                 key="status"
               >
                 <SystemRuntime />
                 {systemStatus && <SystemStatus systemStatus={systemStatus} />}
               </TabPane>
-                <TabPane 
-                tab={<span><SettingOutlined /> 系统配置</span>} 
+                <TabPane
+                tab={<span><SettingOutlined /> 系统配置</span>}
                 key="settings"
               >
                 {activeTab === 'settings' && (
@@ -245,32 +275,32 @@ const SettingsPage: React.FC = () => {
                     form={form}
                     layout="vertical"
                     onFinish={handleSaveSettings}
-                  >                    <StorageSettings 
-                      clearCacheLoading={clearCacheLoading} 
+                  >                    <StorageSettings
+                      clearCacheLoading={clearCacheLoading}
                       onClearCache={showClearCacheConfirm}
                       systemStatus={systemStatus}
                       loading={loading}
                     />
-                  
+
                   <ApiSettings loading={loading} />
-                  
-                  <ModelSettings systemStatus={systemStatus} loading={loading} />
-                  
+
+                  <ModelSettings systemStatus={systemStatus} loading={loading} form={form} />
+
                   <VectorDbSettings systemStatus={systemStatus} loading={loading} />
 
                   <Card>
                     <div className="settings-actions">
                       <Space size="large">
-                        <Button 
-                          type="primary" 
-                          htmlType="submit" 
-                          icon={<SaveOutlined />} 
+                        <Button
+                          type="primary"
+                          htmlType="submit"
+                          icon={<SaveOutlined />}
                           loading={saveLoading}
                           size="large"
                         >
                           保存设置
                         </Button>
-                        <Button 
+                        <Button
                           icon={<ReloadOutlined />}
                           onClick={() => form.resetFields()}
                           size="large"

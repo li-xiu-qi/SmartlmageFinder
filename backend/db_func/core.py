@@ -122,9 +122,4 @@ def init_db():
     
     print("数据库初始化完成")
 
-def rows_to_dicts(rows):
-    """将 sqlite3.Row 对象列表转换为字典列表"""
-    if rows is None:
-        return []
-    return [row_to_dict(row) for row in rows]
 

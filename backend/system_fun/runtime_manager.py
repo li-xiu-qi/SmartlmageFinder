@@ -8,6 +8,8 @@ import sys
 from datetime import datetime, timedelta
 from typing import Dict, Any
 
+from ..config import settings
+
 # 记录应用启动时间
 APP_START_TIME = time.time()
 APP_START_DATETIME = datetime.fromtimestamp(APP_START_TIME)
@@ -59,6 +61,19 @@ def get_runtime_info() -> Dict[str, Any]:
     }
 
 
+def get_models_info() -> Dict[str, Any]:
+    """获取模型信息
+    
+    Returns:
+        Dict[str, Any]: 模型信息字典
+    """
+    config = settings.get_config()
+    return {
+        "embedding_model": config.MODEL_PATH,
+        "embedding_dimension": config.EMBEDDING_DIMENSION
+    }
+
+
 def get_system_info() -> Dict[str, Any]:
     """获取系统信息
     
@@ -66,10 +81,11 @@ def get_system_info() -> Dict[str, Any]:
         Dict[str, Any]: 系统信息字典
     """
     return {
-        "version": "1.0.0",  # 可以从配置或版本文件中读取
+        "version": "1.0.0", 
         "app_uptime": int(get_app_uptime()),
         "app_uptime_formatted": get_app_uptime_formatted(),
         "status": "healthy",  # 可以基于其他监控指标动态设置
         "platform": platform.system(),
-        "python_version": sys.version.split()[0]
+        "python_version": sys.version.split()[0],
+        "models_info": get_models_info()  # 添加模型信息
     }

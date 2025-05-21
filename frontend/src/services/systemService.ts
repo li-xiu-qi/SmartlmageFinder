@@ -7,7 +7,8 @@ import {
   RuntimeInfo,
   DatabaseInfo,
   StorageInfo,
-  CacheInfo
+  CacheInfo,
+  VectorDbDriverStatus
 } from '../types/system';
 
 const systemService = {
@@ -18,7 +19,7 @@ const systemService = {
   getSystemInfo: (): Promise<ApiResponse<SystemInfo>> => {
     return apiClient.getWithTransform<SystemInfo>('/system/info');
   },
-  
+
   /**
    * 获取数据库状态信息
    * GET /api/v1/system/database
@@ -26,7 +27,7 @@ const systemService = {
   getDatabaseInfo: (): Promise<ApiResponse<DatabaseInfo>> => {
     return apiClient.getWithTransform<DatabaseInfo>('/system/database');
   },
-  
+
   /**
    * 获取存储信息
    * GET /api/v1/system/storage
@@ -34,7 +35,7 @@ const systemService = {
   getStorageInfo: (): Promise<ApiResponse<StorageInfo>> => {
     return apiClient.getWithTransform<StorageInfo>('/system/storage');
   },
-  
+
   /**
    * 获取缓存信息
    * GET /api/v1/system/cache
@@ -67,7 +68,7 @@ const systemService = {
     const params = new URLSearchParams();
     params.append('text_cache', textCache.toString());
     params.append('image_cache', imageCache.toString());
-    
+
     return apiClient.postWithTransform<SimplifiedCacheClearData>('/system/cache/clear', {}, {
       params
     });
@@ -79,6 +80,14 @@ const systemService = {
    */
   getRuntime: (): Promise<ApiResponse<RuntimeInfo>> => {
     return apiClient.getWithTransform<RuntimeInfo>('/system/runtime');
+  },
+
+  /**
+   * 获取向量数据库驱动状态
+   * GET /api/v1/system/vector-driver
+   */
+  getVectorDbDriverStatus: (): Promise<ApiResponse<VectorDbDriverStatus>> => {
+    return apiClient.getWithTransform<VectorDbDriverStatus>('/system/vector-driver');
   }
 };
 

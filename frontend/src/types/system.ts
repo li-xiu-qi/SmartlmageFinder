@@ -15,6 +15,10 @@ export interface SystemInfo {
   status: 'healthy' | 'warning' | 'error'; // 系统健康状态
   platform: string;            // 操作系统平台
   python_version: string;      // Python版本
+  models_info?: {              // 模型信息，可选
+    embedding_model: string;   // 嵌入模型路径
+    embedding_dimension?: number; // 嵌入维度
+  };
 }
 
 /**
@@ -29,7 +33,6 @@ export interface DatabaseInfo {
   tag_count: number;                              // 标签总数
   vector_status: boolean;                         // 向量功能状态
   db_version: string;                             // 数据库版本
-  tables_info: Record<string, number>;            // 表信息(表名:记录数)
   error: string | null;                           // 错误信息(如果有)
 }
 
@@ -97,6 +100,7 @@ export interface CacheInfo {
  */
 export interface ModelsInfo {
   embedding_model: string;                         // 嵌入模型路径
+  embedding_dimension?: number;                   // 嵌入维度大小
 }
 
 /**
@@ -142,6 +146,7 @@ export interface StorageConfig {
 export interface ModelConfig {
   vectorModel: string;                             // 向量模型名称
   visionModel: string;                             // 视觉模型名称
+  availableModels: string[];                       // Added to match backend response
 }
 
 /**
@@ -178,7 +183,7 @@ export enum SystemErrorCode {
   CONFIG_UPDATE_ERROR = 'CONFIG_UPDATE_ERROR',     // 配置更新失败
   CACHE_CLEAR_ERROR = 'CACHE_CLEAR_ERROR',         // 缓存清除失败
   SYSTEM_STATUS_ERROR = 'SYSTEM_STATUS_ERROR',     // 获取系统状态失败
-  DATABASE_ERROR = 'DATABASE_ERROR',               // 数据库状态错误  
+  DATABASE_ERROR = 'DATABASE_ERROR',               // 数据库状态错误
   STORAGE_ERROR = 'STORAGE_ERROR',                 // 存储信息错误
   CACHE_ERROR = 'CACHE_ERROR'                      // 缓存信息错误
 }
@@ -245,38 +250,38 @@ export interface SystemClient {
    * @returns 系统基本信息的 Promise
    */
   getSystemInfo(): Promise<ApiResponse<SystemInfo>>;
-  
+
   /**
    * 获取数据库状态信息
    * @returns 数据库状态信息的 Promise
    */
   getDatabaseInfo(): Promise<ApiResponse<DatabaseInfo>>;
-  
+
   /**
    * 获取存储信息
    * @returns 存储信息的 Promise
    */
   getStorageInfo(): Promise<ApiResponse<StorageInfo>>;
-  
+
   /**
    * 获取缓存信息
    * @returns 缓存信息的 Promise
    */
   getCacheInfo(): Promise<ApiResponse<CacheInfo>>;
-  
+
   /**
    * 获取系统配置
    * @returns 系统配置信息的 Promise
    */
   getSystemConfig(): Promise<SystemConfigResponse>;
-  
+
   /**
    * 更新系统配置
    * @param config 新的系统配置
    * @returns 更新结果的 Promise
    */
   updateSystemConfig(config: SystemConfig): Promise<UpdateConfigResponse>;
-  
+
   /**
    * 清除系统缓存
    * @param textCache 是否清除文本缓存

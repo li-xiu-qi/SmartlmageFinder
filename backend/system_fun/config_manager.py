@@ -15,6 +15,7 @@ def get_frontend_config() -> Dict[str, Any]:
         Dict[str, Any]: 前端配置信息字典
     """
     config = settings.get_config()
+    
 
     return {
         "api": {
@@ -27,8 +28,9 @@ def get_frontend_config() -> Dict[str, Any]:
             "maxCacheSize": config.MAX_CACHE_SIZE_GB,
         },
         "model": {
-            "vectorModel": os.path.basename(config.MODEL_PATH) if config.MODEL_PATH else "",
+            "vectorModel": config.MODEL_PATH,
             "visionModel": config.VISION_MODEL,
+            "availableModels": config.AVAILABLE_VISION_MODELS,  # 添加可用的向量模型列表
         },
         "vectorDb": {
             "driverPath": config.VECTOR_DB_DRIVER
@@ -74,13 +76,14 @@ def update_system_config(config_data: Dict[str, Any]) -> Dict[str, Any]:
     if "apiKey" in api_config:
         config_updates["OPENAI_API_KEY"] = api_config["apiKey"]
     if "baseUrl" in api_config:
-        config_updates["OPENAI_API_BASE"] = api_config["baseUrl"]
-
-    # 处理模型配置
+        config_updates["OPENAI_API_BASE"] = api_config["baseUrl"]    # 处理模型配置
     if "visionModel" in model_config:
         config_updates["VISION_MODEL"] = model_config["visionModel"]
     if "vectorModel" in model_config and model_config["vectorModel"]:
         config_updates["MODEL_PATH"] = model_config["vectorModel"]
+    # 处理可用视觉模型列表
+    if "availableModels" in model_config and isinstance(model_config["availableModels"], list):
+        config_updates["AVAILABLE_VISION_MODELS"] = model_config["availableModels"]
 
     # 处理向量数据库配置
     if "driverPath" in vector_db_config:

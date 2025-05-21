@@ -74,30 +74,7 @@ def get_db_version(conn: sqlite3.Connection) -> str:
     return result_dict["version"]
 
 
-def get_tables_info(conn: sqlite3.Connection) -> Dict[str, int]:
-    """获取数据库中所有表的信息及记录数"""
-    cursor = conn.cursor()
-    tables_info = {}
-    
-    # 获取所有表名
-    cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
-    table_name_rows = cursor.fetchall()
-    table_name_dicts = rows_to_dicts(table_name_rows)
-    tables = [d['name'] for d in table_name_dicts]
-    
-    # 获取每个表的记录数
-    for table in tables:
-        try:
-            cursor.execute(f"SELECT COUNT(*) AS count FROM {table}")
-            count_row = cursor.fetchone()
-            # COUNT(*) on an existing table always returns one row.
-            count = row_to_dict(count_row)['count']
-            tables_info[table] = count
-        except sqlite3.Error as e:
-            print(f"Error counting rows in table {table}: {e}")
-            tables_info[table] = -1  # 标记错误或不可用的计数
-    
-    return tables_info
+
 
 
 def get_database_info(conn: Optional[sqlite3.Connection] = None) -> Dict[str, Any]:
@@ -121,7 +98,6 @@ def get_database_info(conn: Optional[sqlite3.Connection] = None) -> Dict[str, An
         tag_count = get_tag_count(conn)
         vector_status = check_vector_db_status(conn)
         db_version = get_db_version(conn)
-        tables_info = get_tables_info(conn)
         
         db_status = "connected"
         
@@ -134,7 +110,6 @@ def get_database_info(conn: Optional[sqlite3.Connection] = None) -> Dict[str, An
             "tag_count": tag_count,
             "vector_status": vector_status,
             "db_version": db_version,
-            "tables_info": tables_info,
             "error": None  # 成功时明确设置错误为 None
         }
     except Exception as e:

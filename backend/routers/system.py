@@ -11,7 +11,7 @@ from ..db_func.core import get_db
 
 # 导入重构后的功能模块
 from ..system_fun.cache_manager import get_complete_cache_stats, clear_all_caches
-from ..system_fun.config_manager import get_frontend_config, update_system_config
+from ..system_fun.config_manager import get_frontend_config, update_system_config, check_vector_db_driver_status
 from ..system_fun.db_manager import get_database_info, get_storage_info
 from ..system_fun.runtime_manager import get_runtime_info, get_system_info
 
@@ -103,3 +103,10 @@ async def update_system_configuration(config_payload: Dict[str, Any] = Body(...)
         return ResponseModel.success(data={"message": result['message']})
     else:
         return ResponseModel.error(code="CONFIG_UPDATE_ERROR", message=result['message'])
+
+
+@router.get("/vector-driver", response_model=ResponseModel)
+async def get_vector_db_driver_status():
+    """获取向量数据库驱动状态信息"""
+    driver_status = check_vector_db_driver_status()
+    return ResponseModel.success(data=driver_status)
