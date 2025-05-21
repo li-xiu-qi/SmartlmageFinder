@@ -1,4 +1,24 @@
-# SmartImageFinder
+<div align="center">
+  <img src="assets/images/logo.png" alt="SmartImageFinder Logo" width="200">
+  <h1>SmartImageFinder</h1>
+
+  <p>An intelligent image search engine and management system built on multimodal vector models</p>
+
+  <div>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License"></a>
+    <img src="https://img.shields.io/badge/version-1.0.0-green.svg" alt="Version">
+    <img src="https://img.shields.io/badge/Python-3.8+-blue.svg" alt="Python">
+    <img src="https://img.shields.io/badge/FastAPI-0.100+-orange.svg" alt="FastAPI">
+    <img src="https://img.shields.io/badge/React-18-61DAFB.svg" alt="React">
+  </div>
+
+  <div>
+    <a href="README.md">中文</a> | 
+    <a href="README_EN.md">English</a>
+  </div>
+</div>
+
+## Introduction
 
 An intelligent image search engine and management system built on multimodal vector models and visual multimodal models. It enables precise text-to-image and image-to-image intelligent retrieval methods while providing a complete image management solution. This project uses FastAPI + React tech stack, integrating Jina CLIP V2 and multimodal large language models to provide a one-stop solution for personal image management.
 
@@ -164,6 +184,53 @@ Modify the frontend API request address in \`vite.config.ts\` file: [vite.config
 Core system configuration is in \`backend/config_files/config.yaml\` configuration file:
 ![backend_config](backend/config_files/config.yaml)
 The system will load the configuration file by default. You can also remove loading from the default file and use the configuration in [config.py](backend/config.py).
+
+## System Demonstration
+
+### System Architecture
+
+![System Architecture](assets/images/SmartImageFinder-项目架构图-v3.png)
+
+### Home Page
+
+![Home Page](assets/images/首页.png)
+![Home Page Sidebar](assets/images/首页图片侧边栏展示.png)
+
+### Image Upload and Analysis
+
+![Image Upload](assets/images/图片上传.png)
+![Edit Image Analysis Content During Upload](assets/images/上传的时候可以编辑图片分析内容.png)
+![Upload Complete Result Display](assets/images/上传完成的结果显示.png)
+![AI Auto Image Content Analysis](assets/images/AI自动分析图片内容.png)
+![AI Auto Image Content Analysis Effect](assets/images/AI自动分析图片内容效果.png)
+
+### Tag Management System
+
+![Tag Management](assets/images/标签管理.png)
+![Tag Editing](assets/images/标签编辑.png)
+![Tag Editing Effect](assets/images/标签编辑效果.png)
+![Tag Search and Filtering](assets/images/标签搜索及过滤.png)
+![Click Tag to Filter Images](assets/images/点击标签可以直接跳转到对应的图片展示部分并过滤图片.png)
+![Tag-based Filtering Search](assets/images/基于标签的过滤搜索.png)
+
+### Smart Search Functions
+
+![Fuzzy Search for Images](assets/images/基于模糊搜索的图片搜索.png)
+![Title Vector Search](assets/images/标题向量搜索.png)
+![Title and Description Vector Mixed Search](assets/images/标题向量和描述向量混合搜索.png)
+![Three Mixed Search Results](assets/images/三种混合搜索的搜索效果.png)
+![Image-to-Image Search](assets/images/使用图搜索图.png)
+
+### Metadata Management
+
+![Metadata Editing](assets/images/元数据编辑.png)
+![Metadata Editing Effect](assets/images/元数据编辑效果.png)
+![Image Description Update](assets/images/图片描述更新.png)
+
+### System Management
+
+![System Settings](assets/images/系统设置.png)
+![System Status View](assets/images/系统状态查看.png)
 
 ## License
 
