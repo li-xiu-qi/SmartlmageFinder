@@ -145,6 +145,7 @@ VECTOR_DB_DRIVER: ./backend/config_files/vector_db_driver/vec0.dll # 向量数�
 ```
 
 注意⚠️： 默认的驱动是Windows电脑使用的，如果是mac或者linux电脑需要去<https://github.com/asg017/sqlite-vec/releases> 下载对应的驱动，并且把路径替换上来，如果你直接放到backend\config_files\vector_db_driver目录下面就可以直接换文件名即可，如果你直接换成绝对路径也可。
+
 4. 启动后端服务:
 
 ```bash
@@ -184,7 +185,7 @@ npm run dev
 ### 后端配置
 
 系统核心配置在 `backend/config_files/config.yaml` 配置文件中:
-![backend_config](backend/config_files/config.yaml)
+[backend_config](backend/config_files/config.yaml)
 默认会加载系统配置文件，你也可以去掉从默认文件里面加载配置，然后使用[config.py](backend/config.py)里面的配置。
 
 ## 效果演示
