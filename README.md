@@ -8,12 +8,12 @@
     <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License"></a>
     <img src="https://img.shields.io/badge/version-1.0.0-green.svg" alt="Version">
     <img src="https://img.shields.io/badge/Python-3.8+-blue.svg" alt="Python">
-    <img src="https://img.shields.io/badge/FastAPI-0.100+-orange.svg" alt="FastAPI">
+    <img src="https://img.shields.io/badge/FastAPI-0.115.12+-orange.svg" alt="FastAPI">
     <img src="https://img.shields.io/badge/React-18-61DAFB.svg" alt="React">
   </div>
 
   <div>
-    <a href="README.md">中文</a> | 
+    <a href="README.md">中文</a> |
     <a href="README_EN.md">English</a>
   </div>
 </div>
