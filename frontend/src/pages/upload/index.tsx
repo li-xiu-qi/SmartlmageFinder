@@ -4,7 +4,7 @@ import type { UploadProps } from 'antd';
 import { useNavigate } from 'react-router-dom';
 
 // 导入类型
-import { UploadFile, ImageMetadata, UploadResult } from './types';
+import { UploadFile, ImageMetadata, UploadResult, AnalysisMode } from './types';
 
 // 导入组件
 import UploadDropzone from './components/UploadDropzone';
@@ -13,6 +13,7 @@ import MetadataModal from './components/MetadataModal';
 import UploadResultDisplay from './components/UploadResultDisplay';
 import BatchAnalyzeButton from './components/BatchAnalyzeButton';
 import UploadToolbar from './components/UploadToolbar';
+import ConcurrencySettings from './components/ConcurrencySettings';
 
 // 导入工具函数
 import {
@@ -50,6 +51,10 @@ const UploadPage: React.FC = () => {
   // AI分析相关状态
   const [analyzingFile, setAnalyzingFile] = useState<UploadFile | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  // 并发控制状态
+  const [concurrentAnalysis, setConcurrentAnalysis] = useState(true); // 启用并发分析
+  const [concurrentLimit, setConcurrentLimit] = useState(5); // 并发限制数量，默认5个
 
   // 通用设置
   const [commonSettings] = useState({
@@ -156,13 +161,19 @@ const UploadPage: React.FC = () => {
     );
   };
 
-  // 批量AI分析所有图片
-  const handleBatchAnalyze = async () => {
+  // 批量AI分析图片
+  const handleBatchAnalyze = async (mode: AnalysisMode = AnalysisMode.ALL) => {
     await batchAnalyzeImages(
       fileList,
       setIsAnalyzing,
       setAnalyzingFile,
-      setImageMetadataMap
+      setImageMetadataMap,
+      imageMetadataMap,
+      {
+        concurrent: concurrentAnalysis,
+        concurrentLimit: concurrentLimit,
+        mode: mode
+      }
     );
   };
 
@@ -197,9 +208,19 @@ const UploadPage: React.FC = () => {
           <>
             <Divider />
 
+            {/* 并发控制设置 */}
+            <ConcurrencySettings
+              concurrentAnalysis={concurrentAnalysis}
+              concurrentLimit={concurrentLimit}
+              onConcurrentAnalysisChange={setConcurrentAnalysis}
+              onConcurrentLimitChange={setConcurrentLimit}
+              disabled={isAnalyzing || uploading || hasUploaded}
+            />
+
             {/* 批量AI分析按钮 */}
             <BatchAnalyzeButton
               fileList={fileList}
+              imageMetadataMap={imageMetadataMap}
               isAnalyzing={isAnalyzing}
               hasUploaded={hasUploaded}
               onBatchAnalyze={handleBatchAnalyze}

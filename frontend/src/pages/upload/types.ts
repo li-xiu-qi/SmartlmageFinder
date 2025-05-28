@@ -50,3 +50,9 @@ export interface SelectableTag {
   label: string; // 标签显示文本
   value: string; // 标签实际值
 }
+
+// 批量分析模式枚举
+export enum AnalysisMode {
+  ALL = 'all',              // 分析所有图片
+  UNANALYZED_ONLY = 'unanalyzed_only' // 仅分析未分析的图片
+}
