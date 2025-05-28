@@ -55,7 +55,7 @@ const UploadDropzone: React.FC<UploadDropzoneProps> = ({ fileList, onChange, onR
       </p>
       <p className="ant-upload-text">点击或拖拽文件到此区域进行上传</p>
       <p className="ant-upload-hint">
-        支持单个或批量上传。请勿上传公司内部资料及其他敏感或违规文件。
+        支持单个或批量上传。只允许 JPG/PNG/GIF/WEBP 格式。
       </p>
     </Dragger>
   );
