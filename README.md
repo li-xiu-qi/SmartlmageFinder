@@ -1,251 +1,68 @@
-<div align="center">
-  <img src="assets/logo/logo.png" alt="SmartImageFinder Logo" width="200">
-  <h1>SmartImageFinder</h1>
 
-  <p>基于多模态向量模型及视觉多模态模型构建的智能图片搜索引擎和管理系统</p>
-
-  <div>
-    <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License"></a>
-    <img src="https://img.shields.io/badge/version-1.0.0-green.svg" alt="Version">
-    <img src="https://img.shields.io/badge/Python-3.8+-blue.svg" alt="Python">
-    <img src="https://img.shields.io/badge/FastAPI-0.115.12+-orange.svg" alt="FastAPI">
-    <img src="https://img.shields.io/badge/React-18-61DAFB.svg" alt="React">
-  </div>
 
-  <div>
-    <a href="README.md">中文</a> |
-    <a href="README_EN.md">English</a>
-  </div>
-</div>
+## 深度学习论文阅读关键问题清单 🧐
 
-## 项目简介
 
-一个智能图片搜索引擎和管理系统，实现精准的以文搜图、以图搜图等多种智能检索方式，并提供完整的图片管理解决方案。本项目采用 FastAPI + React 技术栈，集成 Jina CLIP V2 和多模态大语言模型，为个人图片管理提供一站式解决方案。
+### 1. 动机与问题 (Motivation & Problem) 🤔
 
-## 功能特点
+* **这篇论文试图解决什么具体问题？** 这个问题是否重要？它在现实世界或学术领域中有什么应用价值？
+* **为什么现有的方法不足以解决这个问题？** 作者认为当前研究存在哪些挑战或空白？
+* **论文的主要目标是什么？** 作者希望通过这项研究达到什么样的效果？
 
-### 图片管理
+### 2. 相关工作 (Related Work) 📚
 
-- 直观的图片浏览界面，支持网格式布局和图片预览
-- 强大的标签管理系统，支持多标签分类和过滤
-- 灵活的元数据编辑功能，包括标题、描述和自定义标签
-- 高效的批量操作支持，包括上传、分析和标签管理
-- 支持拖放上传和多文件选择
-
-### 多模态AI分析
-
-- 基于 CLIP V2 模型的高精度向量编码
-- 支持三种向量检索模式：
-  - 文本-图片匹配：通过自然语言描述查找相似图片
-  - 图片-图片匹配：基于参考图片查找相似内容
-  - 混合向量搜索：结合标题、描述和图片内容的多维度搜索
-- 集成多模态视觉模型API，提供智能图片分析：
-  - 自动生成图片标题和详细描述
-  - 智能提取关键标签
-  - 支持批量AI分析处理
-
-### 用户界面
-
-- 基于 React + Ant Design 的现代化界面设计
-- 响应式布局，适配不同屏幕尺寸
-- 支持图片预览、放大和编辑操作
-- 直观的标签筛选和搜索界面
-- 实时显示处理进度和状态提示
-- 支持深色/浅色主题切换
-
-## 使用场景
+* **这篇论文建立在哪些先前工作的基础之上？** 作者如何定位自己的研究与现有文献的关系？
+* **作者是如何评价和区分先前方法的？** 他们认为哪些是关键的、有影响力的工作？
+* **与最相关的工作相比，这篇论文的主要区别和优势在哪里？**
 
-- 个人图片库管理与组织
-- 设计素材检索与管理
-- 图片资源智能分类与检索
-- 基于内容的图片相似度搜索
-- 智能图片标注与描述生成
+### 3. 核心方法与贡献 (Proposed Method & Contribution) 💡
 
-## 技术架构
+* **论文提出的核心思想或方法是什么？** 能否用一两句话概括其精髓？
+* **这个新方法的具体技术细节是什么？** (例如，网络架构、算法流程、关键假设等)
+* **这个方法是如何解决之前提到的问题的？** 其背后的直觉或理论依据是什么？
+* **这篇论文最主要的贡献是什么？** (例如，新模型、新算法、新理论、新数据集、新视角等)
 
-### 后端
+### 4. 数学细节与公式 (Mathematical Details & Formulas) 🔢✍️
 
-- FastAPI 框架提供高性能API服务
-- SQLite + sqlite-vec 实现轻量化高效向量存储和检索
-- Jina CLIP V2 模型用于特征向量提取
-- 集成多模态大模型API进行内容理解和生成
+* **论文中核心公式的含义是什么？** 它们是如何推导出来的？
+* **每个符号和变量的定义是否清晰明确？**
+* **这些公式背后的数学假设是什么？** 这些假设是否合理？
+* **公式是如何与提出的模型架构或算法流程相联系的？** 它们是如何体现核心思想的？
+* **你是否能理解并跟上论文中的数学推导过程？** 是否有不清楚或感觉跳跃的地方？
 
-### 前端
+### 5. 实验设计 (Experiments) 🧪
 
-- React 18 + TypeScript 构建用户界面
-- Ant Design 5.x 提供UI组件库
-- Vite 作为开发和构建工具
-- Axios 处理HTTP请求
-- 支持文件拖放和批量处理
+* **作者是如何评估他们提出的方法的？** 实验的目标是什么？
+* **使用了哪些数据集？** 这些数据集是否具有代表性？它们有什么特点或挑战？
+* **评估指标是什么？** 这些指标是否能有效地衡量方法的性能？
+* **作者选择了哪些基线 (Baselines) 或对比方法？** 这些选择是否公平合理？
+* **实验设置和超参数是如何选择的？** 作者是否提供了足够的细节来复现实验？
 
-## 核心功能展示
+### 6. 结果与分析 (Results & Analysis) 📊
 
-- 多模态搜索：支持文本搜索、图像搜索和混合搜索
-- 智能标签：自动生成和管理图片标签
-- 元数据管理：灵活编辑和组织图片信息
-- AI分析：智能生成图片描述和标签
-- 批量处理：高效处理大量图片文件
-- 系统管理：监控系统状态和配置管理
+* **主要的实验结果是什么？** 提出的方法是否优于基线方法？在哪些方面表现更好/更差？
+* **结果是否具有统计显著性？** 作者是否进行了消融研究 (Ablation Studies) 来验证模型/方法各个组成部分的有效性？
+* **作者是如何解释这些结果的？** 他们是否提供了深入的分析，而不仅仅是罗列数字？
+* **结果中是否存在异常或出乎意料的发现？** 作者是如何解释这些现象的？
+* **作者是否讨论了他们方法的局限性？** 哪些情况下这个方法可能表现不佳？
 
-## 环境要求
+### 7. 硬件资源与计算成本 (Hardware & Computational Cost) 💻💰
 
-- Python 3.8+
-- Node.js 16+
-- SQLite 3
-- 支持CUDA的GPU（推荐但不是必需）
-- 足够的磁盘空间用于存储图片和向量数据
+* **作者使用了什么样的硬件配置来训练和评估模型？** (例如，GPU 型号、数量、内存大小，CPU 型号等)
+* **训练模型需要多长时间？** 推理速度如何？
+* **模型的计算复杂度如何？** (例如，参数数量、FLOPs 等)
+* **复现这项研究需要什么样的资源？** 这个方法的计算成本是否可以接受？
+* **作者是否讨论了模型的效率或部署可行性？**
 
-## 快速开始
+### 8. 结论与未来工作 (Conclusion & Future Work) 🚀
 
-1. 克隆仓库:
+* **论文的主要结论是什么？** 这些结论是否得到了实验结果的有力支持？
+* **这项研究有哪些潜在的影响？**
+* **作者提出了哪些未来可能的研究方向？** 你是否能想到其他的扩展或改进方向？
 
-```bash
-git clone https://github.com/li-xiu-qi/SmartImageFinder.git
-cd SmartImageFinder
-```
+### 9. 批判性思考 (Critical Thinking) 🤔
 
-2. 安装依赖:
-
-```bash
-pip install -r requirements.txt
-```
-
-3. 配置系统:
-
-```bash
-# 复制默认配置
-cp backend/config/config.example.yaml backend/config/config.yaml
-# 根据需要编辑配置文件
-```
-
----
-
-```yaml
-AVAILABLE_VISION_MODELS: # 可用的视觉模型列表,可以自己加，只要对应的厂商支持
-- Qwen/Qwen2.5-VL-32B-Instruct
-- Pro/Qwen/Qwen2.5-VL-7B-Instruct 
-DB_PATH: ./data/db/smartimagefinder.db # 数据库路径
-HOST: 0.0.0.0 # 这里不要动
-PORT: 1000 # 后端的端口号
-IMAGE_VECTOR_CACHE_DIR: ./data/caches/image_vector_cache
-TEXT_VECTOR_CACHE_DIR: ./data/caches/text_vector_cache
-MAX_CACHE_SIZE_GB: 1.5
-MODEL_PATH: jinaai/jina-clip-v2 # 我推荐先下载模型到本地，然后将路径替换过来
-EMBEDDING_DIMENSION: 1024
-OPENAI_API_BASE: https://api.siliconflow.cn/v1 # 如果需要换成其他API服务商，请修改此处
-OPENAI_API_KEY: # 填入你的OpenAI API密钥 
-UPLOAD_DIR: ./data/images # 上传的图片存放目录
-TEMP_DIR: ./data/temp # 临时文件存放目录
-USE_CACHE: true # 是否使用缓存
-VISION_MODEL: Qwen/Qwen2.5-VL-32B-Instruct # 当前使用的视觉模型的名称
-# 添加向量数据库驱动的路径配置
-VECTOR_DB_DRIVER: ./backend/config_files/vector_db_driver/vec0.dll # 向量数据库驱动的路径配置
-
-
-```
-
-注意⚠️： 默认的驱动是Windows电脑使用的，如果是mac或者linux电脑需要去<https://github.com/asg017/sqlite-vec/releases> 下载对应的驱动，并且把路径替换上来，如果你直接放到backend\config_files\vector_db_driver目录下面就可以直接换文件名即可，如果你直接换成绝对路径也可。
-
-4. 启动后端服务:
-
-```bash
-python main.py
-```
-
-服务将在 `http://localhost:1000` 上运行，API文档可在 `http://localhost:1000/docs` 上查看。
-
-### 前端设置
-
-1. 进入前端目录:
-
-```bash
-cd frontend
-```
-
-2. 安装依赖:
-
-```bash
-npm install
-```
-
-3. 启动开发服务器:
-
-```bash
-npm run dev
-```
-
-前端将在 <http://localhost:5173> 上运行。
-
-## 系统配置
-
-### 前端配置
-
-修改前端API请求地址在 `vite.config.ts` 文件中:[vite.config.ts](frontend/vite.config.ts)
-
-### 后端配置
-
-系统核心配置在 `backend/config_files/config.yaml` 配置文件中:
-[backend_config](backend/config_files/config.yaml)
-默认会加载系统配置文件，你也可以去掉从默认文件里面加载配置，然后使用[config.py](backend/config.py)里面的配置。
-
-## 效果演示
-
-### 系统架构
-
-![系统架构图](assets/images/SmartImageFinder-项目架构图-v3.png)
-
-### 首页展示
-
-![首页](assets/images/首页.png)
-![首页图片侧边栏展示](assets/images/首页图片侧边栏展示.png)
-
-### 图片上传和分析
-
-![图片上传](assets/images/图片上传.png)
-![上传的时候可以编辑图片分析内容](assets/images/上传的时候可以编辑图片分析内容.png)
-![上传完成的结果显示](assets/images/上传完成的结果显示.png)
-![AI自动分析图片内容](assets/images/AI自动分析图片内容.png)
-![AI自动分析图片内容效果](assets/images/AI自动分析图片内容效果.png)
-
-### 标签管理系统
-
-![标签管理](assets/images/标签管理.png)
-![标签编辑](assets/images/标签编辑.png)
-![标签编辑效果](assets/images/标签编辑效果.png)
-![标签搜索及过滤](assets/images/标签搜索及过滤.png)
-
-![点击标签可以直接跳转到对应的图片展示部分并过滤图片](assets/images/点击标签可以直接跳转到对应的图片展示部分并过滤图片.png)
-
-![基于标签的过滤搜索](assets/images/基于标签的过滤搜索.png)
-
-### 智能搜索功能
-
-![基于模糊搜索的图片搜索](assets/images/基于模糊搜索的图片搜索.png)
-![标题向量搜索](assets/images/标题向量搜索.png)
-![标题向量和描述向量混合搜索](assets/images/标题向量和描述向量混合搜索.png)
-![三种混合搜索的搜索效果](assets/images/三种混合搜索的搜索效果.png)
-![使用图搜索图](assets/images/使用图搜索图.png)
-
-### 元数据管理
-
-![元数据编辑](assets/images/元数据编辑.png)
-![元数据编辑效果](assets/images/元数据编辑效果.png)
-![图片描述更新](assets/images/图片描述更新.png)
-
-### 系统管理
-
-![系统设置](assets/images/系统设置.png)
-![系统状态查看](assets/images/系统状态查看.png)
-
-## 许可证
-
-本项目采用 [Apache 许可证 2.0](LICENSE) 进行许可。
-
-## 联系方式
-
-如果您在使用过程中遇到任何问题或有任何建议，欢迎通过以下方式联系我：
-
-<div align="center">
-  <img src="assets/wechat/筱可AI研习社_258.jpg" alt="筱可AI研习社" width="200">
-  <p>扫码关注「筱可AI研习社」公众号</p>
-</div>
+* **论文的论点是否清晰、有说服力？** 论证过程是否严谨？
+* **实验是否足够全面和公平？** 是否存在可能影响结果有效性的潜在偏见或缺陷？
+* **这篇论文是否真的解决了它声称要解决的问题？** 其贡献是否足够显著？
+* **这篇论文对你自己的研究或学习有什么启发？**

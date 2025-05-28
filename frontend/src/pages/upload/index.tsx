@@ -26,11 +26,6 @@ import { getImagePreviewUrl } from './previewUtils';
 // 导入样式
 import './styles/uploadPage.css';
 
-// 样式
-const styles = {
-  fileListContainer: { marginTop: 16 }
-};
-
 /**
  * 图片上传页面
  * 包含拖拽上传区、文件列表、元数据编辑、AI分析和上传功能
@@ -38,7 +33,7 @@ const styles = {
 const UploadPage: React.FC = () => {
   // 表单实例，用于元数据编辑
   const [metadataForm] = Form.useForm();  const navigate = useNavigate();
-  
+
   // 状态管理
   const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -51,7 +46,7 @@ const UploadPage: React.FC = () => {
   const [hasUploaded, setHasUploaded] = useState(false);
   // 添加预览URL状态
   const [imagePreviewMap, setImagePreviewMap] = useState<Record<string, string>>({});
-  
+
   // AI分析相关状态
   const [analyzingFile, setAnalyzingFile] = useState<UploadFile | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -68,7 +63,7 @@ const UploadPage: React.FC = () => {
   // 处理文件列表变化
   const handleFileListChange: UploadProps['onChange'] = ({ fileList }) => {
     const newList = [...fileList] as UploadFile[];
-    
+
     // 初始化新添加文件的元数据
     newList.forEach(file => {
       if (!imageMetadataMap[file.uid]) {
@@ -81,7 +76,7 @@ const UploadPage: React.FC = () => {
           }
         }));
       }
-      
+
       // 生成图片预览URL
       if (file.originFileObj && !imagePreviewMap[file.uid]) {
         getImagePreviewUrl(file.originFileObj).then(url => {
@@ -92,10 +87,9 @@ const UploadPage: React.FC = () => {
         });
       }
     });
-    
+
     setFileList(newList);
   };
-
   // 处理文件删除
   const handleFileRemove = (file: UploadFile) => {
     setFileList(prev => prev.filter(item => item.uid !== file.uid));
@@ -116,7 +110,7 @@ const UploadPage: React.FC = () => {
   // 打开编辑元数据模态框
   const openMetadataModal = (file: UploadFile) => {
     setCurrentFile(file);
-    
+
     // 设置表单初始值
     const metadata = imageMetadataMap[file.uid] || {
       title: '',
@@ -125,7 +119,7 @@ const UploadPage: React.FC = () => {
       location: '',
       event: '',
     };
-    
+
     metadataForm.setFieldsValue(metadata);
     setShowMetadataModal(true);
   };
@@ -144,7 +138,7 @@ const UploadPage: React.FC = () => {
         }));
         message.success('元数据已更新');
       }
-      
+
       setShowMetadataModal(false);
     });
   };
@@ -198,8 +192,34 @@ const UploadPage: React.FC = () => {
           disabled={uploading || hasUploaded}
         />
 
+        {/* 操作按钮区域 - 移到文件列表上方 */}
+        {fileList.length > 0 && (
+          <>
+            <Divider />
+
+            {/* 批量AI分析按钮 */}
+            <BatchAnalyzeButton
+              fileList={fileList}
+              isAnalyzing={isAnalyzing}
+              hasUploaded={hasUploaded}
+              onBatchAnalyze={handleBatchAnalyze}
+            />
+
+            {/* 上传工具栏 */}
+            <UploadToolbar
+              fileList={fileList}
+              uploading={uploading}
+              hasUploaded={hasUploaded}
+              uploadProgress={uploadProgress}
+              onUpload={handleUpload}
+              onReset={handleReset}
+            />
+          </>
+        )}
+
         {/* 文件列表 */}
-        <div className="file-list-container" style={styles.fileListContainer}>          <FileListView
+        <div className="file-list-container">
+          <FileListView
             fileList={fileList}
             imageMetadataMap={imageMetadataMap}
             isAnalyzing={isAnalyzing}
@@ -209,27 +229,7 @@ const UploadPage: React.FC = () => {
             openMetadataModal={openMetadataModal}
             onFileRemove={handleFileRemove}
           />
-        </div>
-
-        <Divider />
-        
-        {/* 批量AI分析按钮 */}
-        <BatchAnalyzeButton
-          fileList={fileList}
-          isAnalyzing={isAnalyzing}
-          hasUploaded={hasUploaded}
-          onBatchAnalyze={handleBatchAnalyze}
-        />
-
-        {/* 上传工具栏 */}
-        <UploadToolbar
-          fileList={fileList}
-          uploading={uploading}
-          hasUploaded={hasUploaded}
-          uploadProgress={uploadProgress}
-          onUpload={handleUpload}
-          onReset={handleReset}
-        />        {/* 元数据编辑模态框 */}
+        </div>        {/* 元数据编辑模态框 */}
         <MetadataModal
           open={showMetadataModal}
           currentFile={currentFile}

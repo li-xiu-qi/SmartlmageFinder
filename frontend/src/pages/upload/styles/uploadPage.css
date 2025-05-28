@@ -2,3 +2,8 @@
 .file-list-container {
   margin-top: 16px;
 }
+
+/* 操作按钮区域 */
+.upload-actions-container {
+  margin-top: 16px;
+}
