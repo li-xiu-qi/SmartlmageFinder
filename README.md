@@ -1,68 +1,247 @@
+<div align="center">
+  <img src="assets/logo/logo.png" alt="SmartImageFinder Logo" width="200">
+  <h1>SmartImageFinder</h1>
 
+  <p>Intelligent image search engine and management system based on multimodal vector models and vision multimodal models</p>
 
-## 深度学习论文阅读关键问题清单 🧐
+  <div>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License"></a>
+    <img src="https://img.shields.io/badge/version-1.0.0-green.svg" alt="Version">
+    <img src="https://img.shields.io/badge/Python-3.8+-blue.svg" alt="Python">
+    <img src="https://img.shields.io/badge/FastAPI-0.100+-orange.svg" alt="FastAPI">
+    <img src="https://img.shields.io/badge/React-18-61DAFB.svg" alt="React">
+  </div>
 
+  <div>
+    <a href="README.md">中文</a> | 
+    <a href="README_EN.md">English</a>
+  </div>
+</div>
 
-### 1. 动机与问题 (Motivation & Problem) 🤔
+## Project Overview
 
-* **这篇论文试图解决什么具体问题？** 这个问题是否重要？它在现实世界或学术领域中有什么应用价值？
-* **为什么现有的方法不足以解决这个问题？** 作者认为当前研究存在哪些挑战或空白？
-* **论文的主要目标是什么？** 作者希望通过这项研究达到什么样的效果？
+An intelligent image search engine and management system that enables precise text-to-image, image-to-image, and other smart retrieval methods, while providing a complete image management solution. This project uses the FastAPI + React technology stack, integrating Jina CLIP V2 and multimodal large language models to provide a one-stop solution for personal image management.
 
-### 2. 相关工作 (Related Work) 📚
+## Features
 
-* **这篇论文建立在哪些先前工作的基础之上？** 作者如何定位自己的研究与现有文献的关系？
-* **作者是如何评价和区分先前方法的？** 他们认为哪些是关键的、有影响力的工作？
-* **与最相关的工作相比，这篇论文的主要区别和优势在哪里？**
+### Image Management
 
-### 3. 核心方法与贡献 (Proposed Method & Contribution) 💡
+- Intuitive image browsing interface with grid layout and image preview
+- Powerful tag management system supporting multi-tag classification and filtering
+- Flexible metadata editing, including title, description, and custom tags
+- Efficient batch operation support for uploading, analyzing, and tag management
+- Support for drag-and-drop uploads and multi-file selection
 
-* **论文提出的核心思想或方法是什么？** 能否用一两句话概括其精髓？
-* **这个新方法的具体技术细节是什么？** (例如，网络架构、算法流程、关键假设等)
-* **这个方法是如何解决之前提到的问题的？** 其背后的直觉或理论依据是什么？
-* **这篇论文最主要的贡献是什么？** (例如，新模型、新算法、新理论、新数据集、新视角等)
+### Multimodal AI Analysis
 
-### 4. 数学细节与公式 (Mathematical Details & Formulas) 🔢✍️
+- High-precision vector encoding based on CLIP V2 model
+- Support for three vector retrieval modes:
+  - Text-to-image matching: Find similar images through natural language descriptions
+  - Image-to-image matching: Find similar content based on reference images
+  - Hybrid vector search: Multi-dimensional search combining title, description, and image content
+- Integration with multimodal vision model APIs for intelligent image analysis:
+  - Automatic generation of image titles and detailed descriptions
+  - Intelligent extraction of key tags
+  - Support for batch AI analysis processing
 
-* **论文中核心公式的含义是什么？** 它们是如何推导出来的？
-* **每个符号和变量的定义是否清晰明确？**
-* **这些公式背后的数学假设是什么？** 这些假设是否合理？
-* **公式是如何与提出的模型架构或算法流程相联系的？** 它们是如何体现核心思想的？
-* **你是否能理解并跟上论文中的数学推导过程？** 是否有不清楚或感觉跳跃的地方？
+### User Interface
 
-### 5. 实验设计 (Experiments) 🧪
+- Modern interface design based on React + Ant Design
+- Responsive layout, adapting to different screen sizes
+- Support for image preview, zoom, and editing operations
+- Intuitive tag filtering and search interface
+- Real-time display of processing progress and status notifications
+- Support for dark/light theme switching
 
-* **作者是如何评估他们提出的方法的？** 实验的目标是什么？
-* **使用了哪些数据集？** 这些数据集是否具有代表性？它们有什么特点或挑战？
-* **评估指标是什么？** 这些指标是否能有效地衡量方法的性能？
-* **作者选择了哪些基线 (Baselines) 或对比方法？** 这些选择是否公平合理？
-* **实验设置和超参数是如何选择的？** 作者是否提供了足够的细节来复现实验？
+## Use Cases
 
-### 6. 结果与分析 (Results & Analysis) 📊
+- Personal image library management and organization
+- Design material retrieval and management
+- Intelligent image classification and retrieval
+- Content-based image similarity search
+- Intelligent image annotation and description generation
 
-* **主要的实验结果是什么？** 提出的方法是否优于基线方法？在哪些方面表现更好/更差？
-* **结果是否具有统计显著性？** 作者是否进行了消融研究 (Ablation Studies) 来验证模型/方法各个组成部分的有效性？
-* **作者是如何解释这些结果的？** 他们是否提供了深入的分析，而不仅仅是罗列数字？
-* **结果中是否存在异常或出乎意料的发现？** 作者是如何解释这些现象的？
-* **作者是否讨论了他们方法的局限性？** 哪些情况下这个方法可能表现不佳？
+## Technical Architecture
 
-### 7. 硬件资源与计算成本 (Hardware & Computational Cost) 💻💰
+### Backend
 
-* **作者使用了什么样的硬件配置来训练和评估模型？** (例如，GPU 型号、数量、内存大小，CPU 型号等)
-* **训练模型需要多长时间？** 推理速度如何？
-* **模型的计算复杂度如何？** (例如，参数数量、FLOPs 等)
-* **复现这项研究需要什么样的资源？** 这个方法的计算成本是否可以接受？
-* **作者是否讨论了模型的效率或部署可行性？**
+- FastAPI framework providing high-performance API services
+- SQLite + sqlite-vec implementing lightweight and efficient vector storage and retrieval
+- Jina CLIP V2 model for feature vector extraction
+- Integration with multimodal large model APIs for content understanding and generation
 
-### 8. 结论与未来工作 (Conclusion & Future Work) 🚀
+### Frontend
 
-* **论文的主要结论是什么？** 这些结论是否得到了实验结果的有力支持？
-* **这项研究有哪些潜在的影响？**
-* **作者提出了哪些未来可能的研究方向？** 你是否能想到其他的扩展或改进方向？
+- React 18 + TypeScript for building the user interface
+- Ant Design 5.x providing UI component library
+- Vite as development and build tool
+- Axios for handling HTTP requests
+- Support for file drag-and-drop and batch processing
 
-### 9. 批判性思考 (Critical Thinking) 🤔
+## Core Features Showcase
 
-* **论文的论点是否清晰、有说服力？** 论证过程是否严谨？
-* **实验是否足够全面和公平？** 是否存在可能影响结果有效性的潜在偏见或缺陷？
-* **这篇论文是否真的解决了它声称要解决的问题？** 其贡献是否足够显著？
-* **这篇论文对你自己的研究或学习有什么启发？**
+- Multimodal search: Support for text search, image search, and hybrid search
+- Smart tags: Automatically generate and manage image tags
+- Metadata management: Flexibly edit and organize image information
+- AI analysis: Intelligently generate image descriptions and tags
+- Batch processing: Efficiently process large numbers of image files
+- System management: Monitor system status and configuration management
+
+## Requirements
+
+- Python 3.8+
+- Node.js 16+
+- SQLite 3
+- CUDA-supported GPU (recommended but not required)
+- Sufficient disk space for storing images and vector data
+
+## Quick Start
+
+1. Clone the repository:
+
+```bash
+git clone https://github.com/li-xiu-qi/SmartImageFinder.git
+cd SmartImageFinder
+```
+
+2. Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+3. Configure the system:
+
+```bash
+# Copy default configuration
+cp backend/config/config.example.yaml backend/config/config.yaml
+# Edit configuration file as needed
+```
+
+---
+
+```yaml
+AVAILABLE_VISION_MODELS: # List of available vision models, you can add your own as long as the corresponding vendor supports them
+- Qwen/Qwen2.5-VL-32B-Instruct
+- Pro/Qwen/Qwen2.5-VL-7B-Instruct 
+DB_PATH: ./data/db/smartimagefinder.db # Database path
+HOST: 0.0.0.0 # Don't modify this
+PORT: 1000 # Backend port number
+IMAGE_VECTOR_CACHE_DIR: ./data/caches/image_vector_cache
+TEXT_VECTOR_CACHE_DIR: ./data/caches/text_vector_cache
+MAX_CACHE_SIZE_GB: 1.5
+MODEL_PATH: jinaai/jina-clip-v2 # I recommend downloading the model locally first, then replacing the path here
+EMBEDDING_DIMENSION: 1024
+OPENAI_API_BASE: https://api.siliconflow.cn/v1 # If you need to switch to another API provider, modify this
+OPENAI_API_KEY: # Enter your OpenAI API key
+UPLOAD_DIR: ./data/images # Directory for uploaded images
+TEMP_DIR: ./data/temp # Directory for temporary files
+USE_CACHE: true # Whether to use cache
+VISION_MODEL: Qwen/Qwen2.5-VL-32B-Instruct # Name of the currently used vision model
+# Add vector database driver path configuration
+VECTOR_DB_DRIVER: ./backend/config_files/vector_db_driver/vec0.dll # Path configuration for vector database driver
+```
+
+Note ⚠️: The default driver is for Windows computers. If you're using a Mac or Linux computer, you need to download the corresponding driver from <https://github.com/asg017/sqlite-vec/releases> and replace the path. If you place it directly in the backend\config_files\vector_db_driver directory, you can just change the file name. You can also use an absolute path if you prefer.
+
+4. Start the backend service:
+
+```bash
+python main.py
+```
+
+The service will run on `http://localhost:1000`, and API documentation can be viewed at `http://localhost:1000/docs`.
+
+### Frontend Setup
+
+1. Enter the frontend directory:
+
+```bash
+cd frontend
+```
+
+2. Install dependencies:
+
+```bash
+npm install
+```
+
+3. Start the development server:
+
+```bash
+npm run dev
+```
+
+The frontend will run on <http://localhost:5173>.
+
+## System Configuration
+
+### Frontend Configuration
+
+Modify the frontend API request address in the `vite.config.ts` file: [vite.config.ts](frontend/vite.config.ts)
+
+### Backend Configuration
+
+The core system configuration is in the `backend/config_files/config.yaml` configuration file:
+![backend_config](backend/config_files/config.yaml)
+By default, the system configuration file will be loaded. You can also remove the configuration loading from the default file and use the configuration in [config.py](backend/config.py).
+
+## Demo Screenshots
+
+### System Architecture
+
+![System Architecture](assets/images/SmartImageFinder-项目架构图-v3.png)
+
+### Homepage Display
+
+![Homepage](assets/images/首页.png)
+![Homepage Image Sidebar](assets/images/首页图片侧边栏展示.png)
+
+### Image Upload and Analysis
+
+![Image Upload](assets/images/图片上传.png)
+![Edit Image Analysis During Upload](assets/images/上传的时候可以编辑图片分析内容.png)
+![Upload Completion Results](assets/images/上传完成的结果显示.png)
+![AI Automatic Image Content Analysis](assets/images/AI自动分析图片内容.png)
+![AI Automatic Image Content Analysis Effect](assets/images/AI自动分析图片内容效果.png)
+
+### Tag Management System
+
+![Tag Management](assets/images/标签管理.png)
+![Tag Editing](assets/images/标签编辑.png)
+![Tag Editing Effect](assets/images/标签编辑效果.png)
+![Tag Search and Filtering](assets/images/标签搜索及过滤.png)
+![Click Tag to Jump to Corresponding Image Display Section and Filter Images](assets/images/点击标签可以直接跳转到对应的图片展示部分并过滤图片.png)
+![Tag-Based Filtering Search](assets/images/基于标签的过滤搜索.png)
+
+### Smart Search Function
+
+![Fuzzy Search Based Image Search](assets/images/基于模糊搜索的图片搜索.png)
+![Title Vector Search](assets/images/标题向量搜索.png)
+![Title Vector and Description Vector Hybrid Search](assets/images/标题向量和描述向量混合搜索.png)
+![Three Hybrid Search Results](assets/images/三种混合搜索的搜索效果.png)
+![Search Images Using Images](assets/images/使用图搜索图.png)
+
+### Metadata Management
+
+![Metadata Editing](assets/images/元数据编辑.png)
+![Metadata Editing Effect](assets/images/元数据编辑效果.png)
+![Image Description Update](assets/images/图片描述更新.png)
+
+### System Management
+
+![System Settings](assets/images/系统设置.png)
+![System Status View](assets/images/系统状态查看.png)
+
+## License
+
+This project is licensed under the [Apache License 2.0](LICENSE).
+
+## Contact
+
+If you encounter any issues or have any suggestions while using this project, feel free to contact me:
+
+<div align="center">
+  <img src="assets/wechat/筱可AI研习社_258.jpg" alt="XiaoKe AI Study Group" width="200">
+  <p>Scan the QR code to follow the "XiaoKe AI Study Group" official account</p>
+</div>
