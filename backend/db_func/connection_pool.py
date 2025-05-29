@@ -20,7 +20,7 @@ class DatabaseConnectionPool:
         Args:
             database_path: 数据库文件路径
             max_connections: 最大连接数，默认为10
-        """
+        """        
         self.database_path = database_path
         self.max_connections = max_connections
         self.connections = queue.Queue(maxsize=max_connections)
@@ -29,8 +29,18 @@ class DatabaseConnectionPool:
 
     def _create_connection(self) -> sqlite3.Connection:
         """创建新的数据库连接"""
-        connection = sqlite3.connect(self.database_path, check_same_thread=False)
+        connection = sqlite3.connect(
+            self.database_path, 
+            check_same_thread=False,
+            timeout=30.0  # 30秒超时，避免长时间锁定
+        )
         connection.row_factory = sqlite3.Row
+        
+        # 设置WAL模式以提高并发性能
+        connection.execute("PRAGMA journal_mode=WAL")
+        connection.execute("PRAGMA synchronous=NORMAL")
+        connection.execute("PRAGMA cache_size=1000")
+        connection.execute("PRAGMA temp_store=memory")
         
         # 在创建连接时就加载向量扩展
         try:

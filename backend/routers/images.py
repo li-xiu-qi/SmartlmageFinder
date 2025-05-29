@@ -8,7 +8,7 @@ from fastapi import (
     Depends,
 )
 import sqlite3
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 import os
 import shutil
 from datetime import datetime
@@ -18,7 +18,7 @@ import uuid
 
 # 导入数据库和数据模型
 from ..db_func.core import get_db
-from ..db_func.images_func.create import add_image_to_database
+from ..db_func.images_func.create import batch_add_images_to_database
 from ..db_func.images_func.get import get_image_by_id, get_images
 from ..db_func.images_func.update import update_image as db_update_image
 from ..db_func.images_func.delete import delete_image as db_delete_image
@@ -112,7 +112,7 @@ async def upload_images(
     metadata: Optional[str] = Form(None, description="图片元数据，JSON字符串"),
     db: sqlite3.Connection = Depends(get_db),
 ):
-    """上传图片文件并存储到数据库"""
+    """上传图片文件并存储到数据库，支持单个或批量上传"""
     try:
         # 解析标签和元数据 - 使用 json.loads 解析字符串
         tag_list = json.loads(tags) if tags and isinstance(tags, str) else []
@@ -122,8 +122,43 @@ async def upload_images(
         upload_dir = settings.get_config().UPLOAD_DIR
         os.makedirs(upload_dir, exist_ok=True)
         
-        uploaded_images = []
-        for file in files:
+        # 统一使用批量处理模式（兼容单个文件）
+        return await _upload_images(
+            files, title, description, tag_list, meta_dict, upload_dir, db
+        )
+            
+    except Exception as e:
+        # 使用自定义错误响应
+        return ResponseModel(
+            status="error",
+            code=500,
+            message=f"上传图片失败: {str(e)}",
+            data=None,
+            error=ErrorModel(
+                code="UPLOAD_ERROR",
+                message=f"上传图片失败: {str(e)}"
+            )
+        )
+
+
+async def _upload_images(
+    files: List[UploadFile], 
+    title: Optional[str], 
+    description: Optional[str],
+    tag_list: List[str], 
+    meta_dict: Dict[str, Any],
+    upload_dir: str,
+    db: sqlite3.Connection
+):
+    """批量上传图片处理函数（兼容单个文件）"""
+    print(f"批量处理模式，共 {len(files)} 个文件")
+    
+    # 第一步：批量保存文件并收集信息
+    images_data = []
+    uploaded_files = []
+    
+    for file in files:
+        try:
             # 生成文件名和路径
             original_filename = file.filename
             file_ext = original_filename.split(".")[-1]
@@ -135,17 +170,11 @@ async def upload_images(
                 shutil.copyfileobj(file.file, buffer)
             
             # 获取图像信息
-            try:
-                with PILImage.open(file_path) as img:
-                    width, height = img.size
-                    file_size = os.path.getsize(file_path)
-            except Exception as e:
-                return ResponseModel.error(
-                    code="IMAGE_PROCESSING_ERROR",
-                    message=f"处理图像失败: {str(e)}",
-                    http_code=400
-                )
-            # 准备图像数据，tags 和 metadata 将由 add_image_to_database 处理序列化
+            with PILImage.open(file_path) as img:
+                width, height = img.size
+                file_size = os.path.getsize(file_path)
+            
+            # 准备图像数据
             image_data = {
                 "filename": original_filename,
                 "filepath": file_path,
@@ -160,28 +189,46 @@ async def upload_images(
                 "metadata": meta_dict
             }
             
-            # 添加到数据库
-            image_id = add_image_to_database(db, image_data)
+            images_data.append(image_data)
+            uploaded_files.append(file_path)
             
-            # 获取新添加的图像信息
+        except Exception as e:
+            # 清理已上传的文件
+            for uploaded_file in uploaded_files:
+                try:
+                    os.remove(uploaded_file)
+                except:
+                    pass
+            return ResponseModel.error(
+                code="IMAGE_PROCESSING_ERROR",
+                message=f"处理图像 {file.filename} 失败: {str(e)}",
+                http_code=400
+            )
+    
+    # 第二步：批量添加到数据库（包括批量生成向量）
+    try:
+        image_ids = batch_add_images_to_database(db, images_data)
+        
+        # 第三步：获取所有图像信息返回
+        uploaded_images = []
+        for image_id in image_ids:
             image = get_image_by_id(db, image_id)
-            uploaded_images.append(image)
+            if image:
+                uploaded_images.append(image)
+        
         return ResponseModel.success(
             data=uploaded_images,
-            message=f"成功上传 {len(uploaded_images)} 个文件"
+            message=f"上传成功，共处理 {len(uploaded_images)} 个文件"
         )
+        
     except Exception as e:
-        # 使用自定义错误响应
-        return ResponseModel(
-            status="error",
-            code=500,
-            message=f"上传图片失败: {str(e)}",
-            data=None,
-            error=ErrorModel(
-                code="UPLOAD_ERROR",
-                message=f"上传图片失败: {str(e)}"
-            )
-        )
+        # 数据库操作失败，清理已上传的文件
+        for uploaded_file in uploaded_files:
+            try:
+                os.remove(uploaded_file)
+            except:
+                pass
+        raise e
 
 
 @router.patch("/{image_id}", response_model=ResponseModel)
