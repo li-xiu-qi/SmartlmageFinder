@@ -2,7 +2,7 @@
   <img src="assets/logo/logo.png" alt="SmartImageFinder Logo" width="200">
   <h1>SmartImageFinder</h1>
 
-  <p>Intelligent image search engine and management system based on multimodal vector models and vision multimodal models</p>
+  <p>基于多模态向量模型和视觉多模态模型的智能图片搜索引擎和管理系统</p>
 
   <div>
     <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License"></a>
@@ -18,230 +18,230 @@
   </div>
 </div>
 
-## Project Overview
+## 项目概述
 
-An intelligent image search engine and management system that enables precise text-to-image, image-to-image, and other smart retrieval methods, while providing a complete image management solution. This project uses the FastAPI + React technology stack, integrating Jina CLIP V2 and multimodal large language models to provide a one-stop solution for personal image management.
+一个智能的图片搜索引擎和管理系统，能够实现精准的文本检图、以图搜图等智能检索方式，同时提供完整的图片管理解决方案。该项目采用 FastAPI + React 技术栈，集成 Jina CLIP V2 和多模态大语言模型，为个人图片管理提供一站式解决方案。
 
-## Features
+## 功能特性
 
-### Image Management
+### 图片管理
 
-- Intuitive image browsing interface with grid layout and image preview
-- Powerful tag management system supporting multi-tag classification and filtering
-- Flexible metadata editing, including title, description, and custom tags
-- Efficient batch operation support for uploading, analyzing, and tag management
-- Support for drag-and-drop uploads and multi-file selection
+- 直观的图片浏览界面，支持网格布局和图片预览
+- 强大的标签管理系统，支持多标签分类和筛选
+- 灵活的元数据编辑，包括标题、描述和自定义标签
+- 高效的批量操作支持，包括批量上传、分析和标签管理
+- 支持拖拽上传和多文件选择
 
-### Multimodal AI Analysis
+### 多模态AI分析
 
-- High-precision vector encoding based on CLIP V2 model
-- Support for three vector retrieval modes:
-  - Text-to-image matching: Find similar images through natural language descriptions
-  - Image-to-image matching: Find similar content based on reference images
-  - Hybrid vector search: Multi-dimensional search combining title, description, and image content
-- Integration with multimodal vision model APIs for intelligent image analysis:
-  - Automatic generation of image titles and detailed descriptions
-  - Intelligent extraction of key tags
-  - Support for batch AI analysis processing
+- 基于 CLIP V2 模型的高精度向量编码
+- 支持三种向量检索模式：
+  - 文本匹配图像：通过自然语言描述查找相似图片
+  - 图像匹配图像：基于参考图片查找相似内容
+  - 混合向量搜索：结合标题、描述和图片内容的多维度搜索
+- 集成多模态视觉模型API，实现智能图片分析：
+  - 自动生成图片标题和详细描述
+  - 智能提取关键标签
+  - 支持批量AI分析处理
 
-### User Interface
+### 用户界面
 
-- Modern interface design based on React + Ant Design
-- Responsive layout, adapting to different screen sizes
-- Support for image preview, zoom, and editing operations
-- Intuitive tag filtering and search interface
-- Real-time display of processing progress and status notifications
-- Support for dark/light theme switching
+- 基于 React + Ant Design 的现代化界面设计
+- 响应式布局，适配不同屏幕尺寸
+- 支持图片预览、缩放和编辑操作
+- 直观的标签筛选和搜索界面
+- 实时显示处理进度和状态通知
+- 支持深色/浅色主题切换
 
-## Use Cases
+## 应用场景
 
-- Personal image library management and organization
-- Design material retrieval and management
-- Intelligent image classification and retrieval
-- Content-based image similarity search
-- Intelligent image annotation and description generation
+- 个人图片库管理和整理
+- 设计素材检索和管理
+- 智能图片分类和检索
+- 基于内容的图片相似性搜索
+- 智能图片标注和描述生成
 
-## Technical Architecture
+## 技术架构
 
-### Backend
+### 后端
 
-- FastAPI framework providing high-performance API services
-- SQLite + sqlite-vec implementing lightweight and efficient vector storage and retrieval
-- Jina CLIP V2 model for feature vector extraction
-- Integration with multimodal large model APIs for content understanding and generation
+- FastAPI 框架提供高性能API服务
+- SQLite + sqlite-vec 实现轻量级高效的向量存储和检索
+- Jina CLIP V2 模型进行特征向量提取
+- 集成多模态大模型API进行内容理解和生成
 
-### Frontend
+### 前端
 
-- React 18 + TypeScript for building the user interface
-- Ant Design 5.x providing UI component library
-- Vite as development and build tool
-- Axios for handling HTTP requests
-- Support for file drag-and-drop and batch processing
+- React 18 + TypeScript 构建用户界面
+- Ant Design 5.x 提供UI组件库
+- Vite 作为开发和构建工具
+- Axios 处理HTTP请求
+- 支持文件拖拽和批量处理
 
-## Core Features Showcase
+## 核心功能展示
 
-- Multimodal search: Support for text search, image search, and hybrid search
-- Smart tags: Automatically generate and manage image tags
-- Metadata management: Flexibly edit and organize image information
-- AI analysis: Intelligently generate image descriptions and tags
-- Batch processing: Efficiently process large numbers of image files
-- System management: Monitor system status and configuration management
+- 多模态搜索：支持文本搜索、图片搜索和混合搜索
+- 智能标签：自动生成和管理图片标签
+- 元数据管理：灵活编辑和组织图片信息
+- AI分析：智能生成图片描述和标签
+- 批量处理：高效处理大量图片文件
+- 系统管理：监控系统状态和配置管理
 
-## Requirements
+## 系统要求
 
 - Python 3.8+
 - Node.js 16+
 - SQLite 3
-- CUDA-supported GPU (recommended but not required)
-- Sufficient disk space for storing images and vector data
+- 支持CUDA的GPU（推荐但不是必需）
+- 足够的磁盘空间用于存储图片和向量数据
 
-## Quick Start
+## 快速开始
 
-1. Clone the repository:
+1. 克隆仓库：
 
 ```bash
 git clone https://github.com/li-xiu-qi/SmartImageFinder.git
 cd SmartImageFinder
 ```
 
-2. Install dependencies:
+2. 安装依赖：
 
 ```bash
 pip install -r requirements.txt
 ```
 
-3. Configure the system:
+3. 配置系统：
 
 ```bash
-# Copy default configuration
+# 复制默认配置
 cp backend/config/config.example.yaml backend/config/config.yaml
-# Edit configuration file as needed
+# 根据需要编辑配置文件
 ```
 
 ---
 
 ```yaml
-AVAILABLE_VISION_MODELS: # List of available vision models, you can add your own as long as the corresponding vendor supports them
+AVAILABLE_VISION_MODELS: # 可用的视觉模型列表，你可以自己添加，只要对应的厂商支持就行
 - Qwen/Qwen2.5-VL-32B-Instruct
 - Pro/Qwen/Qwen2.5-VL-7B-Instruct 
-DB_PATH: ./data/db/smartimagefinder.db # Database path
-HOST: 0.0.0.0 # Don't modify this
-PORT: 1000 # Backend port number
+DB_PATH: ./data/db/smartimagefinder.db # 数据库路径
+HOST: 0.0.0.0 # 不要修改这个
+PORT: 1000 # 后端端口号
 IMAGE_VECTOR_CACHE_DIR: ./data/caches/image_vector_cache
 TEXT_VECTOR_CACHE_DIR: ./data/caches/text_vector_cache
 MAX_CACHE_SIZE_GB: 1.5
-MODEL_PATH: jinaai/jina-clip-v2 # I recommend downloading the model locally first, then replacing the path here
+MODEL_PATH: jinaai/jina-clip-v2 # 我建议先把模型下载到本地，然后把路径替换这里
 EMBEDDING_DIMENSION: 1024
-OPENAI_API_BASE: https://api.siliconflow.cn/v1 # If you need to switch to another API provider, modify this
-OPENAI_API_KEY: # Enter your OpenAI API key
-UPLOAD_DIR: ./data/images # Directory for uploaded images
-TEMP_DIR: ./data/temp # Directory for temporary files
-USE_CACHE: true # Whether to use cache
-VISION_MODEL: Qwen/Qwen2.5-VL-32B-Instruct # Name of the currently used vision model
-# Add vector database driver path configuration
-VECTOR_DB_DRIVER: ./backend/config_files/vector_db_driver/vec0.dll # Path configuration for vector database driver
+OPENAI_API_BASE: https://api.siliconflow.cn/v1 # 如果你需要切换到其他API提供商，修改这里
+OPENAI_API_KEY: # 填入你的OpenAI API密钥
+UPLOAD_DIR: ./data/images # 上传图片的目录
+TEMP_DIR: ./data/temp # 临时文件目录
+USE_CACHE: true # 是否使用缓存
+VISION_MODEL: Qwen/Qwen2.5-VL-32B-Instruct # 当前使用的视觉模型名称
+# 添加向量数据库驱动路径配置
+VECTOR_DB_DRIVER: ./backend/config_files/vector_db_driver/vec0.dll # 向量数据库驱动的路径配置
 ```
 
-Note ⚠️: The default driver is for Windows computers. If you're using a Mac or Linux computer, you need to download the corresponding driver from <https://github.com/asg017/sqlite-vec/releases> and replace the path. If you place it directly in the backend\config_files\vector_db_driver directory, you can just change the file name. You can also use an absolute path if you prefer.
+注意⚠️：默认驱动是Windows电脑的，如果你是Mac或Linux电脑，需要从<https://github.com/asg017/sqlite-vec/releases>下载对应的驱动并替换路径。如果你直接放在backend\config_files\vector_db_driver目录下，只需要改文件名即可。你也可以使用绝对路径。
 
-4. Start the backend service:
+4. 启动后端服务：
 
 ```bash
 python main.py
 ```
 
-The service will run on `http://localhost:1000`, and API documentation can be viewed at `http://localhost:1000/docs`.
+服务将运行在 `http://localhost:1000`，API文档可在 `http://localhost:1000/docs` 查看。
 
-### Frontend Setup
+### 前端设置
 
-1. Enter the frontend directory:
+1. 进入前端目录：
 
 ```bash
 cd frontend
 ```
 
-2. Install dependencies:
+2. 安装依赖：
 
 ```bash
 npm install
 ```
 
-3. Start the development server:
+3. 启动开发服务器：
 
 ```bash
 npm run dev
 ```
 
-The frontend will run on <http://localhost:5173>.
+前端将运行在 <http://localhost:5173>。
 
-## System Configuration
+## 系统配置
 
-### Frontend Configuration
+### 前端配置
 
-Modify the frontend API request address in the `vite.config.ts` file: [vite.config.ts](frontend/vite.config.ts)
+在 `vite.config.ts` 文件中修改前端API请求地址：[vite.config.ts](frontend/vite.config.ts)
 
-### Backend Configuration
+### 后端配置
 
-The core system configuration is in the `backend/config_files/config.yaml` configuration file:
+系统核心配置在 `backend/config_files/config.yaml` 配置文件中：
 ![backend_config](backend/config_files/config.yaml)
-By default, the system configuration file will be loaded. You can also remove the configuration loading from the default file and use the configuration in [config.py](backend/config.py).
+默认情况下会加载系统配置文件，你也可以移除默认文件的配置加载，使用[config.py](backend/config.py)中的配置。
 
-## Demo Screenshots
+## 演示截图
 
-### System Architecture
+### 系统架构
 
-![System Architecture](assets/images/SmartImageFinder-项目架构图-v3.png)
+![系统架构](assets/images/SmartImageFinder-项目架构图-v3.png)
 
-### Homepage Display
+### 首页展示
 
-![Homepage](assets/images/首页.png)
-![Homepage Image Sidebar](assets/images/首页图片侧边栏展示.png)
+![首页](assets/images/首页.png)
+![首页图片侧边栏展示](assets/images/首页图片侧边栏展示.png)
 
-### Image Upload and Analysis
+### 图片上传和分析
 
-![Image Upload](assets/images/图片上传.png)
-![Edit Image Analysis During Upload](assets/images/上传的时候可以编辑图片分析内容.png)
-![Upload Completion Results](assets/images/上传完成的结果显示.png)
-![AI Automatic Image Content Analysis](assets/images/AI自动分析图片内容.png)
-![AI Automatic Image Content Analysis Effect](assets/images/AI自动分析图片内容效果.png)
+![图片上传](assets/images/图片上传.png)
+![上传时可编辑图片分析内容](assets/images/上传的时候可以编辑图片分析内容.png)
+![上传完成结果显示](assets/images/上传完成的结果显示.png)
+![AI自动分析图片内容](assets/images/AI自动分析图片内容.png)
+![AI自动分析图片内容效果](assets/images/AI自动分析图片内容效果.png)
 
-### Tag Management System
+### 标签管理系统
 
-![Tag Management](assets/images/标签管理.png)
-![Tag Editing](assets/images/标签编辑.png)
-![Tag Editing Effect](assets/images/标签编辑效果.png)
-![Tag Search and Filtering](assets/images/标签搜索及过滤.png)
-![Click Tag to Jump to Corresponding Image Display Section and Filter Images](assets/images/点击标签可以直接跳转到对应的图片展示部分并过滤图片.png)
-![Tag-Based Filtering Search](assets/images/基于标签的过滤搜索.png)
+![标签管理](assets/images/标签管理.png)
+![标签编辑](assets/images/标签编辑.png)
+![标签编辑效果](assets/images/标签编辑效果.png)
+![标签搜索及过滤](assets/images/标签搜索及过滤.png)
+![点击标签可以直接跳转到对应的图片展示部分并过滤图片](assets/images/点击标签可以直接跳转到对应的图片展示部分并过滤图片.png)
+![基于标签的过滤搜索](assets/images/基于标签的过滤搜索.png)
 
-### Smart Search Function
+### 智能搜索功能
 
-![Fuzzy Search Based Image Search](assets/images/基于模糊搜索的图片搜索.png)
-![Title Vector Search](assets/images/标题向量搜索.png)
-![Title Vector and Description Vector Hybrid Search](assets/images/标题向量和描述向量混合搜索.png)
-![Three Hybrid Search Results](assets/images/三种混合搜索的搜索效果.png)
-![Search Images Using Images](assets/images/使用图搜索图.png)
+![基于模糊搜索的图片搜索](assets/images/基于模糊搜索的图片搜索.png)
+![标题向量搜索](assets/images/标题向量搜索.png)
+![标题向量和描述向量混合搜索](assets/images/标题向量和描述向量混合搜索.png)
+![三种混合搜索的搜索效果](assets/images/三种混合搜索的搜索效果.png)
+![使用图搜索图](assets/images/使用图搜索图.png)
 
-### Metadata Management
+### 元数据管理
 
-![Metadata Editing](assets/images/元数据编辑.png)
-![Metadata Editing Effect](assets/images/元数据编辑效果.png)
-![Image Description Update](assets/images/图片描述更新.png)
+![元数据编辑](assets/images/元数据编辑.png)
+![元数据编辑效果](assets/images/元数据编辑效果.png)
+![图片描述更新](assets/images/图片描述更新.png)
 
-### System Management
+### 系统管理
 
-![System Settings](assets/images/系统设置.png)
-![System Status View](assets/images/系统状态查看.png)
+![系统设置](assets/images/系统设置.png)
+![系统状态查看](assets/images/系统状态查看.png)
 
-## License
+## 许可证
 
-This project is licensed under the [Apache License 2.0](LICENSE).
+本项目采用 [Apache License 2.0](LICENSE) 许可证。
 
-## Contact
+## 联系方式
 
-If you encounter any issues or have any suggestions while using this project, feel free to contact me:
+如果您在使用过程中遇到任何问题或有任何建议，欢迎联系我：
 
 <div align="center">
-  <img src="assets/wechat/筱可AI研习社_258.jpg" alt="XiaoKe AI Study Group" width="200">
-  <p>Scan the QR code to follow the "XiaoKe AI Study Group" official account</p>
+  <img src="assets/wechat/筱可AI研习社_258.jpg" alt="筱可AI研习社" width="200">
+  <p>扫描二维码关注"筱可AI研习社"公众号</p>
 </div>
