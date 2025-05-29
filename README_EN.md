@@ -114,33 +114,38 @@ pip install -r requirements.txt
 
 ```bash
 # Copy default configuration
-cp backend/config/config.example.yaml backend/config/config.yaml
+cp backend/config_files/config.example.yaml backend/config_files/config.yaml
 # Edit configuration file as needed
 ```
 
----
+⚠️ **Important Notice**: Please configure your `config.yaml` file according to the format in `backend/config_files/config.example.yaml`, paying special attention to:
+- Fill in your OpenAI API key
+- Adjust model paths and other configuration items as needed
+- Do not commit configuration files containing sensitive information to version control
 
+Complete configuration file example structure:
 ```yaml
+MODEL_PATH: jinaai/jina-clip-v2 # I recommend downloading the model locally first, then replacing the path here
+VECTOR_DB_DRIVER: ./backend/config_files/vector_db_driver/vec0.dll # Path configuration for vector database driver
+EMBEDDING_DIMENSION: 1024
+UPLOAD_DIR: ./data/images # Directory for uploaded images
+TEMP_DIR: ./data/temp # Directory for temporary files
+DB_PATH: ./data/db/smartimagefinder.db # Database path
+TEXT_VECTOR_CACHE_DIR: ./data/caches/text_vector_cache
+IMAGE_VECTOR_CACHE_DIR: ./data/caches/image_vector_cache
+USE_CACHE: true # Whether to use cache
+MAX_CACHE_SIZE_GB: 1.5
+OPENAI_API_KEY: # Enter your OpenAI API key
+OPENAI_API_BASE: https://api.siliconflow.cn/v1 # If you need to switch to another API provider, modify this
+VISION_MODEL: Qwen/Qwen2.5-VL-32B-Instruct # Name of the currently used vision model
 AVAILABLE_VISION_MODELS: # List of available vision models, you can add your own as long as the corresponding vendor supports them
 - Qwen/Qwen2.5-VL-32B-Instruct
 - Pro/Qwen/Qwen2.5-VL-7B-Instruct 
-DB_PATH: ./data/db/smartimagefinder.db # Database path
 HOST: 0.0.0.0 # Don't modify this
 PORT: 1000 # Backend port number
-IMAGE_VECTOR_CACHE_DIR: ./data/caches/image_vector_cache
-TEXT_VECTOR_CACHE_DIR: ./data/caches/text_vector_cache
-MAX_CACHE_SIZE_GB: 1.5
-MODEL_PATH: jinaai/jina-clip-v2 # I recommend downloading the model locally first, then replacing the path here
-EMBEDDING_DIMENSION: 1024
-OPENAI_API_BASE: https://api.siliconflow.cn/v1 # If you need to switch to another API provider, modify this
-OPENAI_API_KEY: # Enter your OpenAI API key
-UPLOAD_DIR: ./data/images # Directory for uploaded images
-TEMP_DIR: ./data/temp # Directory for temporary files
-USE_CACHE: true # Whether to use cache
-VISION_MODEL: Qwen/Qwen2.5-VL-32B-Instruct # Name of the currently used vision model
-# Add vector database driver path configuration
-VECTOR_DB_DRIVER: ./backend/config_files/vector_db_driver/vec0.dll # Path configuration for vector database driver
 ```
+
+Note ⚠️: The default driver is for Windows computers. If you're using a Mac or Linux computer, you need to download the corresponding driver from <https://github.com/asg017/sqlite-vec/releases> and replace the path. If you place it directly in the backend\config_files\vector_db_driver directory, you can just change the file name. You can also use an absolute path if you prefer.
 
 Note ⚠️: The default driver is for Windows computers. If you're using a Mac or Linux computer, you need to download the corresponding driver from <https://github.com/asg017/sqlite-vec/releases> and replace the path. If you place it directly in the backend\config_files\vector_db_driver directory, you can just change the file name. You can also use an absolute path if you prefer.
 

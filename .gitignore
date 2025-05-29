@@ -41,6 +41,9 @@ cache/
 *.log
 logs/
 
+# Configuration files with sensitive information
+backend/config_files/config.yaml
+
 # Frontend
 node_modules/
 npm-debug.log*

@@ -114,32 +114,35 @@ pip install -r requirements.txt
 
 ```bash
 # 复制默认配置
-cp backend/config/config.example.yaml backend/config/config.yaml
+cp backend/config_files/config.example.yaml backend/config_files/config.yaml
 # 根据需要编辑配置文件
 ```
 
----
+⚠️ **重要提醒**：请根据 `backend/config_files/config.example.yaml` 文件的格式配置您的 `config.yaml` 文件，特别注意：
+- 填入您的 OpenAI API 密钥
+- 根据需要调整模型路径和其他配置项
+- 不要将包含敏感信息的配置文件提交到版本控制系统
 
+配置文件完整示例结构：
 ```yaml
-AVAILABLE_VISION_MODELS: # 可用的视觉模型列表，你可以自己添加，只要对应的厂商支持就行
+MODEL_PATH: jinaai/jina-clip-v2 # 我推荐先下载模型到本地，然后将路径替换过来
+VECTOR_DB_DRIVER: ./backend/config_files/vector_db_driver/vec0.dll # 向量数据库驱动的路径配置
+EMBEDDING_DIMENSION: 1024
+UPLOAD_DIR: ./data/images # 上传的图片存放目录
+TEMP_DIR: ./data/temp # 临时文件存放目录
+DB_PATH: ./data/db/smartimagefinder.db # 数据库路径
+TEXT_VECTOR_CACHE_DIR: ./data/caches/text_vector_cache
+IMAGE_VECTOR_CACHE_DIR: ./data/caches/image_vector_cache
+USE_CACHE: true # 是否使用缓存
+MAX_CACHE_SIZE_GB: 1.5
+OPENAI_API_KEY: # 填入你的OpenAI API密钥 
+OPENAI_API_BASE: https://api.siliconflow.cn/v1 # 如果需要换成其他API服务商，请修改此处
+VISION_MODEL: Qwen/Qwen2.5-VL-32B-Instruct # 当前使用的视觉模型的名称
+AVAILABLE_VISION_MODELS: # 可用的视觉模型列表,可以自己加，只要对应的厂商支持
 - Qwen/Qwen2.5-VL-32B-Instruct
 - Pro/Qwen/Qwen2.5-VL-7B-Instruct 
-DB_PATH: ./data/db/smartimagefinder.db # 数据库路径
-HOST: 0.0.0.0 # 不要修改这个
-PORT: 1000 # 后端端口号
-IMAGE_VECTOR_CACHE_DIR: ./data/caches/image_vector_cache
-TEXT_VECTOR_CACHE_DIR: ./data/caches/text_vector_cache
-MAX_CACHE_SIZE_GB: 1.5
-MODEL_PATH: jinaai/jina-clip-v2 # 我建议先把模型下载到本地，然后把路径替换这里
-EMBEDDING_DIMENSION: 1024
-OPENAI_API_BASE: https://api.siliconflow.cn/v1 # 如果你需要切换到其他API提供商，修改这里
-OPENAI_API_KEY: # 填入你的OpenAI API密钥
-UPLOAD_DIR: ./data/images # 上传图片的目录
-TEMP_DIR: ./data/temp # 临时文件目录
-USE_CACHE: true # 是否使用缓存
-VISION_MODEL: Qwen/Qwen2.5-VL-32B-Instruct # 当前使用的视觉模型名称
-# 添加向量数据库驱动路径配置
-VECTOR_DB_DRIVER: ./backend/config_files/vector_db_driver/vec0.dll # 向量数据库驱动的路径配置
+HOST: 0.0.0.0 # 这里不要动
+PORT: 1000 # 后端的端口号
 ```
 
 注意⚠️：默认驱动是Windows电脑的，如果你是Mac或Linux电脑，需要从<https://github.com/asg017/sqlite-vec/releases>下载对应的驱动并替换路径。如果你直接放在backend\config_files\vector_db_driver目录下，只需要改文件名即可。你也可以使用绝对路径。
