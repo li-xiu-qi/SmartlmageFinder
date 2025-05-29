@@ -61,6 +61,14 @@ frontend/.pnp.js
 *.sqlite
 *.sqlite3
 
+# SQLite WAL mode files
+*.db-wal
+*.db-shm
+*.sqlite-wal
+*.sqlite-shm
+*.sqlite3-wal
+*.sqlite3-shm
+
 # Milvus
 milvus/
 
@@ -86,6 +94,13 @@ var/
 /coverage/
 /.coverage
 htmlcov/
+
+# Test files and temporary databases
+backend/tests/*.db
+backend/tests/*.db-wal
+backend/tests/*.db-shm
+backend/tests/test_*.db*
+backend/tests/temp_*
 
 # Other
 Thumbs.db
