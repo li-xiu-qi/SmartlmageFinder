@@ -57,6 +57,29 @@ export interface DeleteImageParams {
 }
 
 /**
+ * 批量删除图片请求参数
+ */
+export interface BatchDeleteImageParams {
+  image_ids: (number | string)[];  // 图片ID数组
+}
+
+/**
+ * 批量删除响应结果
+ */
+export interface BatchDeleteResult {
+  success_count: number;           // 成功删除的数量
+  failed_count: number;            // 删除失败的数量
+  total_count: number;             // 总数量
+  failed_ids: (number | string)[]; // 删除失败的ID列表
+  errors?: Record<string, string>; // 具体的错误信息，key为image_id，value为错误信息
+}
+
+/**
+ * 批量删除响应
+ */
+export type BatchDeleteImageResponse = ApiResponse<BatchDeleteResult>;
+
+/**
  * 图片列表元数据
  */
 export interface ImagesListMetadata {
@@ -113,42 +136,49 @@ export interface ImageClient {
    * @returns 图片列表的Promise
    */
   getImagesList(params?: GetImagesListParams): Promise<ImagesListResponse>;
-  
+
   /**
    * 获取单个图片详情
    * @param params 包含图片ID的参数
    * @returns 图片详情的Promise
    */
   getImageDetail(params: GetImageDetailParams): Promise<ImageDetailResponse>;
-  
+
   /**
    * 上传一张或多张图片
    * @param params 上传参数和文件
    * @returns 上传结果的Promise
    */
   uploadImages(params: UploadImageParams): Promise<UploadImagesResponse>;
-  
+
   /**
    * 更新图片信息
    * @param params 更新参数
    * @returns 更新结果的Promise
    */
   updateImage(params: UpdateImageParams): Promise<UpdateImageResponse>;
-  
+
   /**
    * 删除图片
    * @param params 删除参数
    * @returns 删除结果的Promise
    */
   deleteImage(params: DeleteImageParams): Promise<DeleteImageResponse>;
-  
+
+  /**
+   * 批量删除图片
+   * @param params 批量删除参数
+   * @returns 批量删除结果的Promise
+   */
+  batchDeleteImages(params: BatchDeleteImageParams): Promise<BatchDeleteImageResponse>;
+
   /**
    * 获取图片文件URL
    * @param imageId 图片ID
    * @returns 可访问的图片URL
    */
   getImageUrl(imageId: number | string): string;
-  
+
   /**
    * 获取图片缩略图URL
    * @param imageId 图片ID

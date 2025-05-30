@@ -1,5 +1,6 @@
 import React from 'react';
-import { Card, Tag } from 'antd';
+import { Card, Tag, Checkbox } from 'antd';
+import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 import { ImageCardModel } from '@/utils/typeConverters';
 import dayjs from 'dayjs';
 import '../styles/components.less';
@@ -10,6 +11,10 @@ interface ImageCardProps {
   showTags?: boolean;
   showSimilarity?: boolean;
   onTagClick?: (tag: string) => void;
+  // 多选功能相关
+  multiSelectMode?: boolean;
+  selected?: boolean;
+  onSelect?: (imageId: number, selected: boolean) => void;
 }
 
 /**
@@ -22,7 +27,7 @@ const formatDate = (dateString: string): string => {
 // 处理标签数据，确保为数组格式
 const processTags = (tags: unknown): string[] => {
   if (!tags) return [];
-  
+
   // 如果是字符串，尝试解析JSON
   if (typeof tags === 'string') {
     try {
@@ -33,23 +38,33 @@ const processTags = (tags: unknown): string[] => {
       return [];
     }
   }
-  
+
   // 确保返回的是数组
   return Array.isArray(tags) ? tags : [];
 };
 
-const ImageCard: React.FC<ImageCardProps> = ({ 
-  image, 
+const ImageCard: React.FC<ImageCardProps> = ({
+  image,
   onClick,
   showTags = false,
   showSimilarity = false,
-  onTagClick
+  onTagClick,
+  multiSelectMode = false,
+  selected = false,
+  onSelect
 }) => {
   const isSearchResult = typeof image.score !== 'undefined';
-  
+
   const handleClick = () => {
-    if (onClick) {
+    if (multiSelectMode && onSelect) {
+      onSelect(image.id, !selected);
+    } else if (onClick) {
       onClick(image);
+    }
+  };  const handleCheckboxChange = (e: CheckboxChangeEvent) => {
+    e.nativeEvent?.stopPropagation();
+    if (onSelect) {
+      onSelect(image.id, e.target.checked);
     }
   };
 
@@ -63,18 +78,25 @@ const ImageCard: React.FC<ImageCardProps> = ({
 
   // 处理图片标签
   const tags = processTags(image.tags);
-
   return (
     <Card
       hoverable
-      className="image-card"
-      onClick={handleClick}
-      cover={
+      className={`image-card ${multiSelectMode ? 'multi-select-mode' : ''} ${selected ? 'selected' : ''}`}
+      onClick={handleClick}cover={
         <div className="image-cover">
-          <img 
-            alt={image.title} 
-            src={image.filepath} 
+          <img
+            alt={image.title}
+            src={image.filepath}
           />
+          {multiSelectMode && (
+            <div className="selection-overlay">
+              <Checkbox
+                checked={selected}
+                onChange={handleCheckboxChange}
+                className="selection-checkbox"
+              />
+            </div>
+          )}
           {isSearchResult && showSimilarity && (
             <div className="similarity-indicator">
               {`相似度: ${Math.round((image.score || 0) * 100)}%`}
@@ -94,10 +116,10 @@ const ImageCard: React.FC<ImageCardProps> = ({
         {showTags && tags.length > 0 && (
           <div className="image-tags">
             {tags.slice(0, 3).map(tag => (
-              <Tag 
-                key={tag} 
-                color="blue" 
-                onClick={(e) => handleTagClick(e, tag)} 
+              <Tag
+                key={tag}
+                color="blue"
+                onClick={(e) => handleTagClick(e, tag)}
                 className="tag-item"
               >
                 {tag}

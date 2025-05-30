@@ -116,3 +116,27 @@
   margin-top: 24px;
   padding: 16px 0;
 }
+
+/* 多选功能样式 */
+.selection-overlay {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 10;
+}
+
+.selection-checkbox {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border-radius: 4px;
+  padding: 2px;
+}
+
+.image-card.multi-select-mode:hover {
+  border-color: #1890ff;
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.2);
+}
+
+.image-card.selected {
+  border-color: #1890ff;
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.3);
+}

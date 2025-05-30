@@ -21,11 +21,15 @@ const ImagesPage: React.FC = () => {
   const [tags, setTags] = useState<TagInfo[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
-  const [selectedImage, setSelectedImage] = useState<ImageModel | null>(null);
+  const [pageSize, setPageSize] = useState(20);  const [selectedImage, setSelectedImage] = useState<ImageModel | null>(null);
   const [detailVisible, setDetailVisible] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
-  const [gridColumns, setGridColumns] = useState<number>(2);
+  const [gridColumns, setGridColumns] = useState<number>(4);
+
+  // 多选功能状态
+  const [multiSelectMode, setMultiSelectMode] = useState(false);
+  const [selectedImageIds, setSelectedImageIds] = useState<Set<number>>(new Set());
+  const [batchDeleting, setBatchDeleting] = useState(false);
 
   // 筛选条件
   const [filterValues, setFilterValues] = useState<GetImagesListParams>({});
@@ -71,7 +75,7 @@ const ImagesPage: React.FC = () => {
           // 将API返回的ImageModel转换为前端显示所需的ImageCardModel
           const imageCards = response.data.map(img => convertToImageCardModel(img));
           setImages(imageCards);
-          
+
           if (response.metadata && response.metadata.pagination) {
             setTotal(response.metadata.pagination.total_items);
           }
@@ -89,7 +93,7 @@ const ImagesPage: React.FC = () => {
   const handleFilterSubmit = (values: GetImagesListParams) => {
     setFilterValues(values);
     setPage(1); // 重置为第一页
-    
+
     // 更新URL参数，以便分享和保存状态
     if (values.tags && Array.isArray(values.tags) && values.tags.length > 0) {
       navigate(`/images?tags=${encodeURIComponent(values.tags.join(','))}`, { replace: true });
@@ -157,16 +161,89 @@ const ImagesPage: React.FC = () => {
   // 更新图片信息
   const handleImageUpdate = (updatedImage: ImageModel) => {
     setSelectedImage(updatedImage);
-    
+
     // 更新列表中的图片数据
-    setImages(prevImages => 
-      prevImages.map(img => 
-        img.id === updatedImage.id 
-          ? convertToImageCardModel(updatedImage) 
+    setImages(prevImages =>
+      prevImages.map(img =>
+        img.id === updatedImage.id
+          ? convertToImageCardModel(updatedImage)
           : img
       )
     );
-  };  // 处理标签点击
+  };
+
+  // 多选功能处理函数
+  const toggleMultiSelectMode = () => {
+    setMultiSelectMode(!multiSelectMode);
+    setSelectedImageIds(new Set()); // 清空选择
+  };
+
+  const handleImageSelect = (imageId: number, selected: boolean) => {
+    const newSelectedIds = new Set(selectedImageIds);
+    if (selected) {
+      newSelectedIds.add(imageId);
+    } else {
+      newSelectedIds.delete(imageId);
+    }
+    setSelectedImageIds(newSelectedIds);
+  };
+
+  const handleSelectAll = () => {
+    if (selectedImageIds.size === images.length) {
+      // 如果全部已选，则取消全选
+      setSelectedImageIds(new Set());
+    } else {
+      // 否则全选当前页面的所有图片
+      setSelectedImageIds(new Set(images.map(img => img.id)));
+    }
+  };
+
+  const handleBatchDelete = async () => {
+    if (selectedImageIds.size === 0) {
+      message.warning('请选择要删除的图片');
+      return;
+    }
+
+    try {
+      setBatchDeleting(true);
+      const imageIds = Array.from(selectedImageIds);
+      const response = await imageService.batchDeleteImages({ image_ids: imageIds });
+
+      if (response.status === 'success' && response.data) {
+        const { success_count, failed_count, failed_ids } = response.data;
+
+        if (success_count > 0) {
+          message.success(`成功删除 ${success_count} 张图片`);
+
+          // 更新图片列表，移除已删除的图片
+          setImages(prevImages =>
+            prevImages.filter(img => !imageIds.includes(img.id) || failed_ids.includes(img.id))
+          );
+          setTotal(prev => prev - success_count);
+        }
+
+        if (failed_count > 0) {
+          message.warning(`有 ${failed_count} 张图片删除失败`);
+        }
+
+        // 清空选择
+        setSelectedImageIds(new Set());
+
+        // 如果当前页没有图片了，回到上一页
+        const remainingImages = images.filter(img => !imageIds.includes(img.id) || failed_ids.includes(img.id));
+        if (remainingImages.length === 0 && page > 1) {
+          setPage(page - 1);
+        }
+      }
+    } catch (error) {
+      console.error('批量删除失败:', error);
+      message.error('批量删除失败');
+    } finally {
+      setBatchDeleting(false);
+    }
+  };
+
+  // 处理标签点击
   const handleTagClick = (tag: string) => {
     // 设置筛选条件
     const updatedTags = [...(filterValues.tags || [])];
@@ -174,7 +251,7 @@ const ImagesPage: React.FC = () => {
       updatedTags.push(tag);
       setFilterValues(prev => ({ ...prev, tags: updatedTags }));
       setPage(1);
-      
+
       // 更新URL，方便分享和保存状态
       navigate(`/images?tags=${encodeURIComponent(updatedTags.join(','))}`, { replace: true });
     }
@@ -184,7 +261,7 @@ const ImagesPage: React.FC = () => {
     <div className="images-page">
       <Spin spinning={loading}>
         <Card className="filter-card">
-          <FilterForm 
+          <FilterForm
             tags={tags}
             onFilter={handleFilterSubmit}
             onReset={resetFilters}
@@ -192,25 +269,31 @@ const ImagesPage: React.FC = () => {
             loading={loading}
           />
         </Card>
-        
-        <ViewControls 
+          <ViewControls
           total={total}
           viewMode={viewMode}
           gridColumns={gridColumns}
           onViewModeChange={setViewMode}
           onGridColumnsChange={setGridColumns}
+          multiSelectMode={multiSelectMode}
+          selectedCount={selectedImageIds.size}
+          onToggleMultiSelect={toggleMultiSelectMode}
+          onSelectAll={handleSelectAll}
+          onBatchDelete={handleBatchDelete}
+          batchDeleting={batchDeleting}
         />
-        
-        <ImageList 
+          <ImageList
           images={images}
           viewMode={viewMode}
           gridColumns={gridColumns}
           onImageClick={handleImageClick}
           onTagClick={handleTagClick}
           onDeleteImage={handleDeleteImage}
-          loading={loading}
+          multiSelectMode={multiSelectMode}
+          selectedImageIds={selectedImageIds}
+          onImageSelect={handleImageSelect}
         />
-        
+
         {total > 0 && (
           <div className="pagination-container">
             <Pagination
@@ -237,10 +320,10 @@ const ImagesPage: React.FC = () => {
             onClose={handleDetailClose}
             open={detailVisible}
             width={640}
-            destroyOnClose          >            
-            <SharedImageDetail 
-              image={selectedImage} 
-              onUpdate={handleImageUpdate} 
+            destroyOnClose          >
+            <SharedImageDetail
+              image={selectedImage}
+              onUpdate={handleImageUpdate}
               onDelete={handleDeleteImage}
               onClose={handleDetailClose}
             />

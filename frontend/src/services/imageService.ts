@@ -11,6 +11,8 @@ import {
   UpdateImageResponse,
   DeleteImageParams,
   DeleteImageResponse,
+  BatchDeleteImageParams,
+  BatchDeleteImageResponse,
 } from '../types/image';
 import { ImageModel, DeletedImageInfo } from '../types/models';
 
@@ -39,7 +41,7 @@ const imageService: ImageClient = {
    */
   uploadImages: (params: UploadImageParams): Promise<UploadImagesResponse> => {
     const formData = new FormData();
-    
+
     if (params.files instanceof FileList) {
       for (let i = 0; i < params.files.length; i++) {
         formData.append('files', params.files[i]);
@@ -118,6 +120,31 @@ const imageService: ImageClient = {
    */
   deleteImage: (params: DeleteImageParams): Promise<DeleteImageResponse> => {
     return apiClient.deleteWithTransform<DeletedImageInfo>(`/images/${params.image_id}`);
+  },
+
+  /**
+   * 批量删除图片
+   * DELETE /api/v1/images/batch
+   */
+  batchDeleteImages: async (params: BatchDeleteImageParams): Promise<BatchDeleteImageResponse> => {
+    // 确保所有ID都是数字类型，因为后端期望 List[int]
+    const imageIds = params.image_ids.map(id => typeof id === 'string' ? parseInt(id, 10) : id);
+
+    console.log('批量删除请求参数:', { image_ids: imageIds });
+    console.log('请求URL:', '/images/batch');
+
+    // 使用带有数据的DELETE请求
+    const response = await apiClient.delete('/images/batch', {
+      data: { image_ids: imageIds },
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    console.log('批量删除响应:', response);
+
+    // 直接返回响应数据，因为后端已经返回了正确的格式
+    return response.data;
   },
 
   /**

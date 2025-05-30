@@ -1,6 +1,6 @@
-from typing import Optional, Dict, Any, List
 import os
 import yaml
+from typing import Optional, Dict, Any, List
 from pydantic import BaseModel, ValidationError, Field
 
 
@@ -62,7 +62,7 @@ class Settings:
         if cls._instance is None:
             cls._instance = super(Settings, cls).__new__(cls)
             cls._instance._initialized = False
-            if config_file_path is not None:  # 首次实例化时设置路径（如果提供）
+            if config_file_path is not None:
                 cls._config_file_path = os.path.abspath(config_file_path)
         elif config_file_path is not None and cls._config_file_path != os.path.abspath(
             config_file_path
@@ -85,7 +85,7 @@ class Settings:
         if self.__class__._config_file_path is None:  # 回退到默认路径
             current_script_dir = os.path.dirname(os.path.abspath(__file__))
             self.__class__._config_file_path = os.path.join(
-                current_script_dir, "config", "config.yaml"
+                current_script_dir, "config_files", "config.yaml"
             )
 
         self.config_file = self.__class__._config_file_path
@@ -140,13 +140,11 @@ class Settings:
                 print(f"配置已根据 Pydantic 模型默认值初始化。")
 
             if not os.path.exists(self.config_file) or not raw_data:
-                if (
-                    self._config_model.MODEL_PATH
-                ):  # 仅在关键路径如 MODEL_PATH 已设置（或有默认值）时保存
+                if self._config_model.MODEL_PATH:
                     print(
                         f"配置文件 {self.config_file} 不存在或为空，将使用当前（可能为默认）配置创建/覆盖。"
                     )
-                    self.save()  # 注意：如果 MODEL_PATH 不是必需的或有默认值，这可能会用默认值覆盖空文件
+                    self.save()
                 else:
                     print(
                         f"提示: MODEL_PATH 未设置，配置文件 {self.config_file} 将不会自动创建/覆盖。请确保配置文件中包含 MODEL_PATH。"
@@ -176,6 +174,7 @@ class Settings:
             print(
                 f"错误: MODEL_PATH 未在配置中设置。保存已中止以避免创建不完整的配置文件。"
             )
+            return False
 
         try:
             config_dir = os.path.dirname(self.config_file)

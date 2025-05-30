@@ -1,0 +1,101 @@
+<mxfile host="65bd71144e">
+    <diagram id="aeIVFuxLdpt_nrS-JQ-U" name="第 1 页">
+        <mxGraphModel dx="358726" dy="248520" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2000" pageHeight="2400" background="#ffffff" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="layer_presentation_group" value="展示层" style="group;fontFamily=SimSun;fontSize=18;fontStyle=1;strokeColor=#3498db;fillColor=#eaf5fc;align=center;verticalAlign=top;spacingTop=5;dashed=0;container=1;collapsible=0;" parent="1" vertex="1" connectable="0">
+                    <mxGeometry x="50" y="50" width="1900" height="300" as="geometry"/>
+                </mxCell>
+                <mxCell id="user" value="用户" style="shape=actor;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=14;fillColor=#3498db;fontColor=#FFFFFF;strokeColor=#2980b9;" parent="layer_presentation_group" vertex="1">
+                    <mxGeometry x="100" y="90" width="100" height="150" as="geometry"/>
+                </mxCell>
+                <mxCell id="react_app" value="React + Ant Design 前端应用&#xa;(SmartImageFinder UI)" style="rounded=1;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=14;fillColor=#3498db;fontColor=#FFFFFF;strokeColor=#2980b9;verticalAlign=top;spacingTop=10;align=center;" parent="layer_presentation_group" vertex="1">
+                    <mxGeometry x="350" y="70" width="1210" height="200" as="geometry"/>
+                </mxCell>
+                <mxCell id="ui_search" value="图片检索界面" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=12;fillColor=#adcdeb;strokeColor=#3498db;fontColor=#000000;align=left;spacingLeft=10;verticalAlign=middle;" parent="react_app" vertex="1">
+                    <mxGeometry x="75.625" y="55" width="1058.75" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="ui_manage" value="图片管理界面 (网格/卡片, 懒加载, 虚拟滚动)" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=12;fillColor=#adcdeb;strokeColor=#3498db;fontColor=#000000;align=left;spacingLeft=10;verticalAlign=middle;" parent="react_app" vertex="1">
+                    <mxGeometry x="75.625" y="90" width="1058.75" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="ui_upload" value="图片上传界面 (拖放, 预览)" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=12;fillColor=#adcdeb;strokeColor=#3498db;fontColor=#000000;align=left;spacingLeft=10;verticalAlign=middle;" parent="react_app" vertex="1">
+                    <mxGeometry x="75.625" y="125" width="1058.75" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="ui_system" value="系统管理与配置界面" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=12;fillColor=#adcdeb;strokeColor=#3498db;fontColor=#000000;align=left;spacingLeft=10;verticalAlign=middle;" parent="react_app" vertex="1">
+                    <mxGeometry x="75.625" y="160" width="1058.75" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="layer_api_gateway_group" value="网关层 / API层" style="group;fontFamily=SimSun;fontSize=18;fontStyle=1;strokeColor=#2ecc71;fillColor=#eafaf1;align=center;verticalAlign=top;spacingTop=5;dashed=0;container=1;collapsible=0;" parent="1" vertex="1" connectable="0">
+                    <mxGeometry x="50" y="380" width="1900" height="150" as="geometry"/>
+                </mxCell>
+                <mxCell id="fastapi_app" value="FastAPI 应用服务器&#xa;(RESTful API Endpoints)" style="shape=cylinder3;size=20;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;fontFamily=SimSun;fontSize=14;fillColor=#2ecc71;fontColor=#FFFFFF;strokeColor=#27ae60;verticalAlign=middle;align=center;" parent="layer_api_gateway_group" vertex="1">
+                    <mxGeometry x="30" y="70" width="1860" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="conn_user_react_edge" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;strokeWidth=1;strokeColor=#333333;endArrow=classic;" parent="1" source="user" target="react_app" edge="1"/>
+                <mxCell id="layer_service_group" value="服务层" style="group;fontFamily=SimSun;fontSize=18;fontStyle=1;strokeColor=#2ecc71;fillColor=#eafaf1;align=center;verticalAlign=top;spacingTop=5;dashed=0;container=1;collapsible=0;" parent="1" vertex="1" connectable="0">
+                    <mxGeometry x="50" y="550" width="1900" height="950" as="geometry"/>
+                </mxCell>
+                <mxCell id="service_upload" value="图片上传处理服务" style="rounded=1;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=14;fillColor=#2ecc71;fontColor=#FFFFFF;strokeColor=#27ae60;verticalAlign=top;spacingTop=10;align=center;" parent="layer_service_group" vertex="1">
+                    <mxGeometry x="100" y="70" width="300" height="160" as="geometry"/>
+                </mxCell>
+                <mxCell id="text_upload_details" value="文件保存&#xa;AI批量异步并发分析&#xa;个性化AI分析&#xa;数据入库流程" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontFamily=SimSun;fontSize=12;fontColor=#000000;" parent="service_upload" vertex="1">
+                    <mxGeometry y="55" width="300" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="service_retrieval" value="图片检索服务" style="rounded=1;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=14;fillColor=#2ecc71;fontColor=#FFFFFF;strokeColor=#27ae60;verticalAlign=top;spacingTop=10;align=center;" parent="layer_service_group" vertex="1">
+                    <mxGeometry x="480" y="70" width="300" height="160" as="geometry"/>
+                </mxCell>
+                <mxCell id="text_retrieval_details" value="非向量检索 (文本匹配)&#xa;向量检索 (文搜图, 图搜图)&#xa;组合搜索, 过滤与排序&#xa;相似度分数计算" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontFamily=SimSun;fontSize=12;fontColor=#000000;" parent="service_retrieval" vertex="1">
+                    <mxGeometry y="50" width="300" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="service_manage" value="图片管理服务" style="rounded=1;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=14;fillColor=#2ecc71;fontColor=#FFFFFF;strokeColor=#27ae60;verticalAlign=top;spacingTop=10;align=center;" parent="layer_service_group" vertex="1">
+                    <mxGeometry x="859.9999999999999" y="70" width="300" height="160" as="geometry"/>
+                </mxCell>
+                <mxCell id="text_manage_details" value="图片信息编辑&#xa;批量操作&#xa;标签分类管理&#xa;交互式标签筛选逻辑" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontFamily=SimSun;fontSize=12;fontColor=#000000;" parent="service_manage" vertex="1">
+                    <mxGeometry y="50" width="300" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="service_system_mgnt" value="系统管理服务" style="rounded=1;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=14;fillColor=#2ecc71;fontColor=#FFFFFF;strokeColor=#27ae60;verticalAlign=top;spacingTop=10;align=center;" parent="layer_service_group" vertex="1">
+                    <mxGeometry x="1240" y="70" width="300" height="160" as="geometry"/>
+                </mxCell>
+                <mxCell id="text_system_mgnt_details" value="状态监控&#xa;配置管理&#xa;缓存管理" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontFamily=SimSun;fontSize=12;fontColor=#000000;" parent="service_system_mgnt" vertex="1">
+                    <mxGeometry y="60" width="300" height="45" as="geometry"/>
+                </mxCell>
+                <mxCell id="multimodal_api_client" value="多模态模型 API 客户端&#xa;(硅基流动, 书生浦语等)&#xa;(智能标题, 描述, 标签生成)" style="shape=component;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=13;fillColor=#9b59b6;fontColor=#FFFFFF;strokeColor=#8e44ad;verticalAlign=middle;align=center;" parent="layer_service_group" vertex="1">
+                    <mxGeometry x="110" y="330" width="320" height="130" as="geometry"/>
+                </mxCell>
+                <mxCell id="jina_clip_model" value="Jina CLIP V2 模型&#xa;(图片/文本向量生成)" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=13;fillColor=#9b59b6;fontColor=#FFFFFF;strokeColor=#8e44ad;verticalAlign=middle;align=center;size=0;" parent="layer_service_group" vertex="1">
+                    <mxGeometry x="1180" y="370" width="380" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="external_multimodal_service_actual" value="外部多模态大模型服务&#xa;(硅基流动, 书生浦语, 智谱清言等)" style="shape=cloud;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=13;fillColor=#bdc3c7;fontColor=#2c3e50;strokeColor=#7f8c8d;verticalAlign=middle;align=center;" parent="layer_service_group" vertex="1">
+                    <mxGeometry x="610" y="335" width="320" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="data_access_bus" value="数据访问总线" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#888888;fontFamily=SimSun;fontSize=12;fontColor=#555555;dashed=0;labelBackgroundColor=#eafaf1;labelBorderColor=none;align=left;spacingLeft=10;verticalAlign=middle;" parent="layer_service_group" edge="1">
+                    <mxGeometry x="100" y="780" width="100" as="geometry">
+                        <mxPoint as="sourcePoint"/>
+                        <mxPoint x="1700" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="conn_multimodal_client_to_external" value="外部API调用" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeWidth=1;strokeColor=#555555;endArrow=classic;fontFamily=SimSun;fontSize=11;" parent="layer_service_group" source="multimodal_api_client" target="external_multimodal_service_actual" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="layer_data_group" value="数据层" style="group;fontFamily=SimSun;fontSize=18;fontStyle=1;strokeColor=#e67e22;fillColor=#fdf3e6;align=center;verticalAlign=top;spacingTop=5;dashed=0;container=1;collapsible=0;" parent="layer_service_group" vertex="1" connectable="0">
+                    <mxGeometry x="140" y="530" width="1480" height="400" as="geometry"/>
+                </mxCell>
+                <mxCell id="file_storage_system" value="文件系统 (本地存储)" style="shape=folder;whiteSpace=wrap;html=1;tabWidth=60;tabHeight=25;tabPosition=left;fontFamily=SimSun;fontSize=14;fillColor=#e67e22;fontColor=#FFFFFF;strokeColor=#d35400;align=center;verticalAlign=top;spacingTop=10;" parent="layer_data_group" vertex="1">
+                    <mxGeometry x="832.5" y="100" width="555" height="240" as="geometry"/>
+                </mxCell>
+                <mxCell id="fs_storage_details" value="图片文件存储&#xa;(UUID文件名, 按日期组织目录)&#xa;保留原始文件名于元数据" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontFamily=SimSun;fontSize=12;fontColor=#000000;" parent="file_storage_system" vertex="1">
+                    <mxGeometry y="87.27272727272728" width="320" height="45" as="geometry"/>
+                </mxCell>
+                <mxCell id="sqlite_database" value="SQLite 数据库 (本地存储)" style="shape=cylinder3;size=20;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;fontFamily=SimSun;fontSize=14;fillColor=#e67e22;fontColor=#FFFFFF;strokeColor=#d35400;verticalAlign=top;spacingTop=10;align=center;" parent="layer_data_group" vertex="1">
+                    <mxGeometry x="169.58333333333334" y="95" width="493.33333333333337" height="250" as="geometry"/>
+                </mxCell>
+                <mxCell id="sqlite_vec_extension" value="sqlite-vec 扩展 (高效向量近邻搜索)" style="shape=note;size=15;whiteSpace=wrap;html=1;backgroundOutline=1;fontFamily=SimSun;fontSize=12;fillColor=#f5cba7;fontColor=#000000;strokeColor=#d35400;align=center;verticalAlign=middle;" parent="sqlite_database" vertex="1">
+                    <mxGeometry x="46.25" y="50" width="400.83333333333337" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="db_tables_info" value="images 表 (图片元数据, 路径, 原始文件名)&#xa;title_vectors 表 (标题向量)&#xa;description_vectors 表 (描述向量)&#xa;image_vectors 表 (图片视觉向量)" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontFamily=SimSun;fontSize=12;fontColor=#000000;spacingLeft=10;" parent="sqlite_database" vertex="1">
+                    <mxGeometry x="30.833333333333336" y="100" width="280" height="100" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

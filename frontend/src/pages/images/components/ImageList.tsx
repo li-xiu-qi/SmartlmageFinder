@@ -13,7 +13,10 @@ interface ImageListProps {
   onImageClick: (image: ImageCardModel) => void;
   onTagClick: (tag: string) => void;
   onDeleteImage: (id: number) => void;
-  loading?: boolean;
+  // 多选功能相关
+  multiSelectMode?: boolean;
+  selectedImageIds?: Set<number>;
+  onImageSelect?: (imageId: number, selected: boolean) => void;
 }
 
 /**
@@ -33,7 +36,9 @@ const ImageList: React.FC<ImageListProps> = ({
   onImageClick,
   onTagClick,
   onDeleteImage,
-  loading = false
+  multiSelectMode = false,
+  selectedImageIds = new Set(),
+  onImageSelect
 }) => {
   if (images.length === 0) {
     return <Empty description="暂无图片" />;
@@ -44,41 +49,43 @@ const ImageList: React.FC<ImageListProps> = ({
     return (
       <Row gutter={[24, 24]}>
         {images.map(image => (
-          <Col 
-            xs={24} 
-            sm={12} 
-            md={12} 
-            lg={24 / gridColumns} 
-            xl={24 / gridColumns} 
+          <Col
+            xs={24}
+            sm={12}
+            md={12}
+            lg={24 / gridColumns}
+            xl={24 / gridColumns}
             key={image.id}
-          >
-            <div className="image-card-wrapper">
-              <ImageCard 
-                image={image} 
-                onClick={onImageClick} 
+          >            <div className="image-card-wrapper">
+              <ImageCard
+                image={image}
+                onClick={onImageClick}
                 showTags={true}
                 onTagClick={onTagClick}
+                multiSelectMode={multiSelectMode}
+                selected={selectedImageIds.has(image.id)}
+                onSelect={onImageSelect}
               />
             </div>
           </Col>
         ))}
       </Row>
     );
-  } 
-  
+  }
+
   // 列表视图
   else {
     return (
       <div className="image-list">
         {images.map(image => (
-          <Card 
+          <Card
             style={{ marginBottom: 16 }}
             key={image.id}
           >
             <div style={{ display: 'flex' }}>
               <div style={{ width: 100, height: 100, overflow: 'hidden', marginRight: 16, position: 'relative' }}>
                 <Image
-                  src={image.filepath} 
+                  src={image.filepath}
                   alt={image.title}
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   preview={{
@@ -93,8 +100,8 @@ const ImageList: React.FC<ImageListProps> = ({
                 </p>
                 <div>
                   {image.tags.map(tag => (
-                    <Tag 
-                      key={tag} 
+                    <Tag
+                      key={tag}
                       onClick={() => onTagClick(tag)}
                       style={{ cursor: 'pointer' }}
                     >
