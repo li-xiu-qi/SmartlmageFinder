@@ -89,6 +89,14 @@
 
 ## 系统要求
 
+### 支持平台
+
+- **Windows**: x86_64
+- **Linux**: x86_64, aarch64 
+- **macOS**: x86_64 (Intel), aarch64 (Apple Silicon)
+
+### 软件要求
+
 - Python 3.8+
 - Node.js 16+
 - SQLite 3
@@ -126,7 +134,7 @@ cp backend/config_files/config.example.yaml backend/config_files/config.yaml
 配置文件完整示例结构：
 ```yaml
 MODEL_PATH: jinaai/jina-clip-v2 # 我推荐先下载模型到本地，然后将路径替换过来
-VECTOR_DB_DRIVER: ./backend/config_files/vector_db_driver/vec0.dll # 向量数据库驱动的路径配置
+VECTOR_DB_DRIVER_DIR: ./backend/config_files/vector_db_driver # 向量数据库驱动目录，系统会自动选择适合当前平台的驱动
 EMBEDDING_DIMENSION: 1024
 UPLOAD_DIR: ./data/images # 上传的图片存放目录
 TEMP_DIR: ./data/temp # 临时文件存放目录
@@ -135,17 +143,17 @@ TEXT_VECTOR_CACHE_DIR: ./data/caches/text_vector_cache
 IMAGE_VECTOR_CACHE_DIR: ./data/caches/image_vector_cache
 USE_CACHE: true # 是否使用缓存
 MAX_CACHE_SIZE_GB: 1.5
-OPENAI_API_KEY: # 填入你的OpenAI API密钥 
+OPENAI_API_KEY: # 填入你的OpenAI API密钥
 OPENAI_API_BASE: https://api.siliconflow.cn/v1 # 如果需要换成其他API服务商，请修改此处
 VISION_MODEL: Qwen/Qwen2.5-VL-32B-Instruct # 当前使用的视觉模型的名称
 AVAILABLE_VISION_MODELS: # 可用的视觉模型列表,可以自己加，只要对应的厂商支持
 - Qwen/Qwen2.5-VL-32B-Instruct
-- Pro/Qwen/Qwen2.5-VL-7B-Instruct 
+- Pro/Qwen/Qwen2.5-VL-7B-Instruct
 HOST: 0.0.0.0 # 这里不要动
 PORT: 1000 # 后端的端口号
 ```
 
-注意⚠️：默认驱动是Windows电脑的，如果你是Mac或Linux电脑，需要从<https://github.com/asg017/sqlite-vec/releases>下载对应的驱动并替换路径。如果你直接放在backend\config_files\vector_db_driver目录下，只需要改文件名即可。你也可以使用绝对路径。
+注意⚠️：系统会自动配置所需的数据库驱动，您无需手动配置或更改驱动文件。如果您的平台暂未被支持，可以前往 [sqlite-vec releases](https://github.com/asg017/sqlite-vec/releases) 查找相应的驱动，并欢迎您通过提交 Pull Request 的方式为项目添加新的平台驱动支持。
 
 4. 启动后端服务：
 

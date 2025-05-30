@@ -2,12 +2,15 @@ import os
 import yaml
 from typing import Optional, Dict, Any, List
 from pydantic import BaseModel, ValidationError, Field
+from pathlib import Path  # Added
+from backend.db_func.platform_detector import PlatformDetector  # Added
 
 
 # Pydantic 配置模型
 class AppConfig(BaseModel):
     MODEL_PATH: str  # 不提供默认值，必须在 config.yaml 中提供或通过更新设置
-    VECTOR_DB_DRIVER: Optional[str] = None
+    VECTOR_DB_DRIVER_DIR: str  # 期望此路径在 config.yaml 中定义
+    VECTOR_DB_DRIVER: Optional[str] = None  # 将由代码动态填充
     EMBEDDING_DIMENSION: Optional[int] = None
     UPLOAD_DIR: str = "./data/images"
     TEMP_DIR: str = "./data/temp"  # 添加临时目录配置
@@ -18,7 +21,7 @@ class AppConfig(BaseModel):
     MAX_CACHE_SIZE_GB: float = 1.5
     OPENAI_API_KEY: Optional[str] = None
     OPENAI_API_BASE: Optional[str] = None
-    
+
     VISION_MODEL: Optional[str] = None
     AVAILABLE_VISION_MODELS: List[str] = Field(
         default_factory=lambda: [
@@ -104,6 +107,37 @@ class Settings:
 
         self._initialized = True
 
+    def _determine_and_set_vector_db_driver(self, config_model_instance: AppConfig) -> None:
+        """根据 VECTOR_DB_DRIVER_DIR 动态确定并设置 VECTOR_DB_DRIVER"""
+        if not config_model_instance or not hasattr(config_model_instance, "VECTOR_DB_DRIVER_DIR") or not config_model_instance.VECTOR_DB_DRIVER_DIR:
+            if config_model_instance:
+                config_model_instance.VECTOR_DB_DRIVER = None
+            print("警告: VECTOR_DB_DRIVER_DIR 未配置, 无法自动确定驱动路径。")
+            return
+
+        try:
+            # self.config_file 是 config.yaml 的绝对路径
+            # VECTOR_DB_DRIVER_DIR (例如 "./backend/config_files/vector_db_driver") 是相对于项目根目录的
+            project_root = Path(self.config_file).resolve().parent.parent.parent
+
+            relative_driver_dir_str = config_model_instance.VECTOR_DB_DRIVER_DIR
+
+            path_inside_project = relative_driver_dir_str.lstrip("./").lstrip(".\\\\")
+
+            absolute_vector_db_driver_dir = (project_root / path_inside_project).resolve()
+
+            driver_path = PlatformDetector.get_driver_path(str(absolute_vector_db_driver_dir))
+
+            if driver_path and os.path.exists(driver_path):
+                config_model_instance.VECTOR_DB_DRIVER = driver_path
+            else:
+                config_model_instance.VECTOR_DB_DRIVER = None
+                print(f"警告: 无法在 {absolute_vector_db_driver_dir} 中找到适用于当前平台的驱动程序。VECTOR_DB_DRIVER 未设置。")
+        except Exception as e:
+            if config_model_instance:
+                config_model_instance.VECTOR_DB_DRIVER = None
+            print(f"错误: 在确定 VECTOR_DB_DRIVER 时发生异常: {e}")
+
     def _create_required_directories(self):
         """根据配置创建所有必要的目录"""
         dirs_to_create = [
@@ -116,52 +150,63 @@ class Settings:
         print("所有必要的应用目录已初始化")
 
     def reload(self) -> bool:
-        raw_data: Dict[str, Any] = {}
-        config_source_is_file = False
-        try:
-            if os.path.exists(self.config_file):
-                with open(self.config_file, "r", encoding="utf-8") as file:
-                    loaded_yaml = yaml.safe_load(file)
-                    if isinstance(loaded_yaml, dict):
-                        raw_data = loaded_yaml
-                        config_source_is_file = True
-                    elif loaded_yaml is not None:
-                        print(
-                            f"警告: 配置文件 {self.config_file} 格式不正确，应为字典。将使用默认配置。"
-                        )
-                    # 如果 loaded_yaml 为 None（空文件），raw_data 保持为 {}
-            else:
-                print(f"提示: 配置文件 {self.config_file} 不存在。将使用默认配置。")
+        if not self.config_file or not os.path.exists(self.config_file):
+            print(f"配置文件 {self.config_file} 不存在。使用默认配置。")
+            try:
+                # 尝试使用 Pydantic 模型的默认值（如果 AppConfig 字段都有默认值）
+                # 如果关键字段（如 MODEL_PATH, VECTOR_DB_DRIVER_DIR）没有默认值，这里会失败
+                self._config_model = AppConfig()
+            except ValidationError as e:
+                print(f"无法使用默认值创建配置模型: {e}")
+                # 如果 VECTOR_DB_DRIVER_DIR 等是必需的，则需要一个空的 AppConfig 或处理
+                # 此处假设 AppConfig 可以处理空初始化或有默认值
+                # 为了安全起见，如果关键路径不存在，则不应继续
+                self._config_model = None  # 明确设置为 None
+                return False  # 指示加载失败
 
-            self._config_model = AppConfig(**raw_data)
-            if config_source_is_file:
-                print(f"配置已从 {self.config_file} 加载并使用 Pydantic 模型验证。")
-            else:
-                print(f"配置已根据 Pydantic 模型默认值初始化。")
-
-            if not os.path.exists(self.config_file) or not raw_data:
-                if self._config_model.MODEL_PATH:
-                    print(
-                        f"配置文件 {self.config_file} 不存在或为空，将使用当前（可能为默认）配置创建/覆盖。"
-                    )
-                    self.save()
+            if self._config_model:
+                # 即使使用默认配置，也尝试确定驱动程序（如果 VECTOR_DB_DRIVER_DIR 有默认值）
+                self._determine_and_set_vector_db_driver(self._config_model)
+                if self._config_model.VECTOR_DB_DRIVER:
+                    print(f"动态设置 VECTOR_DB_DRIVER 为: {self._config_model.VECTOR_DB_DRIVER}")
                 else:
-                    print(
-                        f"提示: MODEL_PATH 未设置，配置文件 {self.config_file} 将不会自动创建/覆盖。请确保配置文件中包含 MODEL_PATH。"
-                    )
+                    # 如果 VECTOR_DB_DRIVER_DIR 本身就没有或无法解析，则会打印警告
+                    pass  # _determine_and_set_vector_db_driver 内部会打印警告
+                self._create_required_directories()
+            return True  # 返回 True 表示已处理（即使是默认配置）
 
+        try:
+            with open(self.config_file, "r", encoding="utf-8") as f:
+                yaml_data = yaml.safe_load(f)
+
+            if yaml_data is None:  # 处理空配置文件的情况
+                yaml_data = {}
+
+            self._config_data_from_yaml = yaml_data  # 存储从YAML加载的原始数据
+
+            # 使用从YAML加载的数据实例化AppConfig
+            # Pydantic 会使用字段的默认值（如果在AppConfig中定义）来补充YAML中缺失的字段
+            self._config_model = AppConfig(**self._config_data_from_yaml)
+
+            # 动态设置 VECTOR_DB_DRIVER
+            self._determine_and_set_vector_db_driver(self._config_model)
+            if self._config_model.VECTOR_DB_DRIVER:
+                print(f"动态设置 VECTOR_DB_DRIVER 为: {self._config_model.VECTOR_DB_DRIVER}")
+            else:
+                # _determine_and_set_vector_db_driver 内部会打印相关警告
+                pass
+
+            # 确保在模型完全设置后创建目录
+            self._create_required_directories()
+            print("配置已成功加载并应用。")
             return True
         except ValidationError as e:
-            print(
-                f"错误: 配置验证失败 (源: {self.config_file if config_source_is_file else '默认值'}). {e}"
-            )
-            print("将回退到 Pydantic 模型定义的默认配置。")
-            self._config_model = AppConfig()  # 回退到 Pydantic 默认值
+            print(f"配置验证错误: {e}")
+            self._config_model = None  # 确保出错时 _config_model 为 None
             return False
         except Exception as e:
-            print(f"错误: 加载配置文件 {self.config_file} 失败: {e}")
-            print("将回退到 Pydantic 模型定义的默认配置。")
-            self._config_model = AppConfig()  # 回退
+            print(f"加载配置文件时发生错误: {e}")
+            self._config_model = None
             return False
 
     def save(self) -> bool:
@@ -195,40 +240,55 @@ class Settings:
             return False
 
     def get_config(self) -> Optional[AppConfig]:
-        """获取当前加载的 AppConfig 模型实例。"""
+        if self._config_model is None:  # 如果模型未加载或加载失败
+            # 尝试重新加载，这也会处理配置文件不存在的情况
+            print("配置模型未初始化，尝试重新加载...")
+            self.reload()
+            # 再次检查，如果 reload 后仍然是 None，则确实无法获取配置
+            if self._config_model is None:
+                print("错误：配置模型无法初始化。请检查配置文件和错误日志。")
+                return None
         return self._config_model
 
     def update_config(self, new_data: Dict[str, Any], auto_save: bool = True) -> bool:
-        """
-        使用新数据更新配置。新数据将与现有配置合并，然后通过 Pydantic 模型进行验证。
-        """
+        if not self._config_model:
+            print("错误: 配置模型未初始化，无法更新。")
+            # 尝试加载配置，如果成功则可以继续
+            if not self.reload() or not self._config_model:
+                print("错误: 尝试重新加载配置失败，更新操作中止。")
+                return False
+
+        # 获取当前配置的字典表示
+        # 使用 .model_dump() (Pydantic V2) or .dict() (Pydantic V1)
+        # 假设是 Pydantic V1 或 V2 兼容的 .model_dump()
         try:
-            current_config_dict = (
-                self._config_model.model_dump() if self._config_model else {}
-            )
-            merged_data = {**current_config_dict, **new_data}
+            current_config_dict = self._config_model.model_dump()
+        except AttributeError:  # 兼容 Pydantic V1
+            current_config_dict = self._config_model.dict()
 
-            # 验证并更新模型
-            self._config_model = AppConfig(**merged_data)
+        # 合并旧配置和新数据
+        potential_new_config_dict = {**current_config_dict, **new_data}
 
-            # 确保所有必要的目录在配置更新后立即创建
-            self._create_required_directories()
+        try:
+            # 使用合并后的数据创建新的 AppConfig 实例
+            new_app_config = AppConfig(**potential_new_config_dict)
 
-            print("配置已在内存中更新并通过验证。")
+            # 为新的配置实例重新计算 VECTOR_DB_DRIVER
+            self._determine_and_set_vector_db_driver(new_app_config)
+
+            self._config_model = new_app_config  # 应用新的配置模型
+
             if auto_save:
-                if not self._config_model.MODEL_PATH:
-                    print(
-                        f"警告: MODEL_PATH 未设置，配置已在内存中更新但未保存到文件。"
-                    )
-                    return True  # 在内存中更新了，但未保存
-                return self.save()
+                if not self.save():
+                    print("警告: 配置已在内存中更新，但保存到文件失败。")
+                    # 即使保存失败，内存中的配置已更新，返回True
+            print("配置已成功更新。")
             return True
         except ValidationError as e:
-            print(f"错误: 更新配置失败，数据验证错误: {e}")
-            # 由于完成赋值前发生异常，self._config_model 保持为旧的有效值
+            print(f"更新配置时验证错误: {e}")
             return False
         except Exception as e:
-            print(f"错误: 更新配置时发生意外错误: {e}")
+            print(f"更新配置时发生未知错误: {e}")
             return False
 
 
