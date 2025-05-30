@@ -9,6 +9,7 @@ from contextlib import contextmanager
 
 # 导入配置模块
 from ..config import settings
+from .extension_loader import setup_connection
 
 class DatabaseConnectionPool:
     """SQLite数据库连接池，提供线程安全的连接管理"""
@@ -36,24 +37,12 @@ class DatabaseConnectionPool:
         )
         connection.row_factory = sqlite3.Row
         
-        # 设置WAL模式以提高并发性能
-        connection.execute("PRAGMA journal_mode=WAL")
-        connection.execute("PRAGMA synchronous=NORMAL")
-        connection.execute("PRAGMA cache_size=1000")
-        connection.execute("PRAGMA temp_store=memory")
-        
-        # 在创建连接时就加载向量扩展
-        try:
-            connection.enable_load_extension(True)
-            connection.execute(f"SELECT load_extension('{settings.get_config().VECTOR_DB_DRIVER}')")
-            # 验证扩展是否正确加载
-            cursor = connection.cursor()
-            cursor.execute("SELECT vec_version()")
-            result = cursor.fetchone()
-            version = result[0] if result else "未知"
-            print(f"连接创建，成功加载sqlite-vec扩展，版本: {version}")
-        except Exception as e:
-            print(f"连接创建时加载向量扩展失败: {e}")
+        # 使用统一的扩展加载器设置连接
+        success = setup_connection(connection, silent=False)
+        if success:
+            print("连接创建成功，已加载sqlite-vec扩展")
+        else:
+            print("连接创建失败，无法加载sqlite-vec扩展")
         
         return connection
     

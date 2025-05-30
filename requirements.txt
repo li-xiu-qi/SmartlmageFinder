@@ -5,6 +5,8 @@ uvicorn[standard]
 
 # 加载模型需要
 sentence-transformers
+# scikit-learn for sentence-transformers evaluation metrics
+scikit-learn
 # colber模型需要
 einops
 # clip 模型需要
