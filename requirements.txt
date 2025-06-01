@@ -4,7 +4,9 @@ fastapi
 uvicorn[standard]
 
 # 加载模型需要
-sentence-transformers
+transformers==4.51.3
+sentence-transformers==4.1.0
+
 # scikit-learn for sentence-transformers evaluation metrics
 scikit-learn
 # colber模型需要
@@ -36,7 +38,7 @@ pydantic-settings
 notebook
 
 # cpu版本 torch
-torch
+torch==2.7.0+cpu
 torchvision
 torchaudio
 
