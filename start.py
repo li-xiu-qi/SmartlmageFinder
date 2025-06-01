@@ -203,6 +203,26 @@ class SmartImageFinderStarter:
             self.print_colored(f"❌ {description}失败: {e}", Colors.RED)
             return False
 
+    def _stream_output(self, pipe, prefix: str, color: str):
+        """从管道中实时读取并打印输出"""
+        for line in iter(pipe.readline, ''):
+            if self.should_exit:
+                break
+            line = line.strip()
+            if line:
+                self.print_colored(f"{prefix} {line}", color)
+                
+    def _create_output_thread(self, pipe, prefix: str, color: str):
+        """创建输出流线程"""
+        import threading
+        thread = threading.Thread(
+            target=self._stream_output,
+            args=(pipe, prefix, color),
+            daemon=True
+        )
+        thread.start()
+        return thread
+
     def check_python_version(self) -> bool:
         """检查Python版本"""
         version = sys.version_info
@@ -329,8 +349,7 @@ class SmartImageFinderStarter:
                 return False
         except Exception as e:
             self.print_colored(f"❌ 配置初始化失败: {e}", Colors.RED)
-            return False
-
+            return False    
     def start_backend(self) -> bool:
         """启动后端服务"""
         main_script = self.base_path / "main.py"
@@ -348,8 +367,13 @@ class SmartImageFinderStarter:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
+                bufsize=1,  # 行缓冲
                 creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if sys.platform == "win32" else 0
             )
+            
+            # 创建输出流线程
+            stdout_thread = self._create_output_thread(self.backend_process.stdout, "[Backend]", Colors.CYAN)
+            stderr_thread = self._create_output_thread(self.backend_process.stderr, "[Backend Error]", Colors.RED)
             
             # 等待一段时间检查服务是否启动成功
             time.sleep(5)
@@ -358,8 +382,7 @@ class SmartImageFinderStarter:
                 self.print_colored(f"✓ 后端服务启动成功 (PID: {self.backend_process.pid})", Colors.GREEN)
                 return True
             else:
-                stdout, stderr = self.backend_process.communicate()
-                self.print_colored(f"❌ 后端服务启动失败: {stderr}", Colors.RED)
+                self.print_colored("❌ 后端服务启动失败", Colors.RED)
                 return False
         except Exception as e:
             self.print_colored(f"❌ 启动后端服务时出现错误: {e}", Colors.RED)
@@ -382,9 +405,14 @@ class SmartImageFinderStarter:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
+                bufsize=1,  # 行缓冲
                 shell=sys.platform == "win32",
                 creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if sys.platform == "win32" else 0
             )
+            
+            # 创建输出流线程
+            stdout_thread = self._create_output_thread(self.frontend_process.stdout, "[Frontend]", Colors.PURPLE)
+            stderr_thread = self._create_output_thread(self.frontend_process.stderr, "[Frontend Error]", Colors.RED)
             
             # 等待一段时间检查服务是否启动成功
             time.sleep(8)  # 前端启动通常需要更长时间
@@ -393,8 +421,7 @@ class SmartImageFinderStarter:
                 self.print_colored(f"✓ 前端服务启动成功 (PID: {self.frontend_process.pid})", Colors.GREEN)
                 return True
             else:
-                stdout, stderr = self.frontend_process.communicate()
-                self.print_colored(f"❌ 前端服务启动失败: {stderr}", Colors.RED)
+                self.print_colored("❌ 前端服务启动失败", Colors.RED)
                 return False
         except Exception as e:
             self.print_colored(f"❌ 启动前端服务时出现错误: {e}", Colors.RED)
@@ -419,6 +446,19 @@ class SmartImageFinderStarter:
                     self.should_exit = True
                     break
 
+    def get_backend_config(self) -> tuple:
+        """从配置文件读取后端服务配置"""
+        config_file = self.base_path / "backend" / "config_files" / "config.yaml"
+        try:
+            with open(config_file, 'r', encoding='utf-8') as f:
+                config = yaml.safe_load(f)
+                host = config.get('HOST', '127.0.0.1')  # 默认值
+                port = config.get('PORT', 8000)  # 默认值
+                return host, port
+        except Exception as e:
+            self.print_colored(f"⚠️ 读取后端配置文件失败: {e}，使用默认配置", Colors.YELLOW)
+            return '127.0.0.1', 8000
+
     def show_service_info(self):
         """显示服务信息"""
         self.print_colored("\n" + "="*60, Colors.GREEN)
@@ -426,8 +466,12 @@ class SmartImageFinderStarter:
         self.print_colored("="*60, Colors.GREEN)
         
         if not self.frontend_only:
-            self.print_colored("🔗 后端API地址: http://localhost:8000", Colors.CYAN)
-            self.print_colored("📖 API文档地址: http://localhost:8000/docs", Colors.CYAN)
+            host, port = self.get_backend_config()
+            backend_url = f"http://{host}:{port}"
+            if host == '0.0.0.0':
+                backend_url = f"http://localhost:{port}"  # 当绑定所有网卡时，显示 localhost
+            self.print_colored(f"🔗 后端API地址: {backend_url}", Colors.CYAN)
+            self.print_colored(f"📖 API文档地址: {backend_url}/docs", Colors.CYAN)
             
         if not self.backend_only:
             self.print_colored("🌐 前端地址: http://localhost:5173", Colors.CYAN)

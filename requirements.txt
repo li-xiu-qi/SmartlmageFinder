@@ -39,7 +39,9 @@ notebook
 
 # cpu版本 torch
 torch==2.7.0
+
 torchvision
+
 torchaudio
 
 # 大模型api调用

@@ -33,7 +33,7 @@ export default defineConfig({
         secure: false,
       },
       '/data': { // 将 './data' 修改为 '/data'
-        target: 'http://localhost:1000', // 目标指向后端服务根地址
+        target: 'http://localhost:10050', // 目标指向后端服务根地址
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/data/, '/static') // 重写路径，将 /data/images/... 替换为 /static/images/...
