@@ -93,16 +93,16 @@ def create_config_file(base_path: Path, config_data: dict, model_path: str):
     """创建配置文件"""
     config_path = base_path / "backend" / "config_files" / "config.yaml"
     
-    # 更新模型路径为下载的绝对路径
+    # 更新模型路径为下载的绝对路径（模型路径需要保持绝对路径）
     config_data['MODEL_PATH'] = model_path
     
-    # 将其他相对路径转换为绝对路径
-    config_data['VECTOR_DB_DRIVER_DIR'] = str((base_path / "backend" / "config_files" / "vector_db_driver").absolute())
-    config_data['UPLOAD_DIR'] = str((base_path / "data" / "images").absolute())
-    config_data['TEMP_DIR'] = str((base_path / "data" / "temp").absolute())
-    config_data['DB_PATH'] = str((base_path / "data" / "db" / "smartimagefinder.db").absolute())
-    config_data['TEXT_VECTOR_CACHE_DIR'] = str((base_path / "data" / "caches" / "text_vector_cache").absolute())
-    config_data['IMAGE_VECTOR_CACHE_DIR'] = str((base_path / "data" / "caches" / "image_vector_cache").absolute())
+    # 使用相对路径
+    config_data['VECTOR_DB_DRIVER_DIR'] = "./backend/config_files/vector_db_driver"
+    config_data['UPLOAD_DIR'] = "./data/images"
+    config_data['TEMP_DIR'] = "./data/temp"
+    config_data['DB_PATH'] = "./data/db/smartimagefinder.db"
+    config_data['TEXT_VECTOR_CACHE_DIR'] = "./data/caches/text_vector_cache"
+    config_data['IMAGE_VECTOR_CACHE_DIR'] = "./data/caches/image_vector_cache"
 
     try:
         # 确保配置文件目录存在

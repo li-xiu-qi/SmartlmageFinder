@@ -1,9 +1,9 @@
 /**
  * 类型转换工具，帮助将API返回的类型转换为UI组件需要的类型
  */
-import { 
-  ImageModel, 
-  TagInfo, 
+import {
+  ImageModel,
+  TagInfo,
   SearchImageItem,
   PaginationMetadata,
 } from '@/types/models';

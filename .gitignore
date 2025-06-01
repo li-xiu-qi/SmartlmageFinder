@@ -107,11 +107,29 @@ backend/tests/temp_*
 
 # Other
 Thumbs.db
-
 smart_image_finder_outputs
 
+# All config files that might contain sensitive info
 config.yaml
-backend/tests/vec.db 
-backend/tests/vec0.dll
+*config.yaml
+backend/config_files/config.yaml
+backend/config_files/testconfig.yaml
 
-models
+# Models (large files, should be downloaded separately)
+models/
+
+# Cache directories
+**/cache/
+**/caches/
+**/__pycache__/
+
+# Test databases and temporary files
+backend/tests/*.db
+backend/tests/*.dll
+backend/tests/data/
+
+# User data directories
+data/
+cache/
+temp/
+uploads/

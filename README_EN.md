@@ -201,7 +201,7 @@ The script will automatically complete the following operations:
 python main.py
 ```
 
-The service will run on `http://localhost:1000`, and API documentation can be viewed at `http://localhost:1000/docs`.
+The service will run on `http://localhost:10050`, and API documentation can be viewed at `http://localhost:10050/docs`.
 
 5. **Install frontend dependencies and start**:
 

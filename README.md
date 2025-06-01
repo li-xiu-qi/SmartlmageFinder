@@ -209,7 +209,7 @@ python init_config.py
 python main.py
 ```
 
-服务将运行在 `http://localhost:1000`，API文档可在 `http://localhost:1000/docs` 查看。
+服务将运行在 `http://localhost:10050`，API文档可在 `http://localhost:10050/docs` 查看。
 
 5. **安装前端依赖并启动**：
 

@@ -38,7 +38,7 @@ pydantic-settings
 notebook
 
 # cpu版本 torch
-torch==2.7.0
+torch==2.7
 
 torchvision
 
