@@ -26,13 +26,8 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# 配置CORS
-origins = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://localhost:5173",  # Vite默认端口
-    "http://127.0.0.1:5173",
-]
+# 配置CORS - 允许所有源访问
+origins = ["*"]
 
 app.add_middleware(
     CORSMiddleware,

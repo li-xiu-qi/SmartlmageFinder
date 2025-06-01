@@ -67,6 +67,15 @@ class Colors:
     BOLD = '\033[1m'
 
 
+class LogLevel:
+    """日志级别类"""
+    ERROR = "error"
+    WARNING = "warning"
+    INFO = "info"
+    DEBUG = "debug"
+    OTHER = "other"
+
+
 class SmartImageFinderStarter:
     def __init__(self, skip_deps: bool = False, config_only: bool = False, backend_only: bool = False, frontend_only: bool = False):
         self.base_path = Path(__file__).parent.absolute()
@@ -203,15 +212,41 @@ class SmartImageFinderStarter:
             self.print_colored(f"❌ {description}失败: {e}", Colors.RED)
             return False
 
+    def _get_log_level(self, line: str) -> str:
+        """判断日志级别"""
+        message = line.upper()
+        if any(error_indicator in message for error_indicator in ["ERROR:", "EXCEPTION:", "CRITICAL:"]):
+            return LogLevel.ERROR
+        elif any(warn_indicator in line for warn_indicator in ["WARNING:", "USERWARNING:", "WARN:"]):
+            return LogLevel.WARNING
+        elif any(info_indicator in line for info_indicator in ["INFO:", "DEBUG:", "WILL WATCH", "STARTED", "WAITING", "APPLICATION", "READY IN"]):
+            return LogLevel.INFO
+        return LogLevel.OTHER
+
     def _stream_output(self, pipe, prefix: str, color: str):
         """从管道中实时读取并打印输出"""
-        for line in iter(pipe.readline, ''):
-            if self.should_exit:
-                break
-            line = line.strip()
-            if line:
-                self.print_colored(f"{prefix} {line}", color)
-                
+        try:
+            # 使用 utf-8 编码读取
+            with os.fdopen(pipe.fileno(), 'r', encoding='utf-8', errors='replace') as reader:
+                for line in reader:
+                    if self.should_exit:
+                        break
+                    line = line.strip()
+                    if line:
+                        log_level = self._get_log_level(line)
+                        display_prefix = prefix.replace(" Error]", "]")  # 统一使用正常的前缀
+                        
+                        if log_level == LogLevel.ERROR:
+                            self.print_colored(f"{display_prefix} {line}", Colors.RED)
+                        elif log_level == LogLevel.WARNING:
+                            self.print_colored(f"{display_prefix} {line}", Colors.YELLOW)
+                        elif log_level == LogLevel.INFO:
+                            self.print_colored(f"{display_prefix} {line}", Colors.CYAN)
+                        else:
+                            self.print_colored(f"{display_prefix} {line}", color)
+        except Exception as e:
+            self.print_colored(f"💭 输出流读取异常(可以忽略): {e}", Colors.YELLOW)
+
     def _create_output_thread(self, pipe, prefix: str, color: str):
         """创建输出流线程"""
         import threading
@@ -360,6 +395,10 @@ class SmartImageFinderStarter:
         self.print_colored("正在启动后端服务...", Colors.BLUE)
         
         try:
+            # 设置环境变量，确保 Python 输出使用 UTF-8 编码
+            my_env = os.environ.copy()
+            my_env["PYTHONIOENCODING"] = "utf-8"
+            
             # 使用subprocess.Popen直接启动后端进程
             self.backend_process = subprocess.Popen(
                 [sys.executable, str(main_script)],
@@ -368,6 +407,7 @@ class SmartImageFinderStarter:
                 stderr=subprocess.PIPE,
                 text=True,
                 bufsize=1,  # 行缓冲
+                env=my_env,
                 creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if sys.platform == "win32" else 0
             )
             
@@ -398,6 +438,12 @@ class SmartImageFinderStarter:
         self.print_colored("正在启动前端服务...", Colors.BLUE)
         
         try:
+            # 设置环境变量，确保输出使用 UTF-8 编码
+            my_env = os.environ.copy()
+            my_env["PYTHONIOENCODING"] = "utf-8"
+            # npm 输出强制使用 UTF-8
+            my_env["FORCE_COLOR"] = "true"
+            
             # 使用subprocess.Popen直接启动前端进程
             self.frontend_process = subprocess.Popen(
                 ["npm", "run", "dev"],
@@ -406,6 +452,7 @@ class SmartImageFinderStarter:
                 stderr=subprocess.PIPE,
                 text=True,
                 bufsize=1,  # 行缓冲
+                env=my_env,
                 shell=sys.platform == "win32",
                 creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if sys.platform == "win32" else 0
             )

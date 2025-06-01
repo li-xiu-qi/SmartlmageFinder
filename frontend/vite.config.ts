@@ -28,12 +28,12 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:10050',
+        target: 'http://127.0.0.1:10050',
         changeOrigin: true,
         secure: false,
       },
       '/data': { // 将 './data' 修改为 '/data'
-        target: 'http://localhost:10050', // 目标指向后端服务根地址
+        target: 'http://127.0.0.1:10050', // 目标指向后端服务根地址
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/data/, '/static') // 重写路径，将 /data/images/... 替换为 /static/images/...
