@@ -53,6 +53,29 @@ An intelligent image search engine and management system that enables precise te
 - Real-time display of processing progress and status notifications
 - Support for dark/light theme switching
 
+## 🎯 Key Highlights
+
+- **🚀 One-Click Startup**: Brand new intelligent startup script that automatically installs dependencies, configures environment, and starts services - experience full functionality in minutes
+- **🧠 Multimodal AI Search**: CLIP V2-based text-to-image, image-to-image, and hybrid search for search-engine-level precision
+- **🏷️ Smart Tagging System**: AI-generated image titles, descriptions, and tags with flexible categorization management
+- **⚡ High-Performance Vector Retrieval**: SQLite + sqlite-vec lightweight vector database with millisecond search response
+- **🎨 Modern Interface**: Beautiful React + Ant Design interface supporting drag-and-drop upload and batch processing
+- **🔧 Zero-Configuration Startup**: Out-of-the-box configuration script with flexible switching between local models and cloud APIs
+
+## ⚡ 30-Second Quick Start
+
+```bash
+# Clone the project
+git clone https://github.com/li-xiu-qi/SmartImageFinder.git
+cd SmartImageFinder
+
+# One-click startup (handles all configuration automatically)
+python start.py
+```
+
+That's it! The startup script will automatically:
+✅ Check environment dependencies  ✅ Install required packages  ✅ Download AI models  ✅ Start services
+
 ## Use Cases
 
 - Personal image library management and organization
@@ -97,59 +120,82 @@ An intelligent image search engine and management system that enables precise te
 
 ## Quick Start
 
-1. Clone the repository:
+### 🚀 One-Click Startup (Recommended)
+
+We provide a convenient one-click startup script that automatically handles all configuration and service startup:
+
+```bash
+git clone https://github.com/li-xiu-qi/SmartImageFinder.git
+cd SmartImageFinder
+python start.py
+```
+
+🎉 **One-Click Startup Features**:
+
+- Automatically check and install Python and Node.js dependencies
+- Automatically run configuration initialization (including model download)
+- Automatically start frontend and backend services
+- Intelligent service status monitoring
+- Graceful error handling and service shutdown
+
+### 🔧 Startup Options
+
+The startup script supports various options to meet different needs:
+
+```bash
+# Complete startup (default)
+python start.py
+
+# Skip dependency installation (for environments with dependencies already installed)
+python start.py --skip-deps
+
+# Only run configuration initialization
+python start.py --config-only
+
+# Only start backend service
+python start.py --backend-only
+
+# Only start frontend service
+python start.py --frontend-only
+```
+
+### 📝 Manual Setup
+
+If you need manual control over the startup process, follow these steps:
+
+1. **Clone the repository**:
 
 ```bash
 git clone https://github.com/li-xiu-qi/SmartImageFinder.git
 cd SmartImageFinder
 ```
 
-2. Install dependencies:
+2. **Install backend dependencies**:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-3. Configure the system:
+3. **Run the initialization configuration script**:
 
 ```bash
-# Copy default configuration
-cp backend/config_files/config.example.yaml backend/config_files/config.yaml
-# Edit configuration file as needed
+python init_config.py
 ```
 
-⚠️ **Important Notice**: Please configure your `config.yaml` file according to the format in `backend/config_files/config.example.yaml`, paying special attention to:
-- Fill in your OpenAI API key
-- Adjust model paths and other configuration items as needed
-- Do not commit configuration files containing sensitive information to version control
+The script will automatically complete the following operations:
 
-Complete configuration file example structure:
-```yaml
-MODEL_PATH: jinaai/jina-clip-v2 # I recommend downloading the model locally first, then replacing the path here
-VECTOR_DB_DRIVER: ./backend/config_files/vector_db_driver/vec0.dll # Path configuration for vector database driver
-EMBEDDING_DIMENSION: 1024
-UPLOAD_DIR: ./data/images # Directory for uploaded images
-TEMP_DIR: ./data/temp # Directory for temporary files
-DB_PATH: ./data/db/smartimagefinder.db # Database path
-TEXT_VECTOR_CACHE_DIR: ./data/caches/text_vector_cache
-IMAGE_VECTOR_CACHE_DIR: ./data/caches/image_vector_cache
-USE_CACHE: true # Whether to use cache
-MAX_CACHE_SIZE_GB: 1.5
-OPENAI_API_KEY: # Enter your OpenAI API key
-OPENAI_API_BASE: https://api.siliconflow.cn/v1 # If you need to switch to another API provider, modify this
-VISION_MODEL: Qwen/Qwen2.5-VL-32B-Instruct # Name of the currently used vision model
-AVAILABLE_VISION_MODELS: # List of available vision models, you can add your own as long as the corresponding vendor supports them
-- Qwen/Qwen2.5-VL-32B-Instruct
-- Pro/Qwen/Qwen2.5-VL-7B-Instruct 
-HOST: 0.0.0.0 # Don't modify this
-PORT: 1000 # Backend port number
-```
+- Check and install ModelScope dependencies
+- Download the JINA CLIP V2 model locally
+- Create the `config.yaml` file based on the example configuration
+- Configure all necessary paths and parameters
 
-Note ⚠️: The default driver is for Windows computers. If you're using a Mac or Linux computer, you need to download the corresponding driver from <https://github.com/asg017/sqlite-vec/releases> and replace the path. If you place it directly in the backend\config_files\vector_db_driver directory, you can just change the file name. You can also use an absolute path if you prefer.
+⚠️ **Configuration Notes**:
 
-Note ⚠️: The default driver is for Windows computers. If you're using a Mac or Linux computer, you need to download the corresponding driver from <https://github.com/asg017/sqlite-vec/releases> and replace the path. If you place it directly in the backend\config_files\vector_db_driver directory, you can just change the file name. You can also use an absolute path if you prefer.
+- During script execution, you can choose to use an existing local model or download a new one
+- Optionally configure the OpenAI API key to enable AI analysis features
+- Configuration file paths will be automatically generated as absolute paths based on your project directory
 
-4. Start the backend service:
+4. **Start the backend service**:
 
 ```bash
 python main.py
@@ -157,27 +203,39 @@ python main.py
 
 The service will run on `http://localhost:1000`, and API documentation can be viewed at `http://localhost:1000/docs`.
 
-### Frontend Setup
-
-1. Enter the frontend directory:
+5. **Install frontend dependencies and start**:
 
 ```bash
 cd frontend
-```
-
-2. Install dependencies:
-
-```bash
 npm install
-```
-
-3. Start the development server:
-
-```bash
 npm run dev
 ```
 
 The frontend will run on <http://localhost:5173>.
+
+## 💡 Usage Tips
+
+### Startup Script Features
+
+- **Intelligent Environment Detection**: Script automatically detects Python and Node.js versions to ensure compatibility
+- **Dependency Management**: Automatically installs missing Python packages and npm packages
+- **Configuration Wizard**: Guides you through model download and API configuration on first run
+- **Service Monitoring**: Automatically monitors frontend and backend service status with auto-restart on exceptions
+- **Graceful Shutdown**: Press `Ctrl+C` to safely stop all services
+
+### Troubleshooting
+
+**Q: Startup script reports Python version incompatibility**  
+A: Please ensure Python 3.8 or higher is installed
+
+**Q: Node.js dependency installation fails**  
+A: Use `python start.py --backend-only` to start backend first, then manually install frontend dependencies
+
+**Q: Model download is slow**  
+A: Script supports using existing models. If you've already downloaded JINA CLIP V2, specify the local path during configuration
+
+**Q: API key configuration error**  
+A: Use `python start.py --config-only` to re-run configuration initialization
 
 ## System Configuration
 

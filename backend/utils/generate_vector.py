@@ -12,13 +12,28 @@ from .image_utils import get_image_cache_key  # 导入图像缓存键生成函�
 # 全局变量，用于保存加载的模型和维度信息
 model = None
 embedding_dimension = None
+model_loading = False  # 添加加载状态标志
 
 
 def load_model():
     """加载设置中指定的SentenceTransformer模型并获取向量维度"""
-    global model, embedding_dimension
-
-    if model is None:
+    global model, embedding_dimension, model_loading
+    
+    # 如果模型已经加载，直接返回
+    if model is not None:
+        return model
+    
+    # 如果正在加载中，等待加载完成
+    if model_loading:
+        import time
+        print("模型正在加载中，等待...")
+        while model_loading and model is None:
+            time.sleep(0.1)  # 等待100ms后再检查
+        return model
+    
+    # 设置加载状态
+    model_loading = True
+    try:
         config = settings.get_config()
         print(f"正在加载模型: {config.MODEL_PATH}")
         model = SentenceTransformer(
@@ -31,6 +46,10 @@ def load_model():
         if embedding_dimension is None:
             embedding_dimension = settings.get_config().EMBEDDING_DIMENSION
             print(f"未能自动获取向量维度，使用默认值: {embedding_dimension}")
+    finally:
+        # 无论成功还是失败，都要重置加载状态
+        model_loading = False
+    
     return model
 
 def get_model() -> SentenceTransformer:
@@ -43,8 +62,8 @@ def get_model() -> SentenceTransformer:
 
 def get_embedding_dimension() -> int:
     """返回向量维度"""
-    global embedding_dimension
-    # 尝试3次
+    global embedding_dimension, model
+    # 如果模型未加载，先加载模型
     if model is None:
         load_model()
 

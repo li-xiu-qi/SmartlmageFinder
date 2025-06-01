@@ -1,4 +1,4 @@
-MODEL_PATH: jinaai/jina-clip-v2 # 我推荐先下载模型到本地，然后将路径替换过来
+MODEL_PATH: yizhixiaoke/xiaoke-jina-clip-v2 # 我推荐先下载模型到本地，然后将路径替换过来
 VECTOR_DB_DRIVER_DIR: ./backend/config_files/vector_db_driver # 向量数据库驱动目录，系统会自动选择适合当前平台的驱动
 EMBEDDING_DIMENSION: 1024
 UPLOAD_DIR: ./data/images # 上传的图片存放目录
@@ -15,5 +15,5 @@ AVAILABLE_VISION_MODELS: # 可用的视觉模型列表,可以自己加，只要�
 - Qwen/Qwen2.5-VL-32B-Instruct
 - Pro/Qwen/Qwen2.5-VL-7B-Instruct 
 HOST: 0.0.0.0 # 这里不要动
-PORT: 1000 # 后端的端口号
+PORT: 10050 # 后端的端口号
 

@@ -9,6 +9,9 @@ import shutil
 from typing import Optional, Dict, Tuple
 from pathlib import Path
 
+# 全局变量，用于缓存检测到的平台信息，避免重复检测
+_cached_platform_key: Optional[str] = None
+
 
 class PlatformDetector:
     """平台检测器，用于识别当前运行环境并选择合适的数据库驱动"""
@@ -30,7 +33,6 @@ class PlatformDetector:
         'macos_x86_64': 'vec0.dylib',
         'macos_aarch64': 'vec0.dylib',
     }
-    
     @staticmethod
     def detect_platform() -> str:
         """
@@ -38,7 +40,20 @@ class PlatformDetector:
         
         Returns:
             str: 平台标识符，格式为 '{system}_{architecture}'
+        """    @staticmethod
+    def detect_platform() -> str:
         """
+        检测当前运行平台
+        
+        Returns:
+            str: 平台标识符，格式为 '{system}_{architecture}'
+        """
+        global _cached_platform_key
+        
+        # 如果已经检测过了，直接返回缓存的结果
+        if _cached_platform_key is not None:
+            return _cached_platform_key
+        
         system = platform.system().lower()
         machine = platform.machine().lower()
         
@@ -61,6 +76,9 @@ class PlatformDetector:
         
         platform_key = f"{system}_{arch}"
         print(f"检测到平台: {platform_key} (系统: {platform.system()}, 架构: {platform.machine()})")
+        
+        # 缓存检测结果
+        _cached_platform_key = platform_key
         
         return platform_key
 
@@ -124,6 +142,15 @@ class PlatformDetector:
             'detected_key': cls.detect_platform(),
             'extension_filename': cls.get_extension_filename()
         }
+    
+    @classmethod
+    def clear_platform_cache(cls) -> None:
+        """
+        清除平台检测缓存
+        主要用于测试场景，正常使用中不需要调用此方法
+        """
+        global _cached_platform_key
+        _cached_platform_key = None
 
 
 def auto_setup_driver(driver_dir: str, force_extract: bool = False) -> Tuple[bool, Optional[str]]:

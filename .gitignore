@@ -113,3 +113,5 @@ smart_image_finder_outputs
 config.yaml
 backend/tests/vec.db 
 backend/tests/vec0.dll
+
+models
