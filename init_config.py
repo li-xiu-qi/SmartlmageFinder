@@ -64,21 +64,6 @@ def download_model(model_name: str, cache_dir: str) -> str:
         absolute_model_path = str(Path(model_path).absolute())
         print(f"✓ 模型下载成功，路径: {absolute_model_path}")
 
-        # 同步本地 huggingface 缓存到全局 ~/.cache/huggingface
-        local_hf = os.path.join(absolute_model_path, 'huggingface')
-        sync_marker = os.path.join(absolute_model_path, 'huggingface_sync_done.txt')
-        if os.path.isdir(local_hf):
-            if os.path.exists(sync_marker):
-                print("检测到已同步标记，跳过缓存同步")
-            else:
-                hf_cache = os.getenv('HF_HOME', os.path.join(os.path.expanduser('~'), '.cache', 'huggingface'))
-                print(f"正在同步本地 huggingface 缓存到 {hf_cache} (仅新增文件)...")
-                merge_dirs(local_hf, hf_cache)
-                # 同步完成后写入标记文件，下次跳过
-                with open(sync_marker, 'w', encoding='utf-8') as mf:
-                    mf.write('synced')
-                print("✓ 全局 Hugging Face 缓存已更新（保留原有文件，仅新增缺失项），并创建同步标记")
-
         return absolute_model_path
     except Exception as e:
         print(f"❌ 模型下载失败: {e}")
