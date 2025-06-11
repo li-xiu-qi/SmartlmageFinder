@@ -44,6 +44,10 @@ logs/
 # Configuration files with sensitive information
 backend/config_files/config.yaml
 
+# Video script files
+intro.md
+video_script.md
+
 # Frontend
 node_modules/
 npm-debug.log*

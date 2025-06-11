@@ -13,13 +13,14 @@
   </div>
 
   <div>
-    <a href="README.md">中文</a> | 
+    <a href="README.md">中文</a> |
     <a href="README_EN.md">English</a>
   </div>
 </div>
 
 ## 项目概述
 
+![架构图](docs/架构图.png)
 一个智能的图片搜索引擎和管理系统，能够实现精准的文本检图、以图搜图等智能检索方式，同时提供完整的图片管理解决方案。该项目采用 FastAPI + React 技术栈，集成 Jina CLIP V2 和多模态大语言模型，为个人图片管理提供一站式解决方案。
 
 ## 功能特性
@@ -115,7 +116,7 @@ python start.py
 ### 支持平台
 
 - **Windows**: x86_64
-- **Linux**: x86_64, aarch64 
+- **Linux**: x86_64, aarch64
 - **macOS**: x86_64 (Intel), aarch64 (Apple Silicon)
 
 ### 软件要求

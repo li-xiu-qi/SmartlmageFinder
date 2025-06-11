@@ -7,21 +7,10 @@ SmartImageFinder 配置初始化脚本
 import os
 import sys
 import yaml
+import shutil
 from pathlib import Path
 
-# 设置标准输出编码为 utf-8
-if sys.platform == 'win32':
-    # Windows 平台
-    try:
-        # Python 3.7+ 支持 reconfigure
-        sys.stdout.reconfigure(encoding='utf-8')
-    except AttributeError:
-        # 较旧的 Python 版本
-        import codecs
-        sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer)
-else:
-    # 其他平台默认使用 utf-8
-    pass
+
 
 
 def install_modelscope():
@@ -42,6 +31,23 @@ def install_modelscope():
     return True
 
 
+# 递归合并目录，只复制不存在的文件和子目录，保留现有文件
+def merge_dirs(src_dir: str, dst_dir: str):
+    """递归合并目录，只复制不存在的文件和子目录，保留现有文件"""
+    if not os.path.isdir(src_dir):
+        return
+    os.makedirs(dst_dir, exist_ok=True)
+    for item in os.listdir(src_dir):
+        s = os.path.join(src_dir, item)
+        d = os.path.join(dst_dir, item)
+        if os.path.isdir(s):
+            merge_dirs(s, d)
+        else:
+            # 仅复制不存在的文件，避免覆盖
+            if not os.path.exists(d):
+                shutil.copy2(s, d)
+
+
 def download_model(model_name: str, cache_dir: str) -> str:
     """使用ModelScope下载模型"""
     try:
@@ -57,6 +63,22 @@ def download_model(model_name: str, cache_dir: str) -> str:
         # 确保返回绝对路径
         absolute_model_path = str(Path(model_path).absolute())
         print(f"✓ 模型下载成功，路径: {absolute_model_path}")
+
+        # 同步本地 huggingface 缓存到全局 ~/.cache/huggingface
+        local_hf = os.path.join(absolute_model_path, 'huggingface')
+        sync_marker = os.path.join(absolute_model_path, 'huggingface_sync_done.txt')
+        if os.path.isdir(local_hf):
+            if os.path.exists(sync_marker):
+                print("检测到已同步标记，跳过缓存同步")
+            else:
+                hf_cache = os.getenv('HF_HOME', os.path.join(os.path.expanduser('~'), '.cache', 'huggingface'))
+                print(f"正在同步本地 huggingface 缓存到 {hf_cache} (仅新增文件)...")
+                merge_dirs(local_hf, hf_cache)
+                # 同步完成后写入标记文件，下次跳过
+                with open(sync_marker, 'w', encoding='utf-8') as mf:
+                    mf.write('synced')
+                print("✓ 全局 Hugging Face 缓存已更新（保留原有文件，仅新增缺失项），并创建同步标记")
+
         return absolute_model_path
     except Exception as e:
         print(f"❌ 模型下载失败: {e}")
