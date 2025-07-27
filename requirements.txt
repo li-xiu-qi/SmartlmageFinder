@@ -6,7 +6,7 @@ uvicorn[standard]
 # 加载模型需要
 transformers==4.51.3
 sentence-transformers==4.1.0
-
+# xFormers # 有cuda可以装
 # scikit-learn for sentence-transformers evaluation metrics
 scikit-learn
 # colber模型需要

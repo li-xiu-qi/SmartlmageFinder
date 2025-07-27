@@ -2,7 +2,7 @@
 """
 SmartImageFinder 一键启动脚本
 自动安装依赖、检查配置、启动前后端服务
-使用subprocess控制前后端服务（修复Windows多进程问题）
+使用subprocess控制前后端服务
 """
 
 import os
