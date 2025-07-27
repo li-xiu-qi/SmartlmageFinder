@@ -30,7 +30,7 @@ class AppConfig(BaseModel):
         ]
     )
     HOST: str = "0.0.0.0"
-    PORT: int = 1000  # 根据当前 config.yaml 设置
+    PORT: int = 10020  # 根据当前 config.yaml 设置
 
     class Config:
         validate_assignment = True  # 验证赋值

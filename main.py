@@ -1,7 +1,8 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 import time
 import uvicorn
 import os
@@ -25,6 +26,9 @@ app = FastAPI(
     description="SmartImageFinder API for image search and analysis",
     version="1.0.0",
 )
+
+# 初始化Jinja2模板
+templates = Jinja2Templates(directory="templates")
 
 # 配置CORS - 允许所有源访问
 origins = ["*"]
@@ -89,20 +93,13 @@ async def api_root():
     
     
 @app.get("/")
-async def root():
-    # 返回一个简单的欢迎信息html
-    
-    return  """
-    <html>
-        <head>
-            <title>SmartImageFinder API</title>
-        </head>
-        <body>
-            <h1>欢迎使用 SmartImageFinder API</h1>
-            <p>API 文档请访问: <a href="/docs">/docs</a></p>
-        </body>
-    </html>
-    """
+async def root(request: Request):
+    # 使用Jinja2模板渲染欢迎页面
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "version": app.version,
+        "status": "运行中"
+    })
     
 
 if __name__ == "__main__":

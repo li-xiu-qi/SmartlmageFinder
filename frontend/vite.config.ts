@@ -28,12 +28,12 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:10105',
+        target: 'http://192.168.1.100:10020',
         changeOrigin: true,
         secure: false,
       },
       '/data': {
-        target: 'http://localhost:10105',
+        target: 'http://192.168.1.100:10020',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/data/, '/static')

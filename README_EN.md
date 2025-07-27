@@ -2,7 +2,7 @@
   <img src="assets/logo/logo.png" alt="SmartImageFinder Logo" width="200">
   <h1>SmartImageFinder</h1>
 
-  <p>Intelligent image search engine and management system based on multimodal vector models and vision multimodal models</p>
+  <p>Intelligent image search engine and management system based on dual-layer microservice architecture</p>
 
   <div>
     <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License"></a>
@@ -20,234 +20,240 @@
 
 ## Project Overview
 
-An intelligent image search engine and management system that enables precise text-to-image, image-to-image, and other smart retrieval methods, while providing a complete image management solution. This project uses the FastAPI + React technology stack, integrating Jina CLIP V2 and multimodal large language models to provide a one-stop solution for personal image management.
+SmartImageFinder is a modern intelligent image search engine and management system featuring a dual-layer microservice architecture design, providing high-performance image management and intelligent retrieval capabilities. The system integrates advanced vector search technology and AI analysis capabilities to offer users a one-stop image management solution.
+
+## 🏗️ System Architecture
+
+### Dual-Layer Microservice Design
+
+#### Main Service Layer
+
+- **Backend Service** (`backend/`) - Core image management API, Port: 10020
+- **Frontend Service** (`frontend/`) - Image management interface, Port: 5173
+
+#### AI Service Layer  
+
+- **AI Backend** (`ai_backend/`) - AI recommendation and analysis services
+- **AI Frontend** (`ai_frontend/`) - AI intelligent search interface
 
 ## Features
 
-### Image Management
+### 🖼️ Image Management
 
-- Intuitive image browsing interface with grid layout and image preview
-- Powerful tag management system supporting multi-tag classification and filtering
-- Flexible metadata editing, including title, description, and custom tags
-- Efficient batch operation support for uploading, analyzing, and tag management
-- Support for drag-and-drop uploads and multi-file selection
+- **Image Browsing** - Intuitive grid layout and image preview functionality
+- **Tag System** - Powerful multi-tag classification and filtering management
+- **Metadata Editing** - Flexible title, description, and custom tag management
+- **Batch Operations** - Efficient batch upload, analysis, and tag management
+- **Drag-and-Drop Upload** - Support for multi-file selection and drag-and-drop upload
 
-### Multimodal AI Analysis
+### 🔍 Intelligent Search
 
-- High-precision vector encoding based on CLIP V2 model
-- Support for three vector retrieval modes:
-  - Text-to-image matching: Find similar images through natural language descriptions
-  - Image-to-image matching: Find similar content based on reference images
-  - Hybrid vector search: Multi-dimensional search combining title, description, and image content
-- Integration with multimodal vision model APIs for intelligent image analysis:
-  - Automatic generation of image titles and detailed descriptions
-  - Intelligent extraction of key tags
-  - Support for batch AI analysis processing
+- **Text Search** - Image retrieval based on natural language descriptions
+- **Image Search** - Find similar images using reference images
+- **Vector Search** - Multi-dimensional search based on title, description, and image content
+- **Similarity Search** - Similarity retrieval based on reference images
+- **Filter Search** - Support for combined tag and time filtering
 
-### User Interface
+### 🤖 AI Analysis Features
 
-- Modern interface design based on React + Ant Design
-- Responsive layout, adapting to different screen sizes
-- Support for image preview, zoom, and editing operations
-- Intuitive tag filtering and search interface
-- Real-time display of processing progress and status notifications
-- Support for dark/light theme switching
+- **Automatic Analysis** - Image content understanding based on CLIP model
+- **Smart Annotation** - Automatic generation of image titles, descriptions, and tags
+- **Batch Processing** - Support for large-scale batch AI analysis of images
+- **API Integration** - Support for various multimodal vision model APIs
 
-## 🎯 Key Highlights
+### 🎨 User Interface
 
-- **🚀 One-Click Startup**: Brand new intelligent startup script that automatically installs dependencies, configures environment, and starts services - experience full functionality in minutes
-- **🧠 Multimodal AI Search**: CLIP V2-based text-to-image, image-to-image, and hybrid search for search-engine-level precision
-- **🏷️ Smart Tagging System**: AI-generated image titles, descriptions, and tags with flexible categorization management
-- **⚡ High-Performance Vector Retrieval**: SQLite + sqlite-vec lightweight vector database with millisecond search response
-- **🎨 Modern Interface**: Beautiful React + Ant Design interface supporting drag-and-drop upload and batch processing
-- **🔧 Zero-Configuration Startup**: Out-of-the-box configuration script with flexible switching between local models and cloud APIs
+- **Modern Design** - Beautiful interface based on React 18 + Ant Design 5
+- **Responsive Layout** - Perfect adaptation for desktop and mobile devices
+- **Real-time Interaction** - Support for image preview, zoom, and editing operations
+- **Status Monitoring** - Real-time display of processing progress and system status
+- **System Management** - Comprehensive configuration management and monitoring interface
 
-## ⚡ 30-Second Quick Start
+## 🎯 Core Technical Features
+
+- **🏗️ Dual-Layer Microservice Architecture** - Separation of main services and AI services for better scalability and maintainability
+- **⚡ High-Performance Vector Retrieval** - SQLite + sqlite-vec lightweight vector database with millisecond search response
+- **🧠 Advanced AI Models** - Integration with Jina CLIP V2 model providing precise multimodal search capabilities
+- **🎨 Modern Technology Stack** - React 18 + TypeScript + FastAPI ensuring code quality and development experience
+- **🔧 Smart Startup Management** - One-click startup script with automatic environment configuration and dependency management
+- **📱 Responsive Design** - Perfect adaptation for various devices providing consistent user experience
+
+## 🚀 Quick Start
+
+### Environment Initialization
+
+First-time use requires environment initialization:
 
 ```bash
 # Clone the project
 git clone https://github.com/li-xiu-qi/SmartImageFinder.git
 cd SmartImageFinder
 
-# One-click startup (handles all configuration automatically)
-python start.py
+# Environment initialization (automatically installs dependencies, downloads models, generates configuration)
+python start.py init
 ```
 
-That's it! The startup script will automatically:
-✅ Check environment dependencies  ✅ Install required packages  ✅ Download AI models  ✅ Start services
-
-## Use Cases
-
-- Personal image library management and organization
-- Design material retrieval and management
-- Intelligent image classification and retrieval
-- Content-based image similarity search
-- Intelligent image annotation and description generation
-
-## Technical Architecture
-
-### Backend
-
-- FastAPI framework providing high-performance API services
-- SQLite + sqlite-vec implementing lightweight and efficient vector storage and retrieval
-- Jina CLIP V2 model for feature vector extraction
-- Integration with multimodal large model APIs for content understanding and generation
-
-### Frontend
-
-- React 18 + TypeScript for building the user interface
-- Ant Design 5.x providing UI component library
-- Vite as development and build tool
-- Axios for handling HTTP requests
-- Support for file drag-and-drop and batch processing
-
-## Core Features Showcase
-
-- Multimodal search: Support for text search, image search, and hybrid search
-- Smart tags: Automatically generate and manage image tags
-- Metadata management: Flexibly edit and organize image information
-- AI analysis: Intelligently generate image descriptions and tags
-- Batch processing: Efficiently process large numbers of image files
-- System management: Monitor system status and configuration management
-
-## Requirements
-
-- Python 3.8+
-- Node.js 16+
-- SQLite 3
-- CUDA-supported GPU (recommended but not required)
-- Sufficient disk space for storing images and vector data
-
-## Quick Start
-
-### 🚀 One-Click Startup (Recommended)
-
-We provide a convenient one-click startup script that automatically handles all configuration and service startup:
+### Start Services
 
 ```bash
-git clone https://github.com/li-xiu-qi/SmartImageFinder.git
-cd SmartImageFinder
-python start.py
-```
-
-🎉 **One-Click Startup Features**:
-
-- Automatically check and install Python and Node.js dependencies
-- Automatically run configuration initialization (including model download)
-- Automatically start frontend and backend services
-- Intelligent service status monitoring
-- Graceful error handling and service shutdown
-
-### 🔧 Startup Options
-
-The startup script supports various options to meet different needs:
-
-```bash
-# Complete startup (default)
+# Start main services (frontend and backend)
 python start.py
 
-# Skip dependency installation (for environments with dependencies already installed)
-python start.py --skip-deps
-
-# Only run configuration initialization
-python start.py --config-only
-
-# Only start backend service
+# Start backend service only
 python start.py --backend-only
 
-# Only start frontend service
+# Start frontend service only
 python start.py --frontend-only
 ```
 
-### 📝 Manual Setup
+The startup script will automatically:
+✅ Check environment dependencies  ✅ Install required packages  ✅ Download AI models  ✅ Start services
 
-If you need manual control over the startup process, follow these steps:
+## Application Scenarios
 
-1. **Clone the repository**:
+- **Personal Image Management** - Intelligent organization and retrieval of personal photo libraries
+- **Design Asset Management** - Efficient management and search of design resources
+- **Content Creation** - Providing intelligent image retrieval services for creators
+- **Enterprise Asset Management** - Enterprise-level image resource management solutions
+- **AI Research Applications** - Research and application platform for multimodal AI technology
 
-```bash
-git clone https://github.com/li-xiu-qi/SmartImageFinder.git
-cd SmartImageFinder
+## 🛠️ Technical Architecture
+
+### Main Service Technology Stack
+
+#### Backend (`backend/`)
+
+- **FastAPI** - High-performance asynchronous web framework
+- **SQLite + sqlite-vec** - Lightweight vector database
+- **Jina CLIP V2** - Multimodal vector encoding model
+- **Connection Pool Management** - Efficient database connection management
+- **Vector Cache** - Vector cache system implemented with diskcache
+
+#### Frontend (`frontend/`)
+
+- **React 18 + TypeScript** - Modern frontend framework
+- **Ant Design 5.25** - Enterprise-grade UI component library
+- **Vite** - Fast build tool
+- **React Router 7.5** - Route management
+- **Axios** - HTTP client
+
+### AI Service Technology Stack
+
+#### AI Backend (`ai_backend/`)
+
+- **FastAPI** - AI service API framework
+- **Recommendation Algorithms** - Intelligent image recommendation engine
+- **Multimodal Analysis** - Image content understanding and analysis
+
+#### AI Frontend (`ai_frontend/`)
+
+- **React 18 + TypeScript** - AI interaction interface
+- **Ant Design 5.4** - UI component library
+- **Intelligent Search** - AI-driven search experience
+
+### Core Components
+
+- **Vector Search Engine** - Support for multiple search modes (text, image, vector, similarity)
+- **AI Analysis Engine** - Automatic image content analysis and annotation
+- **Tag Management System** - Intelligent tag classification and management
+- **Cache System** - High-performance vector caching mechanism
+- **Configuration Management** - Flexible system configuration management
+
+## 🖥️ System Requirements
+
+### Supported Platforms
+
+- **Windows**: x86_64
+- **Linux**: x86_64, aarch64  
+- **macOS**: x86_64 (Intel), aarch64 (Apple Silicon)
+
+### Software Requirements
+
+- **Python**: 3.8+
+- **Node.js**: 16+
+- **Memory**: Recommended 4GB+
+- **Storage**: Sufficient space for storing images and vector data
+- **Network**: Internet connection required for first-time AI model download
+
+## 📁 Project Structure
+
+```
+SmartImageFinder/
+├── backend/                 # Main backend service
+│   ├── routers/            # API route modules
+│   ├── db_func/           # Database operations
+│   ├── ai_func/           # AI analysis functions
+│   └── config_files/      # Configuration files
+├── frontend/               # Main frontend service
+│   ├── src/pages/         # Page components
+│   ├── src/components/    # Common components
+│   └── src/services/      # API service layer
+├── ai_backend/            # AI backend service
+│   ├── app/routers/       # AI API routes
+│   └── app/services/      # AI service logic
+├── ai_frontend/           # AI frontend service
+│   └── src/pages/ai/      # AI search interface
+├── models/                # AI model files
+├── data/                  # Data storage
+│   ├── db/               # Database files
+│   ├── images/           # Image storage
+│   └── caches/           # Vector cache
+├── scripts/               # Startup and management scripts
+├── requirements.txt       # Python dependencies
+└── start.py              # Startup entry point
 ```
 
-2. **Install backend dependencies**:
+## 🔧 Detailed Configuration
 
-```bash
-pip install -r requirements.txt
+### Service Ports
+
+- **Main Backend**: 10020 (read from config.yaml)
+- **Main Frontend**: 5173 (Vite default)
+- **AI Backend**: Read from ai_backend configuration
+- **AI Frontend**: Independent port configuration
+
+### Configuration Files
+
+Main configuration file is located at `backend/config_files/config.yaml`:
+
+```yaml
+MODEL_PATH: ./models/yizhixiaoke/xiaoke-jina-clip-v2  # Model path
+VECTOR_DB_DRIVER_DIR: ./backend/config_files/vector_db_driver  # Vector database driver
+UPLOAD_DIR: ./data/images  # Image upload directory
+DB_PATH: ./data/db/smartimagefinder.db  # Database path
+HOST: 0.0.0.0  # Service listening address
+PORT: 10020  # Service port
 ```
 
-3. **Run the initialization configuration script**:
+### Environment Variables
+
+Support overriding configuration through environment variables:
 
 ```bash
-python init_config.py
+export OPENAI_API_KEY="your-api-key"
+export OPENAI_API_BASE="https://api.openai.com/v1"
 ```
 
-The script will automatically complete the following operations:
+### 💡 Usage Tips
 
-- Check and install ModelScope dependencies
-- Download the JINA CLIP V2 model locally
-- Create the `config.yaml` file based on the example configuration
-- Configure all necessary paths and parameters
+#### Service Access URLs
 
-⚠️ **Configuration Notes**:
+- **Main Frontend Interface**: <http://localhost:5173>
+- **Main Backend API**: <http://localhost:10020>  
+- **API Documentation**: <http://localhost:10020/docs>
+- **AI Frontend**: Requires starting AI services separately before access
 
-- During script execution, you can choose to use an existing local model or download a new one
-- Optionally configure the OpenAI API key to enable AI analysis features
-- Configuration file paths will be automatically generated as absolute paths based on your project directory
+## 📊 System Monitoring & Management
 
-4. **Start the backend service**:
+### System Status Monitoring
 
-```bash
-python main.py
-```
+Through the system settings page, you can monitor in real-time:
 
-The service will run on `http://localhost:10050`, and API documentation can be viewed at `http://localhost:10050/docs`.
-
-5. **Install frontend dependencies and start**:
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-The frontend will run on <http://localhost:5173>.
-
-## 💡 Usage Tips
-
-### Startup Script Features
-
-- **Intelligent Environment Detection**: Script automatically detects Python and Node.js versions to ensure compatibility
-- **Dependency Management**: Automatically installs missing Python packages and npm packages
-- **Configuration Wizard**: Guides you through model download and API configuration on first run
-- **Service Monitoring**: Automatically monitors frontend and backend service status with auto-restart on exceptions
-- **Graceful Shutdown**: Press `Ctrl+C` to safely stop all services
-
-### Troubleshooting
-
-**Q: Startup script reports Python version incompatibility**  
-A: Please ensure Python 3.8 or higher is installed
-
-**Q: Node.js dependency installation fails**  
-A: Use `python start.py --backend-only` to start backend first, then manually install frontend dependencies
-
-**Q: Model download is slow**  
-A: Script supports using existing models. If you've already downloaded JINA CLIP V2, specify the local path during configuration
-
-**Q: API key configuration error**  
-A: Use `python start.py --config-only` to re-run configuration initialization
-
-## System Configuration
-
-### Frontend Configuration
-
-Modify the frontend API request address in the `vite.config.ts` file: [vite.config.ts](frontend/vite.config.ts)
-
-### Backend Configuration
-
-The core system configuration is in the `backend/config_files/config.yaml` configuration file:
-![backend_config](backend/config_files/config.yaml)
-By default, the system configuration file will be loaded. You can also remove the configuration loading from the default file and use the configuration in [config.py](backend/config.py).
+- **System Information** - CPU, memory, disk usage
+- **Database Status** - Connection pool status, table statistics
+- **Storage Information** - Image count, tag count, storage usage
+- **Cache Status** - Cache usage information
+- **Vector Database** - Driver status, index information
 
 ## Demo Screenshots
 

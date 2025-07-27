@@ -34,6 +34,9 @@ pydantic
 # 全局配置
 pydantic-settings
 
+# 模板引擎
+jinja2
+
 # notebook
 notebook
 
