@@ -15,7 +15,7 @@ SmartImageFinder系统采用灵活的配置管理机制，所有配置项集中�
 ### 模型相关配置
 
 - **MODEL_PATH**: CLIP模型路径，用于向量编码（必需配置，无默认值）
-- **EMBEDDING_DIMENSION**: 向量维度，默认为1024
+- **EMBEDDING_DIMENSION**: 向量维度，默认为1024（根据实际模型自动检测）
 - **VISION_MODEL**: 当前使用的视觉模型，如"Qwen/Qwen2.5-VL-32B-Instruct"
 - **AVAILABLE_VISION_MODELS**: 可用视觉模型列表
 
@@ -23,8 +23,9 @@ SmartImageFinder系统采用灵活的配置管理机制，所有配置项集中�
 
 - **UPLOAD_DIR**: 上传图片存储目录，默认为"./data/images"
 - **DB_PATH**: SQLite数据库路径，默认为"./data/db/smartimagefinder.db"
-- **TEMP_FILES_DIR**: 临时文件存储目录，用于处理上传的临时文件
-- **VECTOR_DB_DRIVER**: 向量数据库驱动文件路径，用于加载自定义的向量数据库实现
+- **TEMP_DIR**: 临时文件存储目录，用于处理上传的临时文件，默认为"./data/temp"
+- **VECTOR_DB_DRIVER_DIR**: 向量数据库驱动目录路径，系统会根据平台自动选择正确的驱动文件
+- **VECTOR_DB_DRIVER**: 向量数据库驱动文件路径（自动生成，无需手动配置）
 
 ### 缓存配置
 
@@ -37,12 +38,12 @@ SmartImageFinder系统采用灵活的配置管理机制，所有配置项集中�
 
 - **OPENAI_API_KEY**: OpenAI API密钥
 - **OPENAI_API_BASE**: OpenAI API基础URL
-- **AI_ENABLED**: 是否启用AI功能，布尔值
+- **AI_ENABLED**: 是否启用AI功能，布尔值（根据OPENAI_API_KEY是否存在自动设置）
 
 ### 服务器配置
 
 - **HOST**: 服务器主机地址
-- **PORT**: 服务器端口号
+- **PORT**: 服务器端口号，默认为10020
 
 ## 配置系统特性
 
@@ -168,6 +169,7 @@ VECTOR_DB_DRIVER: ./backend/config_files/vector_db_driver/vec0.dll
 ```
 
 > **安全提示**：实际配置文件中的API密钥已部分隐藏，您应该使用您自己的API密钥。
+> **注意**：系统会根据当前操作系统和架构自动从 `VECTOR_DB_DRIVER_DIR` 中选择合适的 sqlite-vec 驱动文件，无需手动配置 `VECTOR_DB_DRIVER`。
 
 ## Pydantic 配置验证
 
@@ -176,9 +178,11 @@ VECTOR_DB_DRIVER: ./backend/config_files/vector_db_driver/vec0.dll
 ```python
 class AppConfig(BaseModel):
     MODEL_PATH: str  # 不提供默认值，必须在 config.yaml 中提供或通过更新设置
-    VECTOR_DB_DRIVER: Optional[str] = None
-    EMBEDDING_DIMENSION: Optional[int] = None
+    VECTOR_DB_DRIVER_DIR: str  # 期望此路径在 config.yaml 中定义
+    VECTOR_DB_DRIVER: Optional[str] = None  # 将由代码动态填充
+    EMBEDDING_DIMENSION: Optional[int] = None  # 根据模型自动检测
     UPLOAD_DIR: str = "./data/images"
+    TEMP_DIR: str = "./data/temp"
     DB_PATH: str = "./data/db/smartimagefinder.db"
     TEXT_VECTOR_CACHE_DIR: str = "./data/caches/text_vector_cache"
     IMAGE_VECTOR_CACHE_DIR: str = "./data/caches/image_vector_cache"
@@ -193,9 +197,8 @@ class AppConfig(BaseModel):
             "Pro/Qwen/Qwen2.5-VL-7B-Instruct",
         ]
     )
-    AI_ENABLED: bool = True
     HOST: str = "0.0.0.0"
-    PORT: int = 1000
+    PORT: int = 10020
 ```
 
 Pydantic 提供了以下好处：

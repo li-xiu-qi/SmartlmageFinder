@@ -1,173 +1,194 @@
 # 系统管理 API
 
-## 简介
+系统管理API提供系统状态、配置和缓存管理功能。
 
-系统管理API提供了一系列接口，用于获取和管理SmartImageFinder系统的状态、配置和资源。这些API主要用于系统管理员和开发人员监控系统运行状况、查看资源使用情况以及更新系统配置。
+## 基础信息
 
-## 接口详情
+- **Base URL**: `/api/v1/system`
+- **Content-Type**: `application/json`
 
-### 获取基本系统信息
+## 端点列表
 
-**请求方式**: GET
+### 1. 获取基本系统信息
 
-**路径**: `/api/v1/system/info`
+**GET** `/api/v1/system/info`
 
-**说明**: 获取基本系统信息，不包括数据库和缓存等详细信息
+获取基本系统信息，不包括数据库和缓存等详细信息。
 
-#### 响应
+#### 请求参数
 
+无
+
+#### 响应示例
+
+**成功响应 (200)**
 ```json
 {
   "status": "success",
   "code": 200,
   "message": "操作成功",
   "data": {
+    "name": "SmartImageFinder",
     "version": "1.0.0",
-    "app_uptime": 878415,
-    "app_uptime_formatted": "10天 3小时 20分钟 15秒",
+    "description": "智能图片搜索和管理系统",
+    "uptime": "2天3小时15分钟"
+  },
+  "error": null
+}
+```
+
+### 2. 获取系统运行时间
+
+**GET** `/api/v1/system/runtime`
+
+获取系统运行时间信息。
+
+#### 请求参数
+
+无
+
+#### 响应示例
+
+**成功响应 (200)**
+```json
+{
+  "status": "success",
+  "code": 200,
+  "message": "操作成功",
+  "data": {
+    "start_time": "2024-01-15T10:00:00",
+    "uptime_seconds": 183000,
+    "uptime_human": "2天3小时15分钟"
+  },
+  "error": null
+}
+```
+
+### 3. 获取数据库状态
+
+**GET** `/api/v1/system/database`
+
+获取数据库状态信息。
+
+#### 请求参数
+
+无
+
+#### 响应示例
+
+**成功响应 (200)**
+```json
+{
+  "status": "success",
+  "code": 200,
+  "message": "操作成功",
+  "data": {
     "status": "healthy",
-    "platform": "Windows",
-    "python_version": "3.10.0"
+    "tables": [
+      {
+        "name": "images",
+        "row_count": 1500,
+        "size_mb": 15.5
+      },
+      {
+        "name": "tags",
+        "row_count": 250,
+        "size_mb": 2.1
+      }
+    ],
+    "total_size_mb": 17.6,
+    "connection_status": "connected"
   },
-  "timestamp": "2023-05-19T12:34:56.789Z",
-  "request_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+  "error": null
 }
 ```
 
-### 获取系统运行时信息
+### 4. 获取存储状态
 
-**请求方式**: GET
+**GET** `/api/v1/system/storage`
 
-**路径**: `/api/v1/system/runtime`
+获取存储状态信息，包括图像和标签统计。
 
-**说明**: 获取系统运行时间和资源使用情况信息
+#### 请求参数
 
-#### 响应
+无
 
+#### 响应示例
+
+**成功响应 (200)**
 ```json
 {
   "status": "success",
   "code": 200,
   "message": "操作成功",
   "data": {
-    "app_uptime_formatted": "10天 3小时 20分钟 15秒",
-    "current_time": "2023-05-19T12:34:56.789Z"
+    "total_images": 1500,
+    "total_size_mb": 2048.5,
+    "average_image_size_mb": 1.37,
+    "total_tags": 250,
+    "unique_tags": 85,
+    "storage_path": "/uploads",
+    "available_space_gb": 456.7,
+    "used_space_gb": 2.05
   },
-  "timestamp": "2023-05-19T12:34:56.789Z",
-  "request_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+  "error": null
 }
 ```
 
-### 获取数据库状态信息
+### 5. 获取缓存状态
 
-**请求方式**: GET
+**GET** `/api/v1/system/cache`
 
-**路径**: `/api/v1/system/database`
+获取缓存统计信息。
 
-**说明**: 获取数据库状态和统计信息
+#### 请求参数
 
-#### 响应
+无
 
+#### 响应示例
+
+**成功响应 (200)**
 ```json
 {
   "status": "success",
   "code": 200,
   "message": "操作成功",
   "data": {
-    "status": "connected",
-    "type": "sqlite",
-    "path": "c:\\\\Users\\\\k\\\\Documents\\\\project\\\\programming_project\\\\python_project\\\\importance\\\\SmartImageFinder\\\\data\\\\db\\\\smartimagefinder.db",
-    "image_count": 100,
-    "total_size": 10485760, // 单位: 字节
-    "tag_count": 50,
-    "vector_status": true,
-    "db_version": "3.39.4",
-    "error": null
-  },
-  "timestamp": "2023-05-19T12:34:56.789Z",
-  "request_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-}
-```
-
-### 获取存储状态信息
-
-**请求方式**: GET
-
-**路径**: `/api/v1/system/storage`
-
-**说明**: 获取存储状态信息，包括图像和标签统计
-
-#### 响应
-
-```json
-{
-  "status": "success",
-  "code": 200,
-  "message": "操作成功",
-  "data": {
-    "total_images": 100,
-    "total_size_mb": 10.00,
-    "total_tags": 50,
-    "upload_dir": "c:\\\\Users\\\\k\\\\Documents\\\\project\\\\programming_project\\\\python_project\\\\importance\\\\SmartImageFinder\\\\data\\\\images"
-  },
-  "timestamp": "2023-05-19T12:34:56.789Z",
-  "request_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-}
-```
-
-### 获取缓存状态信息
-
-**请求方式**: GET
-
-**路径**: `/api/v1/system/cache`
-
-**说明**: 获取缓存统计信息
-
-#### 响应
-
-```json
-{
-  "status": "success",
-  "code": 200,
-  "message": "操作成功",
-  "data": {
-    "enabled": true,
-    "max_size_gb": 1.0,
-    "total_entries": 120,
-    "total_size_mb": 5.5,
-    "text_vector_cache": {
-      "path": "c:\\\\Users\\\\k\\\\Documents\\\\project\\\\programming_project\\\\python_project\\\\importance\\\\SmartImageFinder\\\\data\\\\caches\\\\text_vector_cache",
-      "entries": 100,
-      "size_mb": 5.0
+    "text_cache": {
+      "size": 45,
+      "max_size": 1000,
+      "hit_rate": 0.85,
+      "entries": 45
     },
-    "image_vector_cache": {
-      "path": "c:\\\\Users\\\\k\\\\Documents\\\\project\\\\programming_project\\\\python_project\\\\importance\\\\SmartImageFinder\\\\data\\\\caches\\\\image_vector_cache",
-      "entries": 20,
-      "size_mb": 0.5
-    }
+    "image_cache": {
+      "size": 12,
+      "max_size": 100,
+      "hit_rate": 0.92,
+      "entries": 12
+    },
+    "total_cache_entries": 57,
+    "total_cache_size_mb": 3.2
   },
-  "timestamp": "2023-05-19T12:34:56.789Z",
-  "request_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+  "error": null
 }
 ```
 
-### 清除系统缓存
+### 6. 清除系统缓存
 
-**请求方式**: POST
+**POST** `/api/v1/system/cache/clear`
 
-**路径**: `/api/v1/system/cache/clear`
+清除系统缓存。
 
-**说明**: 清除系统缓存。此操作会清除所有文本和图像向量缓存。查询参数 `text_cache` 和 `image_cache` 控制响应中是否报告相应缓存类型的清除条目数，但不会阻止缓存被清除。`total_size_freed_mb` 始终反映所有缓存释放的总空间。
+#### 请求参数
 
-#### 查询参数
+| 参数 | 类型 | 必填 | 描述 | 示例 |
+|---|---|---|---|---|
+| text_cache | boolean | 否 | 是否清除文本缓存，默认为true | true |
+| image_cache | boolean | 否 | 是否清除图像缓存，默认为true | true |
 
-| 参数名 | 类型 | 必填 | 默认值 | 描述 |
-|-------|------|------|-------|-----|
-| text_cache | boolean | 否 | true | 是否清除文本缓存 |
-| image_cache | boolean | 否 | true | 是否清除图像缓存 |
+#### 响应示例
 
-#### 响应
-
+**成功响应 (200)**
 ```json
 {
   "status": "success",
@@ -175,119 +196,156 @@
   "message": "操作成功",
   "data": {
     "cleared": true,
-    "text_cache_entries_removed": 100,
-    "image_cache_entries_removed": 20,
-    "total_size_freed_mb": 5.5
+    "text_cache_entries_removed": 45,
+    "image_cache_entries_removed": 12,
+    "total_size_freed_mb": 3.2
   },
-  "timestamp": "2023-05-19T12:34:56.789Z",
-  "request_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+  "error": null
 }
 ```
 
-### 获取系统配置
+### 7. 获取系统配置
 
-**请求方式**: GET
+**GET** `/api/v1/system/config`
 
-**路径**: `/api/v1/system/config`
+获取系统配置信息。
 
-**说明**: 获取系统配置信息
+#### 请求参数
 
-#### 响应
+无
 
+#### 响应示例
+
+**成功响应 (200)**
 ```json
 {
   "status": "success",
   "code": 200,
   "message": "操作成功",
   "data": {
-    "api": {
-      "apiKey": "sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-      "baseUrl": "https://api.openai.com/v1"
-    },
-    "storage": {
-      "rootDirectory": "c:\\\\Users\\\\k\\\\Documents\\\\project\\\\programming_project\\\\python_project\\\\importance\\\\SmartImageFinder\\\\data\\\\images",
-      "cacheDirectory": "c:\\\\Users\\\\k\\\\Documents\\\\project\\\\programming_project\\\\python_project\\\\importance\\\\SmartImageFinder\\\\data\\\\caches\\\\text_vector_cache",
-      "maxCacheSize": 1.0
-    },
-    "model": {
-      "vectorModel": "X:\\\\models\\\\bge-large-zh-v1.5",
-      "visionModel": "gpt-4-vision-preview",
-      "availableModels": ["gpt-4-vision-preview", "gemini-pro-vision"]
-    },
-    "vectorDb": {
-      "driverPath": "c:\\\\Users\\\\k\\\\Documents\\\\project\\\\programming_project\\\\python_project\\\\importance\\\\SmartImageFinder\\\\backend\\\\config_files\\\\vector_db_driver\\\\vec.dll"
+    "upload_dir": "/uploads",
+    "max_file_size": 10485760,
+    "allowed_extensions": [".jpg", ".jpeg", ".png", ".webp"],
+    "max_batch_upload": 100,
+    "vector_model": "jina-clip-v2",
+    "cache_config": {
+      "text_cache_size": 1000,
+      "image_cache_size": 100,
+      "cache_ttl": 3600
     }
   },
-  "timestamp": "2023-05-19T12:34:56.789Z",
-  "request_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+  "error": null
 }
 ```
 
-### 更新系统配置
+### 8. 更新系统配置
 
-**请求方式**: POST
+**POST** `/api/v1/system/config/update`
 
-**路径**: `/api/v1/system/config/update`
+更新系统配置。
 
-**说明**: 更新系统配置
+#### 请求格式
+
+`application/json`
 
 #### 请求体
 
 ```json
 {
-  "storage": {
-    "rootDirectory": "/new/path/to/uploads",
-    "cacheDirectory": "/new/path/to/caches_base",
-    "maxCacheSize": 20.0
-  },
-  "api": {
-    "apiKey": "new-api-key",
-    "baseUrl": "https://new.api.base/url"
-  },
-  "model": {
-    "visionModel": "new-vision-model",
-    "vectorModel": "/new/path/to/vector/model.bin"
-  },
-  "vectorDb": {
-    "driverPath": "/new/path/to/driver.dll"
+  "max_file_size": 20971520,
+  "allowed_extensions": [".jpg", ".jpeg", ".png", ".webp", ".gif"],
+  "cache_config": {
+    "text_cache_size": 2000
   }
 }
 ```
 
-> **注意**: 只需要包含要更新的配置字段，未提供的字段将保持不变。
+#### 响应示例
 
-#### 响应
+**成功响应 (200)**
+```json
+{
+  "status": "success",
+  "code": 200,
+  "message": "配置更新成功",
+  "data": {
+    "message": "配置已成功更新"
+  },
+  "error": null
+}
+```
 
+**错误响应 (400)**
+```json
+{
+  "status": "error",
+  "code": 400,
+  "message": "配置更新失败：无效的配置参数",
+  "error": {
+    "code": "CONFIG_UPDATE_ERROR",
+    "message": "配置更新失败：无效的配置参数"
+  }
+}
+```
+
+### 9. 获取向量数据库驱动状态
+
+**GET** `/api/v1/system/vector-driver`
+
+获取向量数据库驱动状态信息。
+
+#### 请求参数
+
+无
+
+#### 响应示例
+
+**成功响应 (200)**
 ```json
 {
   "status": "success",
   "code": 200,
   "message": "操作成功",
   "data": {
-    "message": "系统配置已更新"
+    "driver": "sqlite-vec",
+    "version": "v0.1.1",
+    "status": "loaded",
+    "vector_dimensions": 512,
+    "total_vectors": 1500,
+    "index_size_mb": 7.8,
+    "performance": {
+      "average_query_time_ms": 45.2,
+      "cache_hit_rate": 0.88
+    }
   },
-  "timestamp": "2023-05-19T12:34:56.789Z",
-  "request_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+  "error": null
 }
 ```
 
 ## 错误代码
 
-| 错误代码 | HTTP状态码 | 描述 |
-|---------|-----------|-----|
-| CONFIG_UPDATE_ERROR | 400 | 配置更新错误 |
-| DATABASE_ERROR | 500 | 数据库操作错误 |
-| PERMISSION_DENIED | 403 | 权限不足 |
-| INTERNAL_SERVER_ERROR | 500 | 内部服务器错误 |
+| 错误代码 | 描述 | HTTP状态码 |
+|---|---|---|
+| CONFIG_UPDATE_ERROR | 配置更新失败 | 400 |
 
-## 最佳实践
+## 缓存类型说明
 
-1. 系统管理API主要用于管理和监控目的，应该限制只有管理员才能访问。
+### 文本缓存
+- 存储文本搜索的向量计算结果
+- 最大容量：1000条记录
+- TTL：3600秒
 
-2. 定期检查系统状态信息可以帮助预防潜在问题，特别是存储空间和数据库状态。
+### 图像缓存
+- 存储图像特征向量
+- 最大容量：100条记录
+- TTL：3600秒
 
-3. 在系统负载较低的时间执行缓存清理操作，避免影响用户体验。
+## 监控建议
 
-4. 更新系统配置时，应该只包含需要修改的字段，而不是整个配置对象，以避免意外覆盖其他设置。
+建议定期调用以下端点进行系统监控：
 
-5. 如果发现系统性能下降，可以通过查看数据库状态和缓存命中率等指标来诊断问题原因。
+1. **系统健康检查**: `GET /api/v1/system/info`
+2. **数据库状态**: `GET /api/v1/system/database`
+3. **存储空间**: `GET /api/v1/system/storage`
+4. **缓存状态**: `GET /api/v1/system/cache`
+5. **向量数据库状态**: `GET /api/v1/system/vector-driver`
