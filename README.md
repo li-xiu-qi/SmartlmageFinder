@@ -207,10 +207,8 @@ SmartImageFinder/
 
 ### 服务端口
 
-- **主后端**: 10020 (从config.yaml读取)
+- **主后端**: 10050 (从config.yaml读取)
 - **主前端**: 5173 (Vite默认)
-- **AI后端**: 从ai_backend配置读取
-- **AI前端**: 独立端口配置
 
 ### 配置文件
 
@@ -222,7 +220,7 @@ VECTOR_DB_DRIVER_DIR: ./backend/config_files/vector_db_driver  # 向量数据库
 UPLOAD_DIR: ./data/images  # 图片上传目录
 DB_PATH: ./data/db/smartimagefinder.db  # 数据库路径
 HOST: 0.0.0.0  # 服务监听地址
-PORT: 10020  # 服务端口
+PORT: 10050  # 服务端口
 ```
 
 ### 环境变量
