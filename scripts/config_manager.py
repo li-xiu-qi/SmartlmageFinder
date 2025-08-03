@@ -141,6 +141,16 @@ def configure_api_settings(config_data: dict) -> dict:
     return config_data
 
 
+def configure_chat_model(config_data: dict) -> dict:
+    """配置聊天模型"""
+    current_chat_model = config_data.get('CHAT_MODEL', 'THUDM/GLM-Z1-9B-0414')
+    new_chat_model = get_user_input("聊天模型名称", current_chat_model)
+    if new_chat_model != current_chat_model:
+        config_data['CHAT_MODEL'] = new_chat_model
+    
+    return config_data
+
+
 def configure_vision_model(config_data: dict) -> dict:
     """配置视觉多模态模型"""
     current_vision_model = config_data.get('VISION_MODEL', '')

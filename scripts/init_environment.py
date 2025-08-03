@@ -16,7 +16,7 @@ from environment_checker import (
 from model_manager import install_modelscope, test_network_connectivity, download_model
 from config_manager import (
     get_user_input, load_example_config, create_config_file,
-    configure_api_settings, configure_vision_model
+    configure_api_settings, configure_vision_model, configure_chat_model
 )
 
 
@@ -142,6 +142,9 @@ def main():
     
     # 配置API设置
     config_data = configure_api_settings(config_data)
+    
+    # 配置聊天模型
+    config_data = configure_chat_model(config_data)
     
     # 配置视觉多模态模型
     config_data = configure_vision_model(config_data)

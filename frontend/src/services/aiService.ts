@@ -30,7 +30,8 @@ const aiService: AIAnalysisClient = {
     const response = await apiClient.postWithTransform<ImageAnalysisData>('/ai/analyze-upload-image', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
-      }
+      },
+      timeout: 90000  // AI分析需要更长时间，设置90秒超时
     });
     
     return response as ImageAnalysisResponse;

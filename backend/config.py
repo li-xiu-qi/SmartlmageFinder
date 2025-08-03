@@ -22,6 +22,7 @@ class AppConfig(BaseModel):
     OPENAI_API_KEY: Optional[str] = None
     OPENAI_API_BASE: Optional[str] = None
 
+    CHAT_MODEL: Optional[str] = "Qwen/Qwen3-8B"  # 新增聊天模型字段，默认值
     VISION_MODEL: Optional[str] = None
     AVAILABLE_VISION_MODELS: List[str] = Field(
         default_factory=lambda: [
