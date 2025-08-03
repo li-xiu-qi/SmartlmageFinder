@@ -28,15 +28,17 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:10050',
+        target: 'http://localhost:10050',
         changeOrigin: true,
         secure: false,
+        timeout: 60000, // 60秒超时，适合AI推荐等长时间操作
       },
-      '/data': { // 将 './data' 修改为 '/data'
-        target: 'http://127.0.0.1:10050', // 目标指向后端服务根地址
+      '/data': {
+        target: 'http://localhost:10050',
         changeOrigin: true,
         secure: false,
-        rewrite: (path) => path.replace(/^\/data/, '/static') // 重写路径，将 /data/images/... 替换为 /static/images/...
+        timeout: 30000, // 30秒超时，适合静态资源
+        rewrite: (path: string) => path.replace(/^\/data/, '/static')
       }
     }
   }

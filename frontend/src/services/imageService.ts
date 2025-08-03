@@ -76,6 +76,7 @@ const imageService: ImageClient = {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+      timeout: 120000,  // 图片上传需要更长时间，设置2分钟超时
     });
   },
 

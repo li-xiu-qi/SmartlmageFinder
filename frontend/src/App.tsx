@@ -12,6 +12,9 @@ import TagsPage from '@/pages/tags';
 import SettingsPage from '@/pages/settings';
 import NotFoundPage from '@/pages/404';
 
+// 全局组件
+import GlobalAIFloatButton from '@/components/GlobalAIFloatButton';
+
 // 引入全局样式
 import './App.less';
 
@@ -38,6 +41,9 @@ function App() {
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>
+        
+        {/* 全局AI悬浮按钮 - 在所有页面都可见 */}
+        <GlobalAIFloatButton />
       </BrowserRouter>
     </ConfigProvider>
   );

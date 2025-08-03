@@ -23,8 +23,8 @@
 | `height`      | INTEGER                       |                     | 图片高度（像素）                           |
 | `created_at`  | TEXT                          | NOT NULL            | 图片记录的创建时间                         |
 | `updated_at`  | TEXT                          | NOT NULL            | 图片记录的最后更新时间                     |
-| `metadata`    | TEXT                          |                     | 存储额外的元数据 (例如, EXIF 信息, 通常为 JSON 字符串) |
-| `tags`        | TEXT                          |                     | 图片的标签 (通常是逗号分隔的字符串或 JSON 数组) |
+| `metadata`    | TEXT                          |                     | 存储额外的元数据 (JSON格式字符串，包含EXIF信息、相机参数等) |
+| `tags`        | TEXT                          |                     | 图片的标签 (JSON格式数组字符串) |
 
 **索引**:
 
@@ -34,7 +34,7 @@
 
 这些表是使用 `sqlite-vec` 扩展创建的虚拟表，用于存储从图片标题、描述和图片内容本身提取的特征向量，以支持语义搜索。
 
-* **向量维度 (`embedding_dim`)**: 由 `backend.utils.generate_vector.get_embedding_dimension()` 函数动态获取。
+* **向量维度 (`embedding_dim`)**: 由 `backend.utils.generate_vector.get_embedding_dimension()` 函数动态获取，实际使用Jina CLIP V2模型为1024维。
 * **距离度量 (`DISTANCE_METRIC`)**: `cosine` (余弦相似度)，适用于比较文本或图像特征向量。
 
 #### a. `title_vectors` 表
@@ -45,7 +45,7 @@
 |-------------|-------------------------------|------------------------------------|------------------------------------------|
 | `id`        | INTEGER                       | PRIMARY KEY, AUTOINCREMENT         | 向量记录的唯一标识                       |
 | `image_id`  | INTEGER                       | UNIQUE, NOT NULL                   | 关联到 `images` 表的 `id`                |
-| `embedding` | FLOAT[`embedding_dim`]        |                                    | 存储标题文本的特征向量                   |
+| `embedding` | FLOAT[1024]                   |                                    | 存储标题文本的特征向量 (1024维)          |
 
 #### b. `description_vectors` 表
 
@@ -55,7 +55,7 @@
 |-------------|-------------------------------|------------------------------------|------------------------------------------|
 | `id`        | INTEGER                       | PRIMARY KEY, AUTOINCREMENT         | 向量记录的唯一标识                       |
 | `image_id`  | INTEGER                       | UNIQUE, NOT NULL                   | 关联到 `images` 表的 `id`                |
-| `embedding` | FLOAT[`embedding_dim`]        |                                    | 存储描述文本的特征向量                   |
+| `embedding` | FLOAT[1024]                   |                                    | 存储描述文本的特征向量 (1024维)          |
 
 #### c. `image_vectors` 表
 
@@ -65,7 +65,7 @@
 |-------------|-------------------------------|------------------------------------|------------------------------------------|
 | `id`        | INTEGER                       | PRIMARY KEY, AUTOINCREMENT         | 向量记录的唯一标识                       |
 | `image_id`  | INTEGER                       | UNIQUE, NOT NULL                   | 关联到 `images` 表的 `id`                |
-| `embedding` | FLOAT[`embedding_dim`]        |                                    | 存储图片内容的特征向量                   |
+| `embedding` | FLOAT[1024]                   |                                    | 存储图片内容的特征向量 (1024维)          |
 
 ### 3. 表关系图 (ERD)
 
@@ -83,8 +83,8 @@ erDiagram
         INTEGER height "高度"
         TEXT created_at "创建时间"
         TEXT updated_at "更新时间"
-        TEXT metadata "元数据 (JSON)"
-        TEXT tags "标签 (TEXT/JSON)"
+        TEXT metadata "元数据 (JSON格式字符串，包含EXIF信息、相机参数等)"
+        TEXT tags "标签 (JSON格式数组字符串)"
     }
 
     title_vectors {
@@ -124,16 +124,15 @@ erDiagram
 
 ### 2. 连接池模式
 
-* **实现**: `backend.db_func.connection_pool.DatabaseConnectionPool`
+* **实现**: `backend.db_func.connection_pool.get_db_connection_from_pool`
 * **目的**: 提高高并发场景下的性能和资源利用率，通过复用连接避免频繁创建和关闭连接的开销。
 * **工作方式**:
-  * 初始化时可配置最大连接数。
-  * 请求连接时，从池中获取；若池空且未达上限则创建新连接；若池满则等待。
-  * 连接使用完毕后归还到池中。
-* **线程安全**: 连接池使用 `threading.Lock` 和 `queue.Queue` 实现线程安全。
+  * 使用线程安全的队列管理连接池。
+  * 请求连接时，从池中获取；若池空则创建新连接；连接使用完毕后归还到池中。
+* **线程安全**: 连接池使用 `queue.Queue` 实现线程安全。
 * **FastAPI 集成**:
   * `backend.db_func.core.get_db` 函数作为 FastAPI 依赖项。
-  * 优先从已初始化的连接池 (`get_db_connection_from_pool`) 获取连接。
+  * 优先从已初始化的连接池获取连接。
   * 若连接池未初始化，则回退到单连接模式。
 
 ## 三、设计原因与考量
@@ -172,6 +171,6 @@ erDiagram
 * **单连接作为备选**:
   * 提供了在连接池不适用或未初始化时的基本数据库连接能力。这对于执行一次性脚本（如数据库初始化 `init_db`）、单元测试或简单的命令行工具非常有用。
 * **`check_same_thread=False` (SQLite 特定)**:
-  * SQLite 默认情况下不允许在不同的线程中共享同一个连接对象。设置此参数是为了在某些特定情况下（例如，FastAPI 的后台任务或某些测试场景中，如果确实需要在不同线程间传递同一个连接实例）提供灵活性。
-  * **重要**: 尽管设置了 `check_same_thread=False`，但在连接池的设计中，通常推荐的做法是每个线程从池中获取自己的连接，并在使用完毕后归还。这样可以更好地利用连接池的并发管理能力，并从根本上避免 SQLite 连接的线程安全问题。项目中的连接池实现遵循了这一原则。
+  * SQLite 默认情况下不允许在不同的线程中共享同一个连接对象。设置此参数是为了在单连接模式下提供灵活性。
+  * **重要**: 连接池实现使用独立的连接来确保线程安全，每个线程从池中获取自己的连接，并在使用完毕后归还，从根本上避免 SQLite 连接的线程安全问题。
 
