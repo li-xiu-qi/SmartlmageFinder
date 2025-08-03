@@ -23,7 +23,7 @@ from ..db_func.images_func.create import batch_add_images_to_database
 from ..db_func.images_func.get import get_image_by_id, get_images
 from ..db_func.images_func.update import update_image as db_update_image
 from ..db_func.images_func.delete import delete_image as db_delete_image, batch_delete_images as db_batch_delete_images
-from ..global_schemas import ResponseModel, ErrorModel
+from ..global_schemas import ResponseModel
 
 # 添加配置导入
 from ..config import settings
@@ -37,7 +37,7 @@ class BatchDeleteRequest(BaseModel):
     image_ids: List[int]
 
 
-@router.get("/", response_model=ResponseModel)
+@router.get("/")
 async def list_images(
     page: int = Query(1, ge=1, description="页码"),
     page_size: int = Query(20, ge=1, le=100, description="每页数量"),
@@ -78,7 +78,7 @@ async def list_images(
         )
 
 
-@router.get("/{image_id}", response_model=ResponseModel)
+@router.get("/{image_id}")
 async def get_image(
     image_id: int = Path(..., description="图片ID"),
     db: sqlite3.Connection = Depends(get_db),
@@ -105,7 +105,7 @@ async def get_image(
         )
 
 
-@router.post("/upload", response_model=ResponseModel)
+@router.post("/upload")
 async def upload_images(
     files: List[UploadFile] = File(..., description="上传的图片文件"),
     title: Optional[str] = Form(None, description="图片标题"),
@@ -240,7 +240,7 @@ async def _upload_images(
         raise e
 
 
-@router.patch("/{image_id}", response_model=ResponseModel)
+@router.patch("/{image_id}")
 async def update_image(
     image_id: int = Path(..., description="图片ID"),
     title: Optional[str] = Form(None, description="图片标题"),
@@ -258,7 +258,7 @@ async def update_image(
                 code="IMAGE_NOT_FOUND",
                 message=f"找不到ID为 {image_id} 的图片",
                 http_code=404
-            )
+            ).to_dict()
         
         # 解析标签
         tag_list = None
@@ -277,13 +277,20 @@ async def update_image(
                 meta_dict = {}
         
         # 更新图片信息
+        update_data = {}
+        if title is not None:
+            update_data['title'] = title
+        if description is not None:
+            update_data['description'] = description
+        if tag_list is not None:
+            update_data['tags'] = tag_list
+        if meta_dict is not None:
+            update_data['metadata'] = meta_dict
+            
         success = db_update_image(
             conn=db,
             image_id=image_id,
-            title=title,
-            description=description,
-            tags=tag_list,
-            metadata=meta_dict
+            update_data=update_data
         )
         
         if success:
@@ -292,23 +299,23 @@ async def update_image(
             return ResponseModel.success(
                 data=updated_image,
                 message="图片信息更新成功"
-            )
+            ).to_dict()
         else:
             return ResponseModel.error(
                 code="UPDATE_ERROR",
                 message="更新图片信息失败",
                 http_code=500
-            )
+            ).to_dict()
             
     except Exception as e:
         return ResponseModel.error(
             code="UPDATE_ERROR",
             message=f"更新图片信息失败: {str(e)}",
             http_code=500
-        )
+        ).to_dict()
 
 
-@router.delete("/batch", response_model=ResponseModel)
+@router.delete("/batch")
 async def batch_delete_images(
     request: BatchDeleteRequest,
     db: sqlite3.Connection = Depends(get_db),
@@ -376,7 +383,7 @@ async def batch_delete_images(
         )
 
 
-@router.delete("/{image_id}", response_model=ResponseModel)
+@router.delete("/{image_id}")
 async def delete_image(
     image_id: int = Path(..., description="图片ID"),
     db: sqlite3.Connection = Depends(get_db),

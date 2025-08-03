@@ -21,7 +21,7 @@ router = APIRouter(prefix="/api/v1/system", tags=["system"])
 
 
 
-@router.get("/info", response_model=ResponseModel)
+@router.get("/info")
 async def get_basic_system_info():
     """获取基本系统信息，不包括数据库和缓存等详细信息"""
     system_info = get_system_info()
@@ -30,7 +30,7 @@ async def get_basic_system_info():
 
 
 
-@router.get("/runtime", response_model=ResponseModel)
+@router.get("/runtime")
 async def get_system_runtime_info():
     """获取系统运行时间信息"""
     runtime_info = get_runtime_info()
@@ -38,14 +38,14 @@ async def get_system_runtime_info():
 
 
 # ------------------ 数据库状态相关路由 ------------------
-@router.get("/database", response_model=ResponseModel)
+@router.get("/database")
 async def get_database_status(db: sqlite3.Connection = Depends(get_db)):
     """获取数据库状态信息"""
     db_info = get_database_info(db)
     return ResponseModel.success(data=db_info)
 
 
-@router.get("/storage", response_model=ResponseModel)
+@router.get("/storage")
 async def get_storage_status(db: sqlite3.Connection = Depends(get_db)):
     """获取存储状态信息，包括图像和标签统计"""
     storage_info = get_storage_info(db)
@@ -53,14 +53,14 @@ async def get_storage_status(db: sqlite3.Connection = Depends(get_db)):
 
 
 # ------------------ 缓存相关路由 ------------------
-@router.get("/cache", response_model=ResponseModel)
+@router.get("/cache")
 async def get_cache_status():
     """获取缓存统计信息"""
     cache_stats = get_complete_cache_stats()
     return ResponseModel.success(data=cache_stats)
 
 
-@router.post("/cache/clear", response_model=ResponseModel)
+@router.post("/cache/clear")
 async def clear_system_cache(
     text_cache: bool = Query(True, description="是否清除文本缓存"),
     image_cache: bool = Query(True, description="是否清除图像缓存")
@@ -84,14 +84,14 @@ async def clear_system_cache(
 
 
 # ------------------ 配置相关路由 ------------------
-@router.get("/config", response_model=ResponseModel)
+@router.get("/config")
 async def get_system_config():
     """获取系统配置信息"""
     frontend_config = get_frontend_config()
     return ResponseModel.success(data=frontend_config)
 
 
-@router.post("/config/update", response_model=ResponseModel)
+@router.post("/config/update")
 async def update_system_configuration(config_payload: Dict[str, Any] = Body(...)):
     """更新系统配置
     
@@ -105,7 +105,7 @@ async def update_system_configuration(config_payload: Dict[str, Any] = Body(...)
         return ResponseModel.error(code="CONFIG_UPDATE_ERROR", message=result['message'])
 
 
-@router.get("/vector-driver", response_model=ResponseModel)
+@router.get("/vector-driver")
 async def get_vector_db_driver_status():
     """获取向量数据库驱动状态信息"""
     driver_status = check_vector_db_driver_status()

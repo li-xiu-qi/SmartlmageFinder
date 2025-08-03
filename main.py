@@ -67,6 +67,16 @@ async def add_process_time_header(request: Request, call_next):
 # 全局异常处理
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
+    import traceback
+    error_traceback = traceback.format_exc()
+    print(f"全局异常处理器捕获异常:")
+    print(f"请求URL: {request.url}")
+    print(f"请求方法: {request.method}")
+    print(f"异常类型: {type(exc).__name__}")
+    print(f"异常信息: {str(exc)}")
+    print(f"异常堆栈:")
+    print(error_traceback)
+    
     return JSONResponse(
         status_code=500,
         content={
@@ -75,6 +85,7 @@ async def global_exception_handler(request: Request, exc: Exception):
             "error": {
                 "code": "SYSTEM_ERROR",
                 "message": f"系统错误: {str(exc)}",
+                "details": error_traceback if exc else None
             },
             "metadata": {}
         }
@@ -105,4 +116,4 @@ async def root(request: Request):
 
 if __name__ == "__main__":
     # 启动FastAPI应用
-    uvicorn.run("main:app", host=settings.get_config().HOST, port=settings.get_config().PORT, log_level="info",reload=False)
+    uvicorn.run("main:app", host=settings.get_config().HOST, port=settings.get_config().PORT, log_level="info",reload=True)

@@ -13,7 +13,7 @@ from backend.db_func.tags_func.tag_operations import update_tags
 
 router = APIRouter(prefix="/api/v1/tags", tags=["tags"])
 
-@router.get("/", response_model=ResponseModel)
+@router.get("/")
 async def get_tags(
     limit: int = Query(50, ge=1, le=200, description="返回标签数量"),
     conn = Depends(get_db)
@@ -31,7 +31,7 @@ async def get_tags(
     )
 
 
-@router.get("/search", response_model=ResponseModel)
+@router.get("/search")
 async def search_tags(
     query: str = Query(..., description="标签搜索关键字"),
     limit: int = Query(20, ge=1, le=100, description="返回标签数量"),
@@ -50,7 +50,7 @@ async def search_tags(
     )
 
 
-@router.get("/by-tag/{tag}", response_model=ResponseModel)
+@router.get("/by-tag/{tag}")
 async def get_images_by_tag_endpoint(
     tag: str = Path(..., description="标签名称"),
     page: int = Query(1, ge=1, description="页码"),
@@ -77,7 +77,7 @@ async def get_images_by_tag_endpoint(
     )
 
 
-@router.get("/by-multiple-tags", response_model=ResponseModel)
+@router.get("/by-multiple-tags")
 async def get_images_by_multiple_tags(
     tags: str = Query(..., description="多个标签，以逗号分隔"),
     mode: str = Query("or", description="匹配模式：'or'表示匹配任一标签，'and'表示匹配所有标签"),
@@ -128,7 +128,7 @@ async def get_images_by_multiple_tags(
     )
 
 
-@router.post("/{image_id}/update", response_model=ResponseModel)
+@router.post("/{image_id}/update")
 async def add_tags_to_image_endpoint(
     image_id: int = Path(..., description="图片ID"),
     tags: List[str] = Body(..., description="标签列表"),

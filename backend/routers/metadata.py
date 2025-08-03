@@ -14,7 +14,7 @@ router = APIRouter(prefix="/api/v1/metadata", tags=["metadata"])
 class MetadataUpdateRequest(BaseModel):
     metadata: Dict[str, Any] = Field(..., description="要更新的元数据字典")
 
-@router.put("/{image_id}/update", response_model=ResponseModel)
+@router.put("/{image_id}/update")
 async def update_image_metadata_endpoint(
     image_id: int = Path(..., description="图片ID", ge=1),
     payload: MetadataUpdateRequest = Body(..., description="元数据更新请求体"),

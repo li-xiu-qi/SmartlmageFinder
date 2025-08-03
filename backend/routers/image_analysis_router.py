@@ -21,7 +21,7 @@ router = APIRouter(prefix="/api/v1/ai", tags=["ai"])
 image_analyzer_instance, ai_feature_available = initialize_ai_services()
 
 
-@router.post("/analyze-upload-image", response_model=ResponseModel)
+@router.post("/analyze-upload-image")
 async def analyze_uploaded_image(
     file: UploadFile = File(..., description="要分析的图片文件"),
     detail: str = Form("low", description="细节级别: low或high"),
@@ -60,7 +60,7 @@ async def analyze_uploaded_image(
             http_code=500
         )
 
-@router.post("/analyze-image-id/{image_id}", response_model=ResponseModel)
+@router.post("/analyze-image-id/{image_id}")
 async def analyze_image(image_id: str = Path(..., description="图片的ID"),
                         detail: str = Form("low", description="细节级别: low或high"),
                         analyzer: ImageAnalysis = Depends(get_image_analyzer),  # 使用依赖注入
