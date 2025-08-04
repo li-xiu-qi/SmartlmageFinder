@@ -9,8 +9,7 @@ import {
   Row,
   Col,
   Card,
-  Tabs,
-  FloatButton
+  Tabs
 } from 'antd';
 import {
   SaveOutlined,
@@ -18,9 +17,6 @@ import {
   SettingOutlined,
   ExclamationCircleFilled,
   SyncOutlined,
-  QuestionCircleOutlined,
-  ApiOutlined,
-  DatabaseOutlined,
   HddOutlined
 } from '@ant-design/icons';
 import systemService from '@/services/systemService';
@@ -315,12 +311,6 @@ const SettingsPage: React.FC = () => {
             </Tabs>
           </Col>
         </Row>      </Spin>
-
-      <FloatButton.Group trigger="hover" type="primary" icon={<QuestionCircleOutlined />}>
-        <FloatButton icon={<SyncOutlined />} tooltip="刷新系统状态" onClick={refreshSystemStatus} />
-        <FloatButton icon={<ApiOutlined />} tooltip="API文档" href="/docs" target="_blank" />
-        <FloatButton icon={<DatabaseOutlined />} tooltip="数据库诊断" onClick={() => setActiveTab('status')} />
-      </FloatButton.Group>
 
       {/* 清除缓存确认对话框 */}      <RefModal
         title={
