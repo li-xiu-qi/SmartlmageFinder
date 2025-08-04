@@ -5,13 +5,13 @@ import { UploadFile, ImageMetadata, SelectableTag, UploadResult, UploadResultIte
 // 导入标签服务，用于获取标签数据
 import tagService from '@/services/tagService';
 // 导入AI服务，用于图片分析
-import aiService from '@/services/aiService';
+import imageAnalysisService from '@/services/imageAnalysisService';
 // 导入图片服务，用于图片上传
 import imageService from '@/services/imageService';
 // 导入图片数据模型
 import { ImageModel } from '@/types/models';
 // 导入AI分析详细程度枚举
-import { AnalysisDetailLevel, AIErrorCode } from '@/types/ai';
+import { AnalysisDetailLevel, ImageAnalysisErrorCode } from '@/types/imageAnalysis';
 import { ApiError } from '@/types/api';
 
 // 并发设置选项接口
@@ -96,8 +96,8 @@ export const analyzeImage = async (
   setAnalyzingFile(file);
   setIsAnalyzing(true);
   try {
-    // 调用AI服务上传并分析图片
-    const response = await aiService.analyzeUploadImage({
+    // 调用图片分析服务上传并分析图片
+    const response = await imageAnalysisService.analyzeUploadImage({
       file: file.originFileObj, // 使用原始 File 对象
       detail: AnalysisDetailLevel.HIGH, // 设置分析详细程度为高
     });
@@ -114,23 +114,23 @@ export const analyzeImage = async (
           tags: response.data.tags,         // 更新标签
         },
       }));
-      message.success(`图片 ${file.name} AI分析完成。`);
+      message.success(`图片 ${file.name} 分析完成。`);
     } else {
-      // 如果AI分析失败，显示错误提示
+      // 如果图片分析失败，显示错误提示
       const errorDetails = response.error?.details as Record<string, string> | undefined;
       let errorMessage = response.message || '未知错误';
-      if (response.error?.code === AIErrorCode.SERVICE_UNAVAILABLE) {
-        errorMessage = 'AI服务不可用，请检查配置。';
+      if (response.error?.code === ImageAnalysisErrorCode.SERVICE_UNAVAILABLE) {
+        errorMessage = '图片分析服务不可用，请检查配置。';
       } else if (errorDetails?.reason) {
         errorMessage += `: ${errorDetails.reason}`;
       }
-      message.error(`图片 ${file.name} AI分析失败: ${errorMessage}`);
+      message.error(`图片 ${file.name} 分析失败: ${errorMessage}`);
     }
   } catch (error) {
-    // 捕获AI分析过程中的异常，显示错误提示
-    const errorMessage = (error as ApiError)?.message || `图片 ${file.name} AI分析时发生未知错误`;
+    // 捕获图片分析过程中的异常，显示错误提示
+    const errorMessage = (error as ApiError)?.message || `图片 ${file.name} 分析时发生未知错误`;
     message.error(errorMessage);
-    console.error('AI分析错误:', error);
+    console.error('图片分析错误:', error);
   } finally {
     // 无论成功或失败，最后都重置分析状态
     setIsAnalyzing(false);
@@ -155,13 +155,13 @@ const analyzeSingleFile = async (
   }
 
   try {
-    // 调用AI服务上传并分析图片
-    const response = await aiService.analyzeUploadImage({
+    // 调用图片分析服务上传并分析图片
+    const response = await imageAnalysisService.analyzeUploadImage({
       file: file.originFileObj,
       detail: AnalysisDetailLevel.HIGH,
     });
 
-    // 如果AI分析成功且返回了数据
+    // 如果图片分析成功且返回了数据
     if (response.status === 'success' && response.data) {
       // 更新对应文件的元数据
       setImageMetadataMap(prev => ({
@@ -173,18 +173,18 @@ const analyzeSingleFile = async (
           tags: response.data.tags,
         },
       }));
-      message.success(`图片 ${file.name} AI分析完成。`);
+      message.success(`图片 ${file.name} 分析完成。`);
       return true;
     } else {
-      // 如果AI分析失败，显示错误提示
+      // 如果图片分析失败，显示错误提示
       const errorDetails = response.error?.details as Record<string, string> | undefined;
       let errorMessage = response.message || '未知错误';
-      if (response.error?.code === AIErrorCode.SERVICE_UNAVAILABLE) {
-        errorMessage = 'AI服务不可用，请检查配置。';
+      if (response.error?.code === ImageAnalysisErrorCode.SERVICE_UNAVAILABLE) {
+        errorMessage = '图片分析服务不可用，请检查配置。';
       } else if (errorDetails?.reason) {
         errorMessage += `: ${errorDetails.reason}`;
       }
-      message.error(`图片 ${file.name} AI分析失败: ${errorMessage}`);
+      message.error(`图片 ${file.name} 分析失败: ${errorMessage}`);
       return false;
     }
   } catch (error) {

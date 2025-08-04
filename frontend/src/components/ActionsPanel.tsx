@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Button, Divider, Select, Space, Popconfirm, message } from 'antd';
 import { 
   SearchOutlined, 
@@ -6,9 +6,9 @@ import {
   DeleteOutlined, 
   ExclamationCircleOutlined 
 } from '@ant-design/icons';
-import { aiService } from '@/services/api';
-import { ImageDetail } from '@/types';
-import { AnalysisDetailLevel } from '@/types/ai';
+import { imageAnalysisService } from '@/services/api';
+import { ImageModel } from '@/types/models';
+import { AnalysisDetailLevel } from '@/types/imageAnalysis';
 
 const { Option } = Select;
 
@@ -20,12 +20,12 @@ const searchTypeOptions = [
 ];
 
 interface ActionsPanelProps {
-  image: ImageDetail;
+  image: ImageModel;
   searchType: string;
   onSearchTypeChange: (value: string) => void;
   onFindSimilar: () => void;
   onDelete: (id: number) => void;
-  onUpdate: (image: ImageDetail) => void;
+  onUpdate: (image: ImageModel) => void;
   loading: boolean;
 }
 
@@ -46,7 +46,7 @@ const ActionsPanel: React.FC<ActionsPanelProps> = ({
     try {
       message.loading('正在分析图片并生成内容...', 0);
       
-      const response = await aiService.analyzeExistingImage(image.id, {
+      const response = await imageAnalysisService.analyzeExistingImage(image.id, {
         detail: AnalysisDetailLevel.HIGH,
       });
       

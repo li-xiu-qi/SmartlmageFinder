@@ -1,19 +1,19 @@
 import apiClient from './apiClient';
 import { 
   ImageAnalysisResponse, 
-  AIAnalysisClient, 
+  ImageAnalysisClient, 
   UploadImageAnalysisRequestParams, 
   ExistingImageAnalysisFormParams,
-  AIServiceConfig,
+  ImageAnalysisServiceConfig,
   AnalysisDetailLevel,
   ImageAnalysisData
-} from '@/types/ai';
+} from '@/types/imageAnalysis';
 
 /**
- * AI分析服务实现
- * 实现AIAnalysisClient接口
+ * 图片分析服务实现
+ * 实现ImageAnalysisClient接口
  */
-const aiService: AIAnalysisClient = {
+const imageAnalysisService: ImageAnalysisClient = {
   /**
    * 分析上传图片
    * POST /api/v1/ai/analyze-upload-image
@@ -31,7 +31,7 @@ const aiService: AIAnalysisClient = {
       headers: {
         'Content-Type': 'multipart/form-data'
       },
-      timeout: 90000  // AI分析需要更长时间，设置90秒超时
+      timeout: 90000  // 图片分析需要更长时间，设置90秒超时
     });
     
     return response as ImageAnalysisResponse;
@@ -61,12 +61,12 @@ const aiService: AIAnalysisClient = {
   },
   
   /**
-   * 获取AI服务配置状态
+   * 获取图片分析服务配置状态
    * GET /api/v1/ai/service-status
    * @returns 服务配置信息的 Promise
    */
-  getServiceStatus: async (): Promise<AIServiceConfig> => {
-    const response = await apiClient.getWithTransform<AIServiceConfig>('/ai/service-status');
+  getServiceStatus: async (): Promise<ImageAnalysisServiceConfig> => {
+    const response = await apiClient.getWithTransform<ImageAnalysisServiceConfig>('/ai/service-status');
     
     if (response.status === 'success' && response.data) {
       return response.data;
@@ -81,4 +81,4 @@ const aiService: AIAnalysisClient = {
   }
 };
 
-export default aiService;
+export default imageAnalysisService;

@@ -40,9 +40,9 @@ export interface UploadResult {
   failureCount: number;      // 失败上传的文件数量
 }
 
-// AI 分析服务的配置 (如果需要在此处引用)
-// import { AIServiceConfig } from '@/types/ai';
-// export type { AIServiceConfig };
+// 图片分析服务的配置 (如果需要在此处引用)
+// import { ImageAnalysisServiceConfig } from '@/types/imageAnalysis';
+// export type { ImageAnalysisServiceConfig };
 
 // 可用标签的格式，用于下拉选择
 // 定义了在标签选择器中展示的标签对象的结构

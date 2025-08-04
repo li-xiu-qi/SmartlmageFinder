@@ -4,7 +4,7 @@
  * 集中导出所有服务，方便在组件中一次性导入多个服务
  */
 
-import aiService from './aiService';
+import imageAnalysisService from './imageAnalysisService';
 import aiRecommendationService from './aiRecommendationService'; // 导入 AI推荐服务
 import imageService from './imageService';
 import searchService from './searchService';
@@ -13,7 +13,7 @@ import tagService from './tagService';
 import metadataService from './metadataService'; // 导入 metadataService
 
 export {
-  aiService,
+  imageAnalysisService,
   aiRecommendationService, // 导出 AI推荐服务
   imageService,
   searchService,
