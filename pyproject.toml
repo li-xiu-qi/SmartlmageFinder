@@ -10,8 +10,8 @@ dependencies = [
     # 运行服务需要
     "uvicorn[standard]",
     # 加载模型需要
-    "transformers==4.51.3",
-    "sentence-transformers==4.1.0",
+    "transformers>=4.55",
+    "sentence-transformers>=5.1.0",
     # scikit-learn for sentence-transformers evaluation metrics
     "scikit-learn",
     # colber模型需要
