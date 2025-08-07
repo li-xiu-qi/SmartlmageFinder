@@ -5,7 +5,7 @@ import { useSearchParams } from 'react-router-dom';
 import searchService from '@/services/searchService';
 import tagService from '@/services/tagService';
 import { SearchImageItem, TagInfo } from '@/types/models';
-import { TextSearchParams, ImageSearchParams } from '@/types/search';
+import { UnifiedTextSearchParams, UnifiedImageSearchParams } from '@/types/search';
 import TextSearchForm from './TextSearchForm';
 import ImageSearchForm from './ImageSearchForm';
 import SearchResults from './SearchResults';
@@ -58,12 +58,12 @@ const SearchPage: React.FC = () => {
   }, [searchParams]);
 
   // 执行文本搜索
-  const handleTextSearch = async (params: TextSearchParams) => {
+  const handleTextSearch = async (params: UnifiedTextSearchParams) => {
     setLoading(true);
     setSearchKeyword(params.q);
     
     try {
-      const response = await searchService.textSearch(params);
+      const response = await searchService.unifiedTextSearch(params);
         if (response.status === 'success' && response.data) {
         setResults(response.data);
         setTotal(response.metadata?.total_results || response.data.length);
@@ -93,12 +93,12 @@ const SearchPage: React.FC = () => {
   };
 
   // 执行图像搜索
-  const handleImageSearch = async (params: ImageSearchParams) => {
+  const handleImageSearch = async (params: UnifiedImageSearchParams) => {
     setLoading(true);
     setSearchKeyword('图像搜索');
     
     try {
-      const response = await searchService.imageSearch(params);
+      const response = await searchService.unifiedImageSearch(params);
         if (response.status === 'success' && response.data) {
         setResults(response.data);
         setTotal(response.metadata?.total_results || response.data.length);

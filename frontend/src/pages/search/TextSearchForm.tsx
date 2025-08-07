@@ -18,7 +18,7 @@ import {
 } from '@ant-design/icons';
 import { useSearchParams } from 'react-router-dom';
 import { TagInfo } from '@/types/models';
-import { TextSearchParams, VectorSearchTarget, SearchType } from '@/types/search';
+import { UnifiedTextSearchParams, VectorSearchTarget, SearchType } from '@/types/search';
 import { SEARCH_TYPES, VECTOR_SEARCH_TARGETS } from './constants';
 import { mapToApiSearchType, parseTagsFromParam, getVectorSearchTargets } from './utils';
 
@@ -26,7 +26,7 @@ const { RangePicker } = DatePicker;
 const { Option } = Select;
 
 interface TextSearchFormProps {
-  onSearch: (params: TextSearchParams) => void;
+  onSearch: (params: UnifiedTextSearchParams) => void;
   loading: boolean;
   tags: TagInfo[];
 }
@@ -71,7 +71,7 @@ const TextSearchForm: React.FC<TextSearchFormProps> = ({ onSearch, loading, tags
     // 执行文本搜索
   const handleSubmit = (values: Record<string, any>) => {
     // 构造搜索参数
-    const params: TextSearchParams = {
+    const params: UnifiedTextSearchParams = {
       q: values.q
     };    // 添加搜索类型
     params.search_type = mapToApiSearchType(values.search_type);

@@ -17,7 +17,7 @@ import {
 } from '@ant-design/icons';
 import type { UploadFile, RcFile } from 'antd/es/upload';
 import { TagInfo } from '@/types/models';
-import { ImageSearchParams, VectorSearchTarget } from '@/types/search';
+import { UnifiedImageSearchParams, VectorSearchTarget } from '@/types/search';
 import { IMAGE_SEARCH_TARGETS, UPLOAD_CONFIG } from './constants';
 import { getImagePreviewUrl, getVectorSearchTargets } from './utils';
 import ImageSearchUpload from './components/ImageSearchUpload';
@@ -26,7 +26,7 @@ const { RangePicker } = DatePicker;
 const { Option } = Select;
 
 interface ImageSearchFormProps {
-  onSearch: (params: ImageSearchParams) => void;
+  onSearch: (params: UnifiedImageSearchParams) => void;
   loading: boolean;
   tags: TagInfo[];
 }
@@ -63,7 +63,7 @@ const ImageSearchForm: React.FC<ImageSearchFormProps> = ({ onSearch, loading, ta
       const values = await form.validateFields();
       
       // 构造搜索参数
-      const params: ImageSearchParams = {
+      const params: UnifiedImageSearchParams = {
         file: searchFile
       };
 
