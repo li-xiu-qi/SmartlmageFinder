@@ -6,12 +6,12 @@ from typing import List, Optional
 import sqlite3
 
 # 导入数据库连接函数
-from ...db_func.core import get_db
+from ...db_func.core.connection import get_db
 # 导入响应模型
 from ...global_schemas import ResponseModel
 
 # 导入搜索功能模块
-from ...db_func.search_func.basic_search import get_filtered_image_ids
+from ...db_func.repositories.search import SearchRepository
 
 # 导入基础组件
 from .base import CommonFilterParams, get_query_filter_params, search_handler
@@ -38,8 +38,11 @@ async def filtered_search(
             http_code=400
         )
         
+    # 创建搜索 repository
+    search_repo = SearchRepository()
+    
     # 获取符合条件的图像ID
-    image_ids = get_filtered_image_ids(conn, filters)
+    image_ids = search_repo.get_filtered_image_ids(filters)
     
     if not image_ids:
         return ResponseModel.paginated_response(

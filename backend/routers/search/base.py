@@ -13,7 +13,7 @@ from functools import wraps
 from PIL import Image as PILImage
 
 # 导入数据库连接函数
-from ...db_func.core import get_db
+from ...db_func.core.connection import get_db
 # 导入响应模型
 from ...global_schemas import ResponseModel
 # 导入共用工具函数

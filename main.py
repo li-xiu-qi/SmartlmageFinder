@@ -9,8 +9,8 @@ import os
 
 from backend.routers import ai_router, images, search, tags, system, metadata, ai_recommendation_router # 导入配置
 from backend.config import settings  # 导入配置
-from backend.db_func.core import init_db  # 导入数据库初始化函数
-from backend.db_func.connection_pool import initialize_connection_pool  # 导入连接池初始化函数
+from backend.db_func.core.database import init_db  # 导入数据库初始化函数
+from backend.db_func.core.connection import initialize_connection_pool  # 导入连接池初始化函数
 
 # 初始化数据库
 init_db()
@@ -47,11 +47,11 @@ app.add_middleware(
 app.mount("/static/images", StaticFiles(directory=settings.get_config().UPLOAD_DIR), name="images")
 
 # 包含路由模块
-app.include_router(images.router)
+app.include_router(images.router, prefix="/api/v1/images", tags=["images"])
 app.include_router(search.router)
 app.include_router(tags.router)
 app.include_router(ai_router)
-app.include_router(ai_recommendation_router, prefix="/api/v1/ai")
+app.include_router(ai_recommendation_router)
 app.include_router(system.router)
 app.include_router(metadata.router)
 

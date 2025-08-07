@@ -7,7 +7,7 @@ from typing import Dict, Any, Optional
 import sqlite3
 
 from ..global_schemas import ResponseModel
-from ..db_func.core import get_db
+from ..db_func.core.connection import get_db
 
 # 导入重构后的功能模块
 from ..system_fun.cache_manager import get_complete_cache_stats, clear_all_caches

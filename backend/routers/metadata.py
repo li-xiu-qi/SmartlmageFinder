@@ -4,9 +4,9 @@ from pydantic import BaseModel, Field
 import sqlite3
 import json # 添加 json 导入
 
-from backend.db_func.core import get_db
-from backend.db_func.images_func.get import get_image_by_id
-from backend.db_func.metadata_func.update import update_image_metadata
+from backend.db_func.core.connection import get_db
+from backend.db_func.repositories.images import ImageRepository
+from backend.db_func.repositories.metadata import MetadataRepository
 from backend.global_schemas import ResponseModel
 
 router = APIRouter(prefix="/api/v1/metadata", tags=["metadata"])
@@ -25,7 +25,8 @@ async def update_image_metadata_endpoint(
     元数据将以JSON对象的形式存储。
     """
     # 检查图片是否存在
-    image = get_image_by_id(conn, image_id)
+    image_repo = ImageRepository()
+    image = image_repo.get_by_id(image_id)
     if not image:
         return ResponseModel.error(
             code="IMAGE_NOT_FOUND",
@@ -34,10 +35,11 @@ async def update_image_metadata_endpoint(
         )
 
     try:
-        success = update_image_metadata(conn, image_id, payload.metadata)
+        metadata_repo = MetadataRepository()
+        success = metadata_repo.update_metadata(image_id, payload.metadata)
         if success:
             # 成功更新后，获取最新的图片信息（包含更新后的元数据）
-            updated_image = get_image_by_id(conn, image_id)
+            updated_image = image_repo.get_by_id(image_id)
             return ResponseModel.success(
                 data=updated_image, # 返回更新后的完整图片信息
                 message="元数据更新成功"

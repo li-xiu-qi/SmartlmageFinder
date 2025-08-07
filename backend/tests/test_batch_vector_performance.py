@@ -14,7 +14,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from backend.utils.generate_vector import encode_text, encode_image
+from backend.ai_func.generate_vector import encode_text, encode_image
 from backend.db_func.vector_func.batch_vectors import BatchVectorManager
 from backend.db_func.vector_func.add_image_vectors import add_image_vector
 from backend.db_func.vector_func.add_text_vectors import add_title_vector, add_description_vector

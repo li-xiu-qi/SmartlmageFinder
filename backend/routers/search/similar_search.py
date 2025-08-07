@@ -3,12 +3,12 @@ from typing import List, Optional
 import sqlite3
 
 # 导入数据库连接函数
-from ...db_func.core import get_db
+from ...db_func.core.connection import get_db
 # 导入响应模型
 from ...global_schemas import ResponseModel
 
 # 导入搜索功能模块
-from ...db_func.search_func.search_by_image_id import search_by_image_id
+from ...db_func.repositories.search import SearchRepository
 
 # 导入基础组件
 from .base import CommonFilterParams, get_query_filter_params, search_handler
@@ -47,8 +47,10 @@ async def similar_image_search(
     # 然后在应用层进行切片。search_by_image_id 的 k 参数是获取 k 个最近邻。
     k_to_fetch = filter_params.offset + filter_params.limit
     
-    fetched_results = search_by_image_id(
-        conn=conn,
+    # 创建搜索 repository
+    search_repo = SearchRepository()
+    
+    fetched_results = search_repo.search_by_image_id(
         image_id=image_id,
         vector_type=vector_type, # Use the new single vector_type parameter
         k=k_to_fetch, # Fetch enough items for pagination

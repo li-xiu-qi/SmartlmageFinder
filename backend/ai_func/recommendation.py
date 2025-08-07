@@ -2,14 +2,11 @@
 AI智能推荐功能模块
 基于现有搜索结果，使用AI模型进行智能筛选和推荐
 """
-import sqlite3
 import json
 from typing import List, Dict, Any, Optional, Union
 from ..config import settings
-from ..db_func.search_func.text_search import search_by_text
-from ..db_func.search_func.multi_vector_search import text_search
-from ..db_func.search_func.search_by_image_id import search_by_image_id
-from .ai_config import is_ai_available
+from ..config.init_service import get_openai_client
+from ..db_func.repositories.search import SearchRepository
 
 
 class RecommendationService:
@@ -18,6 +15,35 @@ class RecommendationService:
     def __init__(self):
         # 初始化推荐服务
         pass
+    
+    def _chat_completion(self, messages: List[Dict[str, str]], temperature: float = 0.7, max_tokens: int = 1000) -> Dict[str, Any]:
+        """
+        简单的聊天完成函数，使用统一的 OpenAI 客户端
+        """
+        try:
+            client = get_openai_client()
+            if not client:
+                return {"success": False, "error": "OpenAI 客户端未配置"}
+            
+            config = settings.get_config()
+            model = config.CHAT_MODEL if config else "Qwen/Qwen3-8B"
+            
+            response = client.chat.completions.create(
+                model=model,
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens
+            )
+            
+            content = response.choices[0].message.content
+            return {
+                "success": True,
+                "content": content,
+                "usage": response.usage.model_dump() if response.usage else {}
+            }
+            
+        except Exception as e:
+            return {"success": False, "error": f"AI 调用失败: {str(e)}"}
     
     def rewrite_search_query(self, user_query: str) -> Dict[str, Any]:
         """
@@ -38,7 +64,8 @@ class RecommendationService:
         
         try:
             # 检查AI服务是否可用
-            if not is_ai_available():
+            client = get_openai_client()
+            if not client:
                 print("⚠️ AI服务不可用，使用原始查询")
                 result["error"] = "AI服务不可用"
                 return result
@@ -46,8 +73,6 @@ class RecommendationService:
             print(f"🤖 开始AI查询改写 - 原始查询: '{user_query}'")
             
             try:
-                from .ai_client import ai_client
-                
                 # 构建查询改写的提示词
                 rewrite_prompt = f"""
 请将用户的自然语言查询改写为更适合图片搜索的关键词。
@@ -77,7 +102,7 @@ class RecommendationService:
                 
                 # 调用AI进行查询改写
                 print(f"📤 发送AI改写请求...")
-                response = ai_client.chat_completion(
+                response = self._chat_completion(
                     messages=[{"role": "user", "content": rewrite_prompt}],
                     temperature=0.3,  # 使用较低的温度保证结果稳定
                     max_tokens=100
@@ -102,10 +127,6 @@ class RecommendationService:
                 result["error"] = "AI改写结果为空或无效"
                 return result
                 
-            except ImportError:
-                print("AI客户端模块导入失败")
-                result["error"] = "AI客户端不可用"
-                return result
             except Exception as e:
                 print(f"AI查询改写调用失败: {e}")
                 result["error"] = f"AI调用失败: {str(e)}"
@@ -118,7 +139,6 @@ class RecommendationService:
     
     def get_ai_recommendations(
         self,
-        conn: sqlite3.Connection,
         query: str,
         search_type: str = "vector",
         vector_targets: List[str] = None,
@@ -131,7 +151,6 @@ class RecommendationService:
         获取AI智能推荐结果
         
         Args:
-            conn: 数据库连接对象
             query: 搜索查询词
             search_type: 搜索类型 (text/vector/image)
             vector_targets: 向量搜索目标 ["title", "description", "image"]
@@ -161,7 +180,7 @@ class RecommendationService:
             
             # 2. 获取搜索结果
             search_results = self._get_search_results(
-                conn, effective_query, search_type, vector_targets, tags, image_id, limit * 2, filters
+                effective_query, search_type, vector_targets, tags, image_id, limit * 2, filters
             )
             
             print(f"🔍 搜索完成 - 找到 {len(search_results) if search_results else 0} 个结果")
@@ -205,7 +224,6 @@ class RecommendationService:
     
     def _get_search_results(
         self,
-        conn: sqlite3.Connection,
         query: str,
         search_type: str,
         vector_targets: List[str],
@@ -222,10 +240,9 @@ class RecommendationService:
         
         if search_type == "image" and image_id:
             # 基于图片ID的相似搜索
-            # 对于图片相似搜索，通常使用单一向量类型，取第一个目标类型
+            search_repo = SearchRepository()
             vector_type = vector_targets[0] if vector_targets else "image"
-            return search_by_image_id(
-                conn=conn,
+            return search_repo.search_by_image_id(
                 image_id=image_id,
                 vector_type=vector_type,
                 k=limit,
@@ -233,18 +250,21 @@ class RecommendationService:
                 exclude_self=True
             )
         elif search_type == "vector":
-            # 向量搜索
-            return text_search(
-                conn=conn,
-                text_query=query,
-                search_targets=vector_targets or ["title", "description", "image"],
-                filters=filters,
-                limit=limit
-            )
+            # 向量搜索 - 使用text_search需要先生成向量
+            search_repo = SearchRepository()
+            from ..ai_func.generate_vector import encode_text
+            query_vector = encode_text(query).tolist()
+            # 简化版本：只使用第一个向量类型
+            vector_type = vector_targets[0] if vector_targets else "title"
+            vector_results = search_repo.vector_search(vector_type, query_vector, limit)
+            if vector_results:
+                image_ids = [result[0] for result in vector_results]
+                return search_repo._get_images_by_ids(image_ids)
+            return []
         else:
             # 文本搜索
-            return search_by_text(
-                conn=conn,
+            search_repo = SearchRepository()
+            return search_repo.basic_search(
                 text=query,
                 search_type="both",
                 filters=filters,

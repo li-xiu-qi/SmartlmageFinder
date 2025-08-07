@@ -1,6 +1,6 @@
 from fastapi import UploadFile
 
-from backend.utils.image_analysis import ImageAnalysis
+from backend.ai_func.image_analysis import ImageAnalysis
 from backend.config import settings
 
 def analyze_upload_image(image_analyzer_instance:ImageAnalysis,

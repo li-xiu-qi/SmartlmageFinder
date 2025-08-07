@@ -12,8 +12,8 @@ current_dir = Path(__file__).parent
 project_root = current_dir.parent.parent
 sys.path.insert(0, str(project_root))
 
-from backend.db_func.platform_detector import PlatformDetector, auto_setup_driver
-from backend.db_func.extension_loader import setup_connection
+from backend.config.platform_detector import PlatformDetector, auto_setup_driver
+from backend.db_func.core.extensions.loader import setup_connection
 from backend.config import settings
 
 

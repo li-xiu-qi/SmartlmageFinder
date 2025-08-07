@@ -19,7 +19,7 @@ import {
 import { useSearchParams } from 'react-router-dom';
 import { TagInfo } from '@/types/models';
 import { TextSearchParams, VectorSearchTarget, SearchType } from '@/types/search';
-import { TEXT_SEARCH_TYPES, ADVANCED_SEARCH_TYPES, VECTOR_SEARCH_TARGETS } from './constants';
+import { SEARCH_TYPES, VECTOR_SEARCH_TARGETS } from './constants';
 import { mapToApiSearchType, parseTagsFromParam, getVectorSearchTargets } from './utils';
 
 const { RangePicker } = DatePicker;
@@ -42,7 +42,7 @@ const TextSearchForm: React.FC<TextSearchFormProps> = ({ onSearch, loading, tags
     // 初始化表单值
   useEffect(() => {
     const query = searchParams.get('q');
-    const searchType = searchParams.get('search_type') || 'both';
+    const searchType = searchParams.get('search_type') || 'vector';
     const tagsParam = searchParams.get('tags');
     const vectorTargets = searchParams.get('vector_targets')?.split(',');
     
@@ -60,6 +60,9 @@ const TextSearchForm: React.FC<TextSearchFormProps> = ({ onSearch, loading, tags
     // 如果有向量搜索目标参数，设置
     if (vectorTargets && vectorTargets.length > 0) {
       initialValues.vector_targets = vectorTargets;
+    } else if (searchType === 'vector') {
+      // 如果是向量搜索但没有指定目标，使用默认值
+      initialValues.vector_targets = [VectorSearchTarget.TITLE, VectorSearchTarget.DESCRIPTION, VectorSearchTarget.IMAGE];
     }
 
     // 设置表单初始值
@@ -105,8 +108,8 @@ const TextSearchForm: React.FC<TextSearchFormProps> = ({ onSearch, loading, tags
         onFinish={handleSubmit}
         layout="vertical"
         initialValues={{
-          search_type: 'both',
-          vector_targets: [VectorSearchTarget.TITLE, VectorSearchTarget.DESCRIPTION]
+          search_type: 'vector',
+          vector_targets: [VectorSearchTarget.TITLE, VectorSearchTarget.DESCRIPTION, VectorSearchTarget.IMAGE]
         }}
       >
         <Row gutter={16}>
@@ -125,16 +128,9 @@ const TextSearchForm: React.FC<TextSearchFormProps> = ({ onSearch, loading, tags
           </Col>          <Col xs={24} md={6}>
             <Form.Item name="search_type">
               <Select size="large">
-                <Select.OptGroup label="基础搜索">
-                  {TEXT_SEARCH_TYPES.map(type => (
-                    <Option key={type.value} value={type.value}>{type.label}</Option>
-                  ))}
-                </Select.OptGroup>
-                <Select.OptGroup label="高级搜索">
-                  {ADVANCED_SEARCH_TYPES.map(type => (
-                    <Option key={type.value} value={type.value}>{type.label}</Option>
-                  ))}
-                </Select.OptGroup>
+                {SEARCH_TYPES.map(type => (
+                  <Option key={type.value} value={type.value}>{type.label}</Option>
+                ))}
               </Select>
             </Form.Item>
           </Col>

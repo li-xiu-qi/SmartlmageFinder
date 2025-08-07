@@ -3,12 +3,10 @@ from typing import List, Optional, Dict, Set
 from pydantic import BaseModel, Field
 import json
 
-from backend import db_func
-from backend.db_func.core import get_db
-from backend.db_func.images_func.get import get_images_by_tag, get_images_by_ids, get_image_by_id
-from backend.db_func.tags_func.get_tags import get_tags_count, get_all_tags
+from backend.db_func.core.connection import get_db
+from backend.db_func.repositories.images import ImageRepository
+from backend.db_func.repositories.tags import TagRepository
 from backend.global_schemas import ResponseModel
-from backend.db_func.tags_func.tag_operations import update_tags
 
 
 router = APIRouter(prefix="/api/v1/tags", tags=["tags"])
@@ -19,7 +17,8 @@ async def get_tags(
     conn = Depends(get_db)
 ):
     """获取系统中所有已使用标签及其使用频率"""
-    tag_counts = get_tags_count(conn)
+    tag_repo = TagRepository()
+    tag_counts = tag_repo.get_tags_count()
     sorted_tags = sorted(tag_counts.items(), key=lambda x: x[1], reverse=True)
     limited_tags = sorted_tags[:limit]
     result = [{"tag": tag, "count": count} for tag, count in limited_tags]
@@ -38,7 +37,8 @@ async def search_tags(
     conn = Depends(get_db)
 ):
     """搜索符合关键字的标签，用于自动完成功能"""
-    all_tags = get_all_tags(conn)
+    tag_repo = TagRepository()
+    all_tags = tag_repo.get_all_tags()
     query_lower = query.lower()
     matched_tags = [tag for tag in all_tags if query_lower in tag.lower()]
     limited_tags = matched_tags[:limit]
@@ -58,14 +58,16 @@ async def get_images_by_tag_endpoint(
     conn = Depends(get_db)
 ):
     """根据标签获取图片列表"""
-    image_ids = get_images_by_tag(conn, tag)
+    tag_repo = TagRepository()
+    image_ids = tag_repo.get_images_by_tag(tag)
     total = len(image_ids)
     
     start_idx = (page - 1) * page_size
     end_idx = start_idx + page_size
     page_image_ids = image_ids[start_idx:end_idx]
     
-    images = get_images_by_ids(page_image_ids, conn)
+    image_repo = ImageRepository()
+    images = image_repo.get_by_ids(page_image_ids)
     
     return ResponseModel.paginated_response(
         data=images,
@@ -94,10 +96,11 @@ async def get_images_by_multiple_tags(
             http_code=400
         )
     
+    tag_repo = TagRepository()
     all_matching_ids: Set[int] = set()
     
     for tag in tag_list:
-        tag_image_ids = set(get_images_by_tag(conn, tag))
+        tag_image_ids = set(tag_repo.get_images_by_tag(tag))
         
         if mode.lower() == "or":
             all_matching_ids.update(tag_image_ids)
@@ -114,7 +117,8 @@ async def get_images_by_multiple_tags(
     end_idx = start_idx + page_size
     page_image_ids = image_ids[start_idx:end_idx]
     
-    images = get_images_by_ids(page_image_ids, conn)
+    image_repo = ImageRepository()
+    images = image_repo.get_by_ids(page_image_ids)
     return ResponseModel.paginated_response(
         data=images,
         page=page,
@@ -136,7 +140,8 @@ async def add_tags_to_image_endpoint(
 ):
     """为图片添加标签"""
     # 检查图片是否存在
-    image = get_image_by_id(conn, image_id)
+    image_repo = ImageRepository()
+    image = image_repo.get_by_id(image_id)
     if not image:
         return ResponseModel.error(
             code="NOT_FOUND",
@@ -152,7 +157,8 @@ async def add_tags_to_image_endpoint(
             http_code=400
         )
     # 添加标签
-    tags = update_tags(conn, image_id, tags)
+    tag_repo = TagRepository()
+    tags = tag_repo.update_tags(image_id, tags)
     
     return ResponseModel.success(
         data={"tags": tags},

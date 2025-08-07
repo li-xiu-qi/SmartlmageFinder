@@ -38,10 +38,6 @@ dependencies = [
     "jinja2",
     # notebook
     "notebook",
-    # cpu版本 torch
-    "torch==2.7",
-    "torchvision",
-    "torchaudio",
     # 大模型api调用
     "openai",
     # 环境变量

@@ -3,11 +3,10 @@ from typing import List, Optional, Literal
 import sqlite3
 
 # 导入数据库连接函数
-from ...db_func.core import get_db
+from ...db_func.core.connection import get_db
 
 # 导入搜索功能模块
-from ...db_func.search_func.text_search import search_by_text
-from ...db_func.search_func.multi_vector_search import text_search
+from ...db_func.repositories.search import SearchRepository
 
 # 导入基础组件
 from .base import CommonFilterParams, get_query_filter_params, search_handler
@@ -32,10 +31,12 @@ async def text_search_api(
     # 构建过滤条件
     filters = filter_params.build_filters()
     
+    # 创建搜索 repository
+    search_repo = SearchRepository()
+    
     if search_type in ["title", "description", "both"]:            
         # 使用文本匹配搜索
-        results = search_by_text(
-            conn=conn,
+        results = search_repo.basic_search(
             text=q,
             search_type=search_type,
             filters=filters,
@@ -46,10 +47,10 @@ async def text_search_api(
         return results
         
     elif search_type == "vector":
-        # 使用向量搜索
-        results = text_search(
-            conn=conn,
-            text_query=q,
+        # 使用向量搜索 - 统一的搜索方法
+        results = search_repo.unified_search(
+            query_type="text",
+            query_content=q,
             search_targets=vector_targets,
             filters=filters,
             limit=filter_params.limit,

@@ -2,10 +2,10 @@ from fastapi import APIRouter, UploadFile, File, Form, Depends
 from typing import List, Optional
 
 # 导入数据库连接函数
-from ...db_func.core import get_db
+from ...db_func.core.connection import get_db
 
 # 导入搜索功能模块
-from ...db_func.search_func.multi_vector_search import image_search
+from ...db_func.repositories.search import SearchRepository
 
 # 导入基础组件
 from .base import (
@@ -32,11 +32,14 @@ async def image_search_api(
     # 处理上传图片
     temp_file_path = process_image_upload(file)
     
+    # 创建搜索 repository
+    search_repo = SearchRepository()
+    
     try:
-        # 使用multi_vector_search模块中的image_search函数
-        results = image_search(
-            conn=conn,
-            image_path=temp_file_path,
+        # 使用统一的搜索方法
+        results = search_repo.unified_search(
+            query_type="image",
+            query_content=temp_file_path,
             search_targets=search_targets,
             filters=filters,
             limit=filter_params.limit,

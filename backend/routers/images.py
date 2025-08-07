@@ -1,68 +1,76 @@
-from fastapi import (
-    APIRouter,
-    Query,
-    Path,
-    UploadFile,
-    File,
-    Form,
-    Depends,
-)
-import sqlite3
-from pydantic import BaseModel
-from typing import List, Optional, Dict, Any
+"""
+图片相关的路由
+"""
 import os
+import json
 import shutil
 from datetime import datetime
-import json
-from PIL import Image as PILImage
-import uuid
+from typing import List, Optional
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends, Query
+from pydantic import BaseModel
 
-# 导入数据库和数据模型
-from ..db_func.core import get_db
-from ..db_func.images_func.create import batch_add_images_to_database
-from ..db_func.images_func.get import get_image_by_id, get_images
-from ..db_func.images_func.update import update_image as db_update_image
-from ..db_func.images_func.delete import delete_image as db_delete_image, batch_delete_images as db_batch_delete_images
+# 导入数据库连接函数
+from ..db_func.core.connection import get_db
+# 导入响应模型
 from ..global_schemas import ResponseModel
+# 导入图片相关的数据库操作
+from ..db_func.repositories.images import ImageRepository
 
-# 添加配置导入
-from ..config import settings
+router = APIRouter()
 
-
-# 创建路由器
-router = APIRouter(prefix="/api/v1/images", tags=["images"])
-
+# 请求模型
+class ImageUpdateRequest(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
 
 class BatchDeleteRequest(BaseModel):
     image_ids: List[int]
 
+class BatchUpdateRequest(BaseModel):
+    image_ids: List[int]
+    updates: dict
 
 @router.get("/")
-async def list_images(
+async def get_images_list(
     page: int = Query(1, ge=1, description="页码"),
     page_size: int = Query(20, ge=1, le=100, description="每页数量"),
     sort_by: str = Query("created_at", description="排序字段"),
-    order: str = Query("desc", description="排序方向"),
-    start_date: Optional[str] = Query(None, description="开始日期过滤"),
-    end_date: Optional[str] = Query(None, description="结束日期过滤"),
-    tags: Optional[List[str]] = Query(None, alias="tags[]", description="标签过滤，可以是数组形式"),
-    db: sqlite3.Connection = Depends(get_db),
+    order: str = Query("desc", description="排序方向 (asc/desc)"),
+    filename: Optional[str] = Query(None, description="文件名过滤"),
+    title: Optional[str] = Query(None, description="标题过滤"),
+    description: Optional[str] = Query(None, description="描述过滤"),
+    tags: Optional[str] = Query(None, description="标签过滤 (逗号分隔)"),
+    start_date: Optional[str] = Query(None, description="开始日期 (YYYY-MM-DD)"),
+    end_date: Optional[str] = Query(None, description="结束日期 (YYYY-MM-DD)"),
+    conn = Depends(get_db)
 ):
-    """获取图片列表，支持分页和各种过滤条件"""
+    """获取图片列表"""
     try:
-        # 获取图片列表和总数
-        images, total_count = get_images(
+        # 构建过滤条件
+        filters = {}
+        if filename:
+            filters['filename'] = filename
+        if title:
+            filters['title'] = title
+        if description:
+            filters['description'] = description
+        if start_date:
+            filters['start_date'] = start_date
+        if end_date:
+            filters['end_date'] = end_date
+        if tags:
+            # 将逗号分隔的标签字符串转换为列表
+            filters['tags'] = [tag.strip() for tag in tags.split(',') if tag.strip()]
+        
+        image_repo = ImageRepository()
+        images, total_count = image_repo.get_list(
             page=page,
             page_size=page_size,
             sort_by=sort_by,
             order=order,
-            start_date=start_date,
-            end_date=end_date,
-            tags=tags,
-            conn=db
+            filters=filters
         )
         
-        # 使用分页响应
         return ResponseModel.paginated_response(
             data=images,
             page=page,
@@ -72,24 +80,24 @@ async def list_images(
         )
     except Exception as e:
         return ResponseModel.error(
-            code="IMAGE_LIST_ERROR",
-            message=f"获取图片列表失败: {str(e)}",
-            http_code=500
+            code="FETCH_IMAGES_ERROR",
+            message=f"获取图片列表失败: {str(e)}"
         )
 
-
 @router.get("/{image_id}")
-async def get_image(
-    image_id: int = Path(..., description="图片ID"),
-    db: sqlite3.Connection = Depends(get_db),
+async def get_image_by_id(
+    image_id: int,
+    conn = Depends(get_db)
 ):
-    """通过ID获取单张图片的详细信息"""
+    """根据ID获取单个图片信息"""
     try:
-        image = get_image_by_id(db, image_id)
+        image_repo = ImageRepository()
+        image = image_repo.get_by_id(image_id)
+        
         if not image:
             return ResponseModel.error(
                 code="IMAGE_NOT_FOUND",
-                message=f"找不到ID为 {image_id} 的图片",
+                message="图片不存在",
                 http_code=404
             )
         
@@ -99,331 +107,298 @@ async def get_image(
         )
     except Exception as e:
         return ResponseModel.error(
-            code="IMAGE_GET_ERROR",
-            message=f"获取图片信息失败: {str(e)}",
-            http_code=500
+            code="FETCH_IMAGE_ERROR",
+            message=f"获取图片信息失败: {str(e)}"
         )
-
 
 @router.post("/upload")
 async def upload_images(
-    files: List[UploadFile] = File(..., description="上传的图片文件"),
-    title: Optional[str] = Form(None, description="图片标题"),
-    description: Optional[str] = Form(None, description="图片描述"),
-    tags: Optional[str] = Form(None, description="图片标签，JSON数组字符串"),
-    metadata: Optional[str] = Form(None, description="图片元数据，JSON字符串"),
-    db: sqlite3.Connection = Depends(get_db),
+    files: List[UploadFile] = File(...),
+    title: Optional[str] = Form(None),
+    description: Optional[str] = Form(None),
+    auto_analyze: bool = Form(True),
+    conn = Depends(get_db)
 ):
-    """上传图片文件并存储到数据库，支持单个或批量上传"""
+    """上传图片"""
     try:
-        # 获取配置
-        config = settings.get_config()
-        if not config:
-            return ResponseModel.error(
-                code="CONFIG_ERROR",
-                message="系统配置未正确加载",
-                http_code=500
-            )
+        from ..config.config import Settings
+        from ..ai_func.analyze_image_id import analyze_image_id
+        from ..ai_func.image_analysis import ImageAnalysis
         
-        upload_dir = config.UPLOAD_DIR
+        # 获取配置
+        settings = Settings()
+        upload_dir = settings.get_config().UPLOAD_DIR
         
         # 确保上传目录存在
         os.makedirs(upload_dir, exist_ok=True)
         
-        # 解析可选参数
-        tag_list = []
-        if tags:
-            try:
-                tag_list = json.loads(tags) if isinstance(tags, str) else tags
-            except json.JSONDecodeError:
-                tag_list = [tag.strip() for tag in tags.split(',') if tag.strip()]
+        uploaded_images = []
         
-        meta_dict = {}
-        if metadata:
-            try:
-                meta_dict = json.loads(metadata) if isinstance(metadata, str) else metadata
-            except json.JSONDecodeError:
-                meta_dict = {}
+        for file in files:
+            # 验证文件类型
+            if not file.content_type or not file.content_type.startswith('image/'):
+                continue
+            
+            # 生成唯一文件名
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+            filename = f"{timestamp}_{file.filename}"
+            filepath = os.path.join(upload_dir, filename)
+            
+            # 保存文件
+            with open(filepath, "wb") as buffer:
+                shutil.copyfileobj(file.file, buffer)
+            
+            # 获取文件信息
+            file_stat = os.stat(filepath)
+            file_size = file_stat.st_size
+            
+            # 基础图片信息
+            image_data = {
+                'filename': file.filename,
+                'filepath': filepath,
+                'title': title or file.filename,
+                'description': description or '',
+                'file_size': file_size,
+                'file_type': file.content_type,
+                'width': 0,  # 后续可以通过PIL获取
+                'height': 0,
+                'created_at': datetime.now(),
+                'updated_at': datetime.now(),
+                'metadata': '{}',
+                'tags': '[]'
+            }
+            
+            uploaded_images.append(image_data)
         
-        # 批量上传处理
-        return await _upload_images(files, title, description, tag_list, meta_dict, upload_dir, db)
+        if not uploaded_images:
+            return ResponseModel.error(
+                code="NO_VALID_IMAGES",
+                message="没有有效的图片文件"
+            )
+        
+        # 批量插入数据库
+        image_repo = ImageRepository()
+        image_ids = image_repo.batch_create(uploaded_images)
+        
+        # 获取插入后的完整信息
+        result_images = []
+        for image_id in image_ids:
+            image = image_repo.get_by_id(image_id)
+            if image:
+                result_images.append(image)
+        
+        # 如果启用自动分析，异步处理
+        if auto_analyze:
+            # 创建图像分析器实例
+            image_analyzer = ImageAnalysis()
+            for image_id in image_ids:
+                try:
+                    analyze_image_id(image_analyzer, image_id)
+                except Exception as e:
+                    print(f"自动分析图片 {image_id} 失败: {str(e)}")
+        
+        return ResponseModel.success(
+            data=result_images,
+            message=f"成功上传 {len(result_images)} 张图片"
+        )
         
     except Exception as e:
         return ResponseModel.error(
             code="UPLOAD_ERROR",
-            message=f"上传图片失败: {str(e)}",
-            http_code=500
+            message=f"上传失败: {str(e)}"
         )
 
-
-async def _upload_images(
-    files: List[UploadFile], 
-    title: Optional[str], 
-    description: Optional[str],
-    tag_list: List[str], 
-    meta_dict: Dict[str, Any],
-    upload_dir: str,
-    db: sqlite3.Connection
-):
-    """批量上传图片处理函数（兼容单个文件）"""
-    print(f"批量处理模式，共 {len(files)} 个文件")
-    
-    # 第一步：批量保存文件并收集信息
-    images_data = []
-    uploaded_files = []
-    
-    for file in files:
-        try:
-            # 生成唯一文件名
-            file_extension = os.path.splitext(file.filename)[1].lower()
-            unique_filename = f"{uuid.uuid4()}{file_extension}"
-            file_path = os.path.join(upload_dir, unique_filename)
-            
-            # 保存文件
-            with open(file_path, "wb") as buffer:
-                shutil.copyfileobj(file.file, buffer)
-            uploaded_files.append(file_path)
-            
-            # 获取图片信息
-            with PILImage.open(file_path) as img:
-                width, height = img.size
-            
-            file_size = os.path.getsize(file_path)
-            
-            # 准备数据库记录
-            image_data = {
-                'filename': file.filename,
-                'filepath': file_path,
-                'title': title or os.path.splitext(file.filename)[0],
-                'description': description or '',
-                'file_size': file_size,
-                'file_type': file.content_type,
-                'width': width,
-                'height': height,
-                'tags': tag_list,
-                'metadata': meta_dict
-            }
-            images_data.append(image_data)
-            
-        except Exception as e:
-            # 如果处理单个文件失败，清理已上传的文件
-            for uploaded_file in uploaded_files:
-                try:
-                    os.remove(uploaded_file)
-                except:
-                    pass
-            raise Exception(f"处理文件 {file.filename} 失败: {str(e)}")
-    
-    # 第二步：批量添加到数据库（包括批量生成向量）
-    try:
-        image_ids = batch_add_images_to_database(db, images_data)
-        
-        # 第三步：获取所有图像信息返回
-        uploaded_images = []
-        for image_id in image_ids:
-            image = get_image_by_id(db, image_id)
-            if image:
-                uploaded_images.append(image)
-        
-        return ResponseModel.success(
-            data=uploaded_images,
-            message=f"上传成功，共处理 {len(uploaded_images)} 个文件"
-        )
-        
-    except Exception as e:
-        # 数据库操作失败，清理已上传的文件
-        for uploaded_file in uploaded_files:
-            try:
-                os.remove(uploaded_file)
-            except:
-                pass
-        raise e
-
-
-@router.patch("/{image_id}")
+@router.put("/{image_id}")
 async def update_image(
-    image_id: int = Path(..., description="图片ID"),
-    title: Optional[str] = Form(None, description="图片标题"),
-    description: Optional[str] = Form(None, description="图片描述"),
-    tags: Optional[str] = Form(None, description="图片标签，JSON数组字符串"),
-    metadata: Optional[str] = Form(None, description="图片元数据，JSON字符串"),
-    db: sqlite3.Connection = Depends(get_db),
+    image_id: int,
+    request: ImageUpdateRequest,
+    conn = Depends(get_db)
 ):
     """更新图片信息"""
     try:
+        image_repo = ImageRepository()
+        
         # 检查图片是否存在
-        existing_image = get_image_by_id(db, image_id)
+        existing_image = image_repo.get_by_id(image_id)
         if not existing_image:
             return ResponseModel.error(
                 code="IMAGE_NOT_FOUND",
-                message=f"找不到ID为 {image_id} 的图片",
+                message="图片不存在",
                 http_code=404
-            ).to_dict()
+            )
         
-        # 解析标签
-        tag_list = None
-        if tags is not None:
-            try:
-                tag_list = json.loads(tags) if isinstance(tags, str) else tags
-            except json.JSONDecodeError:
-                tag_list = [tag.strip() for tag in tags.split(',') if tag.strip()]
-        
-        # 解析元数据
-        meta_dict = None
-        if metadata is not None:
-            try:
-                meta_dict = json.loads(metadata) if isinstance(metadata, str) else metadata
-            except json.JSONDecodeError:
-                meta_dict = {}
-        
-        # 更新图片信息
+        # 准备更新数据
         update_data = {}
-        if title is not None:
-            update_data['title'] = title
-        if description is not None:
-            update_data['description'] = description
-        if tag_list is not None:
-            update_data['tags'] = tag_list
-        if meta_dict is not None:
-            update_data['metadata'] = meta_dict
-            
-        success = db_update_image(
-            conn=db,
-            image_id=image_id,
-            update_data=update_data
-        )
+        if request.title is not None:
+            update_data['title'] = request.title
+        if request.description is not None:
+            update_data['description'] = request.description
+        
+        if not update_data:
+            return ResponseModel.error(
+                code="NO_UPDATE_DATA",
+                message="没有提供更新数据"
+            )
+        
+        # 添加更新时间
+        update_data['updated_at'] = datetime.now()
+        
+        # 执行更新
+        success = image_repo.update(image_id, update_data)
         
         if success:
-            # 获取更新后的图片信息
-            updated_image = get_image_by_id(db, image_id)
+            # 获取更新后的数据
+            updated_image = image_repo.get_by_id(image_id)
             return ResponseModel.success(
                 data=updated_image,
                 message="图片信息更新成功"
-            ).to_dict()
+            )
         else:
             return ResponseModel.error(
-                code="UPDATE_ERROR",
-                message="更新图片信息失败",
-                http_code=500
-            ).to_dict()
+                code="UPDATE_FAILED",
+                message="更新失败"
+            )
             
     except Exception as e:
         return ResponseModel.error(
             code="UPDATE_ERROR",
-            message=f"更新图片信息失败: {str(e)}",
-            http_code=500
-        ).to_dict()
-
+            message=f"更新图片信息失败: {str(e)}"
+        )
 
 @router.delete("/batch")
 async def batch_delete_images(
     request: BatchDeleteRequest,
-    db: sqlite3.Connection = Depends(get_db),
+    conn = Depends(get_db)
 ):
-    """批量删除图片及其关联数据"""
+    """批量删除图片"""
     try:
         if not request.image_ids:
             return ResponseModel.error(
-                code="INVALID_REQUEST",
-                message="图片ID列表不能为空",
-                http_code=400
+                code="NO_IMAGE_IDS",
+                message="没有提供要删除的图片ID"
             )
         
-        # 先获取所有图片信息，以便删除文件
-        image_files_to_delete = []
+        image_repo = ImageRepository()
+        
+        # 获取要删除的图片信息（用于删除文件）
+        images_to_delete = []
         for image_id in request.image_ids:
-            try:
-                image = get_image_by_id(db, image_id)
-                if image and image.get('filepath'):
-                    image_files_to_delete.append((image_id, image['filepath']))
-            except Exception as e:
-                print(f"获取图片 {image_id} 信息失败: {e}")
+            image = image_repo.get_by_id(image_id)
+            if image:
+                images_to_delete.append(image)
         
-        # 使用批量删除函数
-        result = db_batch_delete_images(db, request.image_ids)
+        # 从数据库删除
+        result = image_repo.batch_delete(request.image_ids)
         
-        # 删除成功的图片文件
+        # 删除实际文件
         deleted_files = []
-        for image_id, filepath in image_files_to_delete:
-            if image_id not in result['failed_ids'] and os.path.exists(filepath):
-                try:
-                    os.remove(filepath)
-                    deleted_files.append(filepath)
-                except Exception as file_e:
-                    print(f"删除文件 {filepath} 失败: {file_e}")
-        
-        # 构建响应消息
-        message = f"批量删除完成，成功删除 {result['success_count']} 张图片"
-        if result['failed_count'] > 0:
-            message += f"，失败 {result['failed_count']} 张图片"
-        
-        # 构建响应数据，与前端期望的类型匹配
-        response_data = {
-            "success_count": result['success_count'],
-            "failed_count": result['failed_count'],
-            "total_count": result['total_count'],
-            "failed_ids": result['failed_ids'],
-            "deleted_files": deleted_files
-        }
-        
-        # 如果有错误详情，也包含进去
-        if result.get('errors'):
-            response_data['errors'] = result['errors']
+        for image in images_to_delete:
+            try:
+                if os.path.exists(image['filepath']):
+                    os.remove(image['filepath'])
+                    deleted_files.append(image['filepath'])
+            except Exception as e:
+                print(f"删除文件失败 {image['filepath']}: {str(e)}")
         
         return ResponseModel.success(
-            data=response_data,
-            message=message
+            data={
+                "deleted_count": result.get('deleted_count', 0),
+                "deleted_files": deleted_files
+            },
+            message=f"成功删除 {result.get('deleted_count', 0)} 张图片"
         )
         
     except Exception as e:
         return ResponseModel.error(
             code="BATCH_DELETE_ERROR",
-            message=f"批量删除图片失败: {str(e)}",
-            http_code=500
+            message=f"批量删除失败: {str(e)}"
         )
-
 
 @router.delete("/{image_id}")
 async def delete_image(
-    image_id: int = Path(..., description="图片ID"),
-    db: sqlite3.Connection = Depends(get_db),
+    image_id: int,
+    conn = Depends(get_db)
 ):
-    """删除单张图片及其关联数据"""
+    """删除单张图片"""
     try:
-        # 先获取图片信息，以便删除文件
-        image = get_image_by_id(db, image_id)
+        image_repo = ImageRepository()
         
+        # 获取图片信息
+        image = image_repo.get_by_id(image_id)
         if not image:
             return ResponseModel.error(
                 code="IMAGE_NOT_FOUND",
-                message=f"找不到ID为 {image_id} 的图片",
+                message="图片不存在",
                 http_code=404
             )
         
-        # 从数据库删除图片记录
-        success = db_delete_image(db, image_id)
+        # 从数据库删除
+        success = image_repo.delete(image_id)
         
-        if not success:
+        if success:
+            # 删除实际文件
+            try:
+                if os.path.exists(image['filepath']):
+                    os.remove(image['filepath'])
+            except Exception as e:
+                print(f"删除文件失败 {image['filepath']}: {str(e)}")
+            
+            return ResponseModel.success(
+                message="图片删除成功"
+            )
+        else:
             return ResponseModel.error(
-                code="DELETE_ERROR",
-                message="删除图片记录失败",
-                http_code=500
+                code="DELETE_FAILED",
+                message="删除失败"
+            )
+            
+    except Exception as e:
+        return ResponseModel.error(
+            code="DELETE_ERROR",
+            message=f"删除图片失败: {str(e)}"
+        )
+
+@router.post("/batch-update")
+async def batch_update_images(
+    request: BatchUpdateRequest,
+    conn = Depends(get_db)
+):
+    """批量更新图片"""
+    try:
+        if not request.image_ids:
+            return ResponseModel.error(
+                code="NO_IMAGE_IDS",
+                message="没有提供要更新的图片ID"
             )
         
-        # 删除物理文件
-        try:
-            if os.path.exists(image.get('filepath', '')):
-                os.remove(image['filepath'])
-                print(f"已删除文件: {image['filepath']}")
-        except Exception as file_e:
-            print(f"删除文件失败: {file_e}")
+        if not request.updates:
+            return ResponseModel.error(
+                code="NO_UPDATE_DATA",
+                message="没有提供更新数据"
+            )
+        
+        image_repo = ImageRepository()
+        
+        # 添加更新时间
+        update_data = request.updates.copy()
+        update_data['updated_at'] = datetime.now()
+        
+        # 执行批量更新
+        success_count = 0
+        for image_id in request.image_ids:
+            if image_repo.update(image_id, update_data):
+                success_count += 1
         
         return ResponseModel.success(
-            data=None,
-            message="图片删除成功"
+            data={
+                "updated_count": success_count,
+                "total_count": len(request.image_ids)
+            },
+            message=f"成功更新 {success_count} 张图片"
         )
-    except Exception as e:        return ResponseModel.error(
-            code="DELETE_ERROR",
-            message=f"删除图片失败: {str(e)}",
-            http_code=500
+        
+    except Exception as e:
+        return ResponseModel.error(
+            code="BATCH_UPDATE_ERROR",
+            message=f"批量更新失败: {str(e)}"
         )

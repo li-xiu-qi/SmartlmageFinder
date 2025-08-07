@@ -17,6 +17,15 @@ export enum SearchType {
 }
 
 /**
+ * 查询类型枚举（用于统一搜索）
+ */
+export enum QueryType {
+  TEXT = 'text',               // 文本查询
+  IMAGE = 'image',             // 图像查询
+  VECTOR = 'vector'            // 直接向量查询
+}
+
+/**
  * 向量搜索目标枚举
  */
 export enum VectorSearchTarget {
@@ -115,6 +124,49 @@ export interface FilteredSearchParams {
 }
 
 /**
+ * 统一搜索参数（文本查询）
+ */
+export interface UnifiedTextSearchParams {
+  q: string;                                     // 搜索文本
+  search_type?: SearchType;                      // 搜索类型，默认为 vector
+  vector_targets?: VectorSearchTarget[];         // 向量搜索目标
+  filename?: string;                             // 按文件名过滤
+  tags?: string[];                               // 按标签过滤
+  start_date?: string;                           // 开始日期
+  end_date?: string;                             // 结束日期
+  limit?: number;                                // 结果数量限制
+  offset?: number;                               // 分页偏移
+}
+
+/**
+ * 统一搜索参数（图像查询）
+ */
+export interface UnifiedImageSearchParams {
+  file: File;                                    // 上传用于搜索的图片文件
+  search_targets?: VectorSearchTarget[];         // 搜索目标，默认为 image
+  filename?: string;                             // 按文件名过滤
+  tags?: string[];                               // 按标签过滤
+  start_date?: string;                           // 开始日期
+  end_date?: string;                             // 结束日期
+  limit?: number;                                // 结果数量限制
+  offset?: number;                               // 分页偏移
+}
+
+/**
+ * 统一搜索参数（直接向量查询）
+ */
+export interface UnifiedVectorSearchParams {
+  query_embedding: number[];                     // 查询向量
+  search_targets?: VectorSearchTarget[];         // 搜索目标
+  filename?: string;                             // 按文件名过滤
+  tags?: string[];                               // 按标签过滤
+  start_date?: string;                           // 开始日期
+  end_date?: string;                             // 结束日期
+  limit?: number;                                // 结果数量限制
+  offset?: number;                               // 分页偏移
+}
+
+/**
  * 搜索元数据
  */
 export interface SearchMetadata {
@@ -163,10 +215,17 @@ export type FilteredSearchResponse = ApiResponse<SearchImageItem[]> & {
 };
 
 /**
+ * 统一搜索响应
+ */
+export type UnifiedSearchResponse = ApiResponse<SearchImageItem[]> & {
+  metadata: SearchMetadata;
+};
+
+/**
  * 搜索错误代码
  */
 export enum SearchErrorCode {
-  NO_FILTERS = 'NO_FILTERS',                 // 未提供过滤条件
+  NO_FILTERS = 'NO_FILTERS',                            // 未提供过滤条件
   INVALID_SEARCH_TYPE = 'INVALID_SEARCH_TYPE',          // 不支持的搜索类型
   IMAGE_NOT_FOUND = 'IMAGE_NOT_FOUND',                  // 图片不存在
   DATABASE_ERROR = 'DATABASE_ERROR',                    // 数据库错误
@@ -174,7 +233,10 @@ export enum SearchErrorCode {
   IMAGE_SEARCH_ERROR = 'IMAGE_SEARCH_ERROR',            // 图片处理或向量生成失败
   VECTOR_SEARCH_ERROR = 'VECTOR_SEARCH_ERROR',          // 向量搜索过程中的错误
   SIMILAR_SEARCH_ERROR = 'SIMILAR_SEARCH_ERROR',        // 相似图像搜索过程中的错误
-  FILTER_SEARCH_ERROR = 'FILTER_SEARCH_ERROR'           // 过滤搜索过程中的错误
+  FILTER_SEARCH_ERROR = 'FILTER_SEARCH_ERROR',          // 过滤搜索过程中的错误
+  UNIFIED_SEARCH_ERROR = 'UNIFIED_SEARCH_ERROR',        // 统一搜索过程中的错误
+  UNIFIED_IMAGE_SEARCH_ERROR = 'UNIFIED_IMAGE_SEARCH_ERROR', // 统一图像搜索过程中的错误
+  UNIFIED_VECTOR_SEARCH_ERROR = 'UNIFIED_VECTOR_SEARCH_ERROR' // 统一向量搜索过程中的错误
 }
 
 /**
@@ -216,4 +278,25 @@ export interface SearchClient {
    * @returns 搜索结果 Promise
    */
   filteredSearch(params: FilteredSearchParams): Promise<FilteredSearchResponse>;
+  
+  /**
+   * 统一文本搜索（推荐使用）
+   * @param params 统一文本搜索参数
+   * @returns 搜索结果 Promise
+   */
+  unifiedTextSearch(params: UnifiedTextSearchParams): Promise<UnifiedSearchResponse>;
+  
+  /**
+   * 统一图像搜索（推荐使用）
+   * @param params 统一图像搜索参数
+   * @returns 搜索结果 Promise
+   */
+  unifiedImageSearch(params: UnifiedImageSearchParams): Promise<UnifiedSearchResponse>;
+  
+  /**
+   * 统一向量搜索（推荐使用）
+   * @param params 统一向量搜索参数
+   * @returns 搜索结果 Promise
+   */
+  unifiedVectorSearch(params: UnifiedVectorSearchParams): Promise<UnifiedSearchResponse>;
 }

@@ -72,7 +72,7 @@ def main():
     print(f"\n📁 项目根目录: {base_path}")
 
     # 检查是否已有配置文件
-    config_path = base_path / "backend" / "config_files" / "config.yaml"
+    config_path = base_path / "backend" / "config" / "files" / "config.yaml"
     if config_path.exists():
         overwrite = get_user_input(f"\n配置文件已存在，是否覆盖? (y/n)", "n").lower()
         if overwrite not in ["y", "yes", "是"]:

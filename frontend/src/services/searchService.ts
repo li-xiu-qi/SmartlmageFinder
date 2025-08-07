@@ -14,7 +14,11 @@ import {
   VectorSearchParams,
   VectorSearchResponse,
   FilteredSearchParams,
-  FilteredSearchResponse
+  FilteredSearchResponse,
+  UnifiedTextSearchParams,
+  UnifiedImageSearchParams,
+  UnifiedVectorSearchParams,
+  UnifiedSearchResponse
 } from '../types/search';
 import { SearchImageItem } from '../types/models';
 
@@ -148,6 +152,122 @@ const searchService: SearchClient = {
     return apiClient.getWithTransform<SearchImageItem[]>('/search/filtered', { 
       params: apiParams 
     }) as Promise<FilteredSearchResponse>;
+  },
+
+  /**
+   * 统一文本搜索（推荐使用）
+   * @param params 统一文本搜索参数
+   */
+  unifiedTextSearch: (params: UnifiedTextSearchParams): Promise<UnifiedSearchResponse> => {
+    const { tags, vector_targets, ...restParams } = params;
+    const apiParams: Record<string, unknown> = { ...restParams };
+    
+    // 处理标签参数
+    if (tags && tags.length > 0) {
+      apiParams.tags = tags.join(',');
+    }
+    
+    // 处理向量搜索目标参数
+    if (vector_targets && vector_targets.length > 0) {
+      // 为每个目标创建数组参数
+      apiParams['vector_targets[]'] = vector_targets;
+    }
+    
+    return apiClient.getWithTransform<SearchImageItem[]>('/search/unified', { 
+      params: apiParams 
+    }) as Promise<UnifiedSearchResponse>;
+  },
+
+  /**
+   * 统一图像搜索（推荐使用）
+   * @param params 统一图像搜索参数
+   */
+  unifiedImageSearch: (params: UnifiedImageSearchParams): Promise<UnifiedSearchResponse> => {
+    const formData = new FormData();
+    formData.append('file', params.file);
+
+    if (params.search_targets && params.search_targets.length > 0) {
+      params.search_targets.forEach(target => {
+        formData.append('search_targets', target);
+      });
+    }
+    
+    if (params.filename) {
+      formData.append('filename', params.filename);
+    }
+    
+    if (params.tags && params.tags.length > 0) {
+      formData.append('tags', params.tags.join(','));
+    }
+    
+    if (params.start_date) {
+      formData.append('start_date', params.start_date);
+    }
+    
+    if (params.end_date) {
+      formData.append('end_date', params.end_date);
+    }
+    
+    if (typeof params.limit === 'number') {
+      formData.append('limit', params.limit.toString());
+    }
+    
+    if (typeof params.offset === 'number') {
+      formData.append('offset', params.offset.toString());
+    }
+
+    return apiClient.postWithTransform<SearchImageItem[]>('/search/unified/image', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    }) as Promise<UnifiedSearchResponse>;
+  },
+
+  /**
+   * 统一向量搜索（推荐使用）
+   * @param params 统一向量搜索参数
+   */
+  unifiedVectorSearch: (params: UnifiedVectorSearchParams): Promise<UnifiedSearchResponse> => {
+    const formData = new FormData();
+    
+    // 将向量数组转换为JSON字符串
+    formData.append('query_embedding', JSON.stringify(params.query_embedding));
+
+    if (params.search_targets && params.search_targets.length > 0) {
+      params.search_targets.forEach(target => {
+        formData.append('search_targets', target);
+      });
+    }
+    
+    if (params.filename) {
+      formData.append('filename', params.filename);
+    }
+    
+    if (params.tags && params.tags.length > 0) {
+      formData.append('tags', params.tags.join(','));
+    }
+    
+    if (params.start_date) {
+      formData.append('start_date', params.start_date);
+    }
+    
+    if (params.end_date) {
+      formData.append('end_date', params.end_date);
+    }
+    
+    if (typeof params.limit === 'number') {
+      formData.append('limit', params.limit.toString());
+    }
+    
+    if (typeof params.offset === 'number') {
+      formData.append('offset', params.offset.toString());
+    }
+
+    return apiClient.postWithTransform<SearchImageItem[]>('/search/unified/vector', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    }) as Promise<UnifiedSearchResponse>;
   }
 };
 

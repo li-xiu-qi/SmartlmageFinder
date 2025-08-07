@@ -5,8 +5,6 @@ AI推荐路由模块
 from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import List, Optional, Dict, Any
 
-# 导入数据库连接函数
-from ..db_func.core import get_db
 # 导入AI推荐服务
 from ..ai_func.recommendation import recommendation_service
 # 导入响应模型
@@ -21,8 +19,7 @@ router = APIRouter()
 async def ai_recommend_images(
     user_query: str = Query(..., description="用户查询，描述您想要找的图片内容"),
     vector_targets: List[str] = Query(["title", "description", "image"], alias="vector_targets[]", description="向量搜索目标"),
-    filter_params: CommonFilterParams = Depends(get_query_filter_params),
-    conn = Depends(get_db)
+    filter_params: CommonFilterParams = Depends(get_query_filter_params)
 ):
     """
     AI智能图片推荐API
@@ -49,7 +46,6 @@ async def ai_recommend_images(
         
         # 使用AI推荐服务（包含查询改写）
         result = recommendation_service.get_ai_recommendations(
-            conn=conn,
             query=user_query,
             search_type="vector",
             vector_targets=vector_targets,

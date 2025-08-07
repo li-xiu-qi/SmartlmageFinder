@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
   Form,
-  Upload,
   Button,
   Select,
   DatePicker,
@@ -14,19 +13,17 @@ import {
   Input
 } from 'antd';
 import {
-  UploadOutlined,
-  InboxOutlined,
-  DeleteOutlined
+  UploadOutlined
 } from '@ant-design/icons';
 import type { UploadFile, RcFile } from 'antd/es/upload';
 import { TagInfo } from '@/types/models';
 import { ImageSearchParams, VectorSearchTarget } from '@/types/search';
 import { IMAGE_SEARCH_TARGETS, UPLOAD_CONFIG } from './constants';
-import { validateImageFile, getImagePreviewUrl, getVectorSearchTargets } from './utils';
+import { getImagePreviewUrl, getVectorSearchTargets } from './utils';
+import ImageSearchUpload from './components/ImageSearchUpload';
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
-const { Dragger } = Upload;
 
 interface ImageSearchFormProps {
   onSearch: (params: ImageSearchParams) => void;
@@ -43,34 +40,6 @@ const ImageSearchForm: React.FC<ImageSearchFormProps> = ({ onSearch, loading, ta
   const [searchFile, setSearchFile] = useState<RcFile | null>(null);
   const [imageUrl, setImageUrl] = useState<string>('');
   const [selectedSearchTargets, setSelectedSearchTargets] = useState<string[]>([VectorSearchTarget.IMAGE]);
-
-  // 处理上传前的验证
-  const beforeUpload = (file: RcFile) => {
-    const validation = validateImageFile(file, UPLOAD_CONFIG.MAX_FILE_SIZE);
-    
-    if (!validation.valid) {
-      message.error(validation.message);
-      return false;
-    }
-    
-    // 更新搜索文件和预览
-    setSearchFile(file);
-    getImagePreviewUrl(file).then(url => setImageUrl(url));
-    
-    // 更新文件列表
-    setFileList([{ uid: '-1', name: file.name, status: 'done', url: URL.createObjectURL(file) }]);
-    
-    // 阻止默认上传行为
-    return false;
-  };
-
-  // 处理文件移除
-  const handleRemove = () => {
-    setFileList([]);
-    setSearchFile(null);
-    setImageUrl('');
-    return true;
-  };
 
   // 处理搜索目标变化
   const handleSearchTargetsChange = (targets: string[]) => {
@@ -126,16 +95,6 @@ const ImageSearchForm: React.FC<ImageSearchFormProps> = ({ onSearch, loading, ta
     }
   };
 
-  // 上传组件配置
-  const uploadProps = {
-    name: 'file',
-    multiple: false,
-    fileList,
-    beforeUpload,
-    onRemove: handleRemove,
-    accept: UPLOAD_CONFIG.ACCEPTED_TYPES.join(',')
-  };
-
   return (
     <Card className="search-form-card">      <Form
         form={form}
@@ -146,33 +105,27 @@ const ImageSearchForm: React.FC<ImageSearchFormProps> = ({ onSearch, loading, ta
         style={{ width: '100%' }}
       >
         <div className="upload-container">
-          {fileList.length === 0 ? (
-            <Dragger {...uploadProps}>
-              <p className="ant-upload-drag-icon">
-                <InboxOutlined />
-              </p>
-              <p className="ant-upload-text">点击或拖拽图片到此区域进行上传</p>
-              <p className="ant-upload-hint">
-                支持单张图片上传，文件大小不超过{UPLOAD_CONFIG.MAX_FILE_SIZE}MB
-              </p>
-            </Dragger>
-          ) : (
-            <div className="image-preview">
-              {imageUrl && (
-                <div className="preview-container">
-                  <img src={imageUrl} alt="搜索图片" />
-                  <Button 
-                    icon={<DeleteOutlined />} 
-                    onClick={handleRemove} 
-                    className="remove-btn"
-                    danger
-                  >
-                    移除
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
+          <ImageSearchUpload
+            fileList={fileList}
+            onFileChange={(file) => {
+              setSearchFile(file);
+              if (file) {
+                getImagePreviewUrl(file).then(url => setImageUrl(url));
+                setFileList([{ 
+                  uid: '-1', 
+                  name: file.name, 
+                  status: 'done', 
+                  url: URL.createObjectURL(file) 
+                }]);
+              } else {
+                setFileList([]);
+                setImageUrl('');
+              }
+            }}
+            onImageUrlChange={setImageUrl}
+            maxSize={UPLOAD_CONFIG.MAX_FILE_SIZE}
+            imageUrl={imageUrl}
+          />
         </div>
 
         <Form.Item label="搜索目标">

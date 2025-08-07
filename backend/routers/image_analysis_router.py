@@ -9,16 +9,16 @@ import tempfile
 from ..global_schemas import ResponseModel
 
 from ..ai_func.analyze_upload_image import analyze_upload_image
-from ..ai_func.ai_config import get_image_analyzer, initialize_ai_services
 from ..config import settings
-from ..utils.image_analysis import ImageAnalysis
-from ..db_func.core import get_db
+from ..ai_func.image_analysis import ImageAnalysis
+from ..db_func.core.connection import get_db
 
 # 创建路由器
 router = APIRouter(prefix="/api/v1/ai", tags=["ai"])
 
-# 初始化AI组件
-image_analyzer_instance, ai_feature_available = initialize_ai_services()
+def get_image_analyzer() -> ImageAnalysis:
+    """获取图像分析器实例"""
+    return ImageAnalysis()
 
 
 @router.post("/analyze-upload-image")

@@ -1,6 +1,6 @@
-from backend.utils.image_analysis import ImageAnalysis
+from backend.ai_func.image_analysis import ImageAnalysis
 from backend.db_func.core import get_db_connection
-from backend.db_func.images_func.get import get_image_by_id
+from backend.db_func.repositories.images import ImageRepository
 import os
 
 
@@ -27,8 +27,8 @@ def analyze_image_id(image_analyzer_instance:ImageAnalysis,
     
     try:
         # 从数据库获取图片信息
-            
-        image = get_image_by_id(conn, int(image_id))
+        image_repo = ImageRepository()
+        image = image_repo.get_by_id(int(image_id))
         
 
         

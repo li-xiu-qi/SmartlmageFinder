@@ -313,7 +313,7 @@ class SmartImageFinderStarter:
 
     def get_backend_config(self) -> tuple:
         """从配置文件读取后端服务配置"""
-        config_file = self.base_path / "backend" / "config_files" / "config.yaml"
+        config_file = self.base_path / "backend" / "config" / "files" / "config.yaml"
         try:
             with open(config_file, 'r', encoding='utf-8') as f:
                 config = yaml.safe_load(f)
