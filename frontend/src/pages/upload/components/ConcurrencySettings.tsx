@@ -43,7 +43,10 @@ const ConcurrencySettings: React.FC<ConcurrencySettingsProps> = ({
             disabled={disabled}
           />
           <Text>启用并发分析</Text>
-          <Tooltip title="启用并发分析可以同时处理多张图片，提高分析速度，但会增加服务器负载">
+          <Tooltip 
+            title="启用并发分析可以同时处理多张图片，提高分析速度，但会增加服务器负载"
+            getPopupContainer={(trigger) => trigger.parentElement || document.body}
+          >
             <InfoCircleOutlined style={{ color: '#1890ff' }} />
           </Tooltip>
         </Space>
@@ -52,7 +55,10 @@ const ConcurrencySettings: React.FC<ConcurrencySettingsProps> = ({
         <Space align="center" style={{ width: '100%', justifyContent: 'space-between' }}>
           <Space>
             <Text>并发数量:</Text>
-            <Tooltip title="同时处理的图片数量。建议设置为1-10之间，数量越大速度越快但服务器压力越大">
+            <Tooltip 
+              title="同时处理的图片数量。建议设置为1-10之间，数量越大速度越快但服务器压力越大"
+              getPopupContainer={(trigger) => trigger.parentElement || document.body}
+            >
               <InfoCircleOutlined style={{ color: '#1890ff' }} />
             </Tooltip>
           </Space>

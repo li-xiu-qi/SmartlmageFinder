@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { ConfigProvider } from 'antd';
+import { ConfigProvider, App as AntdApp } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
 import MainLayout from '@/pages/home/components/layout/MainLayout'; // Updated import path
 
@@ -29,22 +29,24 @@ function App() {
         },
       }}
     >
-      <BrowserRouter>
-        <Routes>
-          <Route element={<MainLayout />}>
-            <Route path="/" element={<HomePage />} />
-            <Route path="images" element={<ImagesPage />} />
-            <Route path="upload" element={<UploadPage />} />
-            <Route path="search" element={<SearchPage />} />
-            <Route path="tags" element={<TagsPage />} />
-            <Route path="settings" element={<SettingsPage />} />
-            <Route path="*" element={<NotFoundPage />} />
-          </Route>
-        </Routes>
-        
-        {/* 全局AI悬浮按钮 - 在所有页面都可见 */}
-        <GlobalAIFloatButton />
-      </BrowserRouter>
+      <AntdApp>
+        <BrowserRouter>
+          <Routes>
+            <Route element={<MainLayout />}>
+              <Route path="/" element={<HomePage />} />
+              <Route path="images" element={<ImagesPage />} />
+              <Route path="upload" element={<UploadPage />} />
+              <Route path="search" element={<SearchPage />} />
+              <Route path="tags" element={<TagsPage />} />
+              <Route path="settings" element={<SettingsPage />} />
+              <Route path="*" element={<NotFoundPage />} />
+            </Route>
+          </Routes>
+          
+          {/* 全局AI悬浮按钮 - 在所有页面都可见 */}
+          <GlobalAIFloatButton />
+        </BrowserRouter>
+      </AntdApp>
     </ConfigProvider>
   );
 }

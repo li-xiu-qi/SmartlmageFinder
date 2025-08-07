@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Form, Divider, message } from 'antd';
+import { Card, Form, Divider, App } from 'antd';
 import type { UploadProps } from 'antd';
 import { useNavigate } from 'react-router-dom';
 
@@ -32,6 +32,7 @@ import './styles/uploadPage.css';
  * 包含拖拽上传区、文件列表、元数据编辑、AI分析和上传功能
  */
 const UploadPage: React.FC = () => {
+  const { message } = App.useApp();
   // 表单实例，用于元数据编辑
   const [metadataForm] = Form.useForm();  const navigate = useNavigate();
 
@@ -271,4 +272,11 @@ const UploadPage: React.FC = () => {
   );
 };
 
-export default UploadPage;
+// 用 App 包裹页面，支持动态主题
+export default function UploadPageWithApp() {
+  return (
+    <App>
+      <UploadPage />
+    </App>
+  );
+}

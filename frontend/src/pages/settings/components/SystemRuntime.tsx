@@ -111,7 +111,10 @@ const SystemRuntime: React.FC = () => {  const [runtime, setRuntime] = useState<
       title={
         <span>
           系统运行状态监控
-          <Tooltip title="实时监控系统运行状态和响应时间">
+          <Tooltip 
+            title="实时监控系统运行状态和响应时间"
+            getPopupContainer={(trigger) => trigger.parentElement || document.body}
+          >
             <InfoCircleOutlined className="system-runtime-icon-style" />
           </Tooltip>
         </span>
@@ -120,7 +123,11 @@ const SystemRuntime: React.FC = () => {  const [runtime, setRuntime] = useState<
     >
       {loading && !runtime ? (
         <div className="system-runtime-loading-container">
-          <Spin tip="获取系统运行状态..." />
+          <Spin spinning={true}>
+            <div style={{ minHeight: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span>获取系统运行状态...</span>
+            </div>
+          </Spin>
         </div>
       ) : error && systemStatus === 'offline' ? (
         <Alert

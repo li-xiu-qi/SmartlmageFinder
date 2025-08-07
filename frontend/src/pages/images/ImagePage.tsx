@@ -320,7 +320,7 @@ const ImagesPage: React.FC = () => {
             onClose={handleDetailClose}
             open={detailVisible}
             width={640}
-            destroyOnClose          >
+            destroyOnHidden          >
             <SharedImageDetail
               image={selectedImage}
               onUpdate={handleImageUpdate}

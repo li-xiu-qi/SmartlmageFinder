@@ -12,8 +12,6 @@ import SearchResults from './SearchResults';
 import { formatTagsForParam } from './utils';
 import './styles.less';
 
-const { TabPane } = Tabs;
-
 /**
  * 搜索页面组件
  */
@@ -157,29 +155,31 @@ const SearchPage: React.FC = () => {
         activeKey={activeTab}
         onChange={handleTabChange}
         className="search-tabs"
-      >
-        <TabPane 
-          tab={<span><SearchOutlined /> 文本搜索</span>} 
-          key="text"
-        >
-          <TextSearchForm 
-            onSearch={handleTextSearch} 
-            loading={loading} 
-            tags={tags} 
-          />
-        </TabPane>
-        
-        <TabPane 
-          tab={<span><PictureOutlined /> 图像搜索</span>} 
-          key="image"
-        >
-          <ImageSearchForm 
-            onSearch={handleImageSearch} 
-            loading={loading} 
-            tags={tags} 
-          />
-        </TabPane>
-      </Tabs>        <SearchResults 
+        items={[
+          {
+            key: 'text',
+            label: <span><SearchOutlined /> 文本搜索</span>,
+            children: (
+              <TextSearchForm 
+                onSearch={handleTextSearch} 
+                loading={loading} 
+                tags={tags} 
+              />
+            )
+          },
+          {
+            key: 'image',
+            label: <span><PictureOutlined /> 图像搜索</span>,
+            children: (
+              <ImageSearchForm 
+                onSearch={handleImageSearch} 
+                loading={loading} 
+                tags={tags} 
+              />
+            )
+          }
+        ]}
+      />        <SearchResults 
         loading={loading} 
         results={results} 
         total={total} 

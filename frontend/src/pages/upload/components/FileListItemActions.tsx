@@ -26,7 +26,10 @@ const FileListItemActions: React.FC<FileListItemActionsProps> = ({
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-      <Tooltip title="AI分析图片">
+      <Tooltip 
+        title="AI分析图片"
+        getPopupContainer={(trigger) => trigger.parentElement || document.body}
+      >
         <Button
           icon={isCurrentFileAnalyzing ? <Spin indicator={<LoadingOutlined style={{ fontSize: 14 }} spin />} /> : <ExperimentOutlined />}
           onClick={() => onAnalyze(file)}
@@ -34,7 +37,10 @@ const FileListItemActions: React.FC<FileListItemActionsProps> = ({
           disabled={disabled || isAnalyzing}
         />
       </Tooltip>
-      <Tooltip title="编辑元数据">
+      <Tooltip 
+        title="编辑元数据"
+        getPopupContainer={(trigger) => trigger.parentElement || document.body}
+      >
         <Button
           icon={<EditOutlined />}
           onClick={() => onEditMetadata(file)}

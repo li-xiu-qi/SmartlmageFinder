@@ -34,7 +34,10 @@ const SystemStatus: React.FC<SystemStatusProps> = ({ systemStatus }) => {
       title={
         <span>
           系统状态
-          <Tooltip title="显示系统各组件的运行状态与配置信息">
+          <Tooltip 
+            title="显示系统各组件的运行状态与配置信息"
+            getPopupContainer={(trigger) => trigger.parentElement || document.body}
+          >
             <InfoCircleOutlined style={{ marginLeft: 8, color: '#1890ff' }} />
           </Tooltip>
         </span>
@@ -82,12 +85,18 @@ const SystemStatus: React.FC<SystemStatusProps> = ({ systemStatus }) => {
             <p><strong>向量状态:</strong> {getStatusBadge(systemStatus.components.database.vector_status ? 'available' : 'disabled')}</p>
             <p><strong>向量驱动:</strong> {getStatusBadge(systemStatus.components.vector_db_driver.status)}</p>
             <p><strong>多模态API:</strong> {getStatusBadge(systemStatus.components.multimodal_api.status)}</p>
-            <p><strong>API Base:</strong> <Tooltip title={systemStatus.components.multimodal_api.api_base}><span>{systemStatus.components.multimodal_api.api_base.length > 20 ? `${systemStatus.components.multimodal_api.api_base.substring(0, 20)}...` : systemStatus.components.multimodal_api.api_base}</span></Tooltip></p>
+            <p><strong>API Base:</strong> <Tooltip 
+              title={systemStatus.components.multimodal_api.api_base}
+              getPopupContainer={(trigger) => trigger.parentElement || document.body}
+            ><span>{systemStatus.components.multimodal_api.api_base.length > 20 ? `${systemStatus.components.multimodal_api.api_base.substring(0, 20)}...` : systemStatus.components.multimodal_api.api_base}</span></Tooltip></p>
             <p><strong>当前视觉模型:</strong> {systemStatus.components.multimodal_api.model}</p>
             <p><strong>可用视觉模型数:</strong> {systemStatus.components.multimodal_api.available_models?.length || 0}</p>
             {systemStatus.models && (
               <>
-                <p><strong>嵌入模型:</strong> <Tooltip title={systemStatus.models.embedding_model}>
+                <p><strong>嵌入模型:</strong> <Tooltip 
+                  title={systemStatus.models.embedding_model}
+                  getPopupContainer={(trigger) => trigger.parentElement || document.body}
+                >
                   <span>{systemStatus.models.embedding_model.length > 20 ? `${systemStatus.models.embedding_model.substring(0, 20)}...` : systemStatus.models.embedding_model}</span>
                 </Tooltip></p>
                 {systemStatus.models.embedding_dimension && <p><strong>嵌入维度:</strong> {systemStatus.models.embedding_dimension}</p>}

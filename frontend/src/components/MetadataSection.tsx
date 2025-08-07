@@ -108,7 +108,7 @@ const MetadataSection: React.FC<MetadataSectionProps> = ({ metadata, onMetadataU
         onCancel={handleCancel}
         confirmLoading={loading}
         width={600}
-        destroyOnClose // 关闭时销毁 Modal 里的子元素，确保表单状态正确重置
+        destroyOnHidden // 关闭时销毁 Modal 里的子元素，确保表单状态正确重置
       >
         <Form form={form} name="editable_metadata_form" autoComplete="off">
           <Form.List name="metadata">

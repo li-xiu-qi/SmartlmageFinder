@@ -66,8 +66,13 @@ const MainHeader: React.FC<MainHeaderProps> = ({ collapsed, toggleCollapse, syst
         />
       </div>      <div className="header-right">
         <div className="system-status">
-          <Tooltip title={systemStatus === 'healthy' ? '系统运行正常' : systemStatus === 'error' ? '系统存在错误' : '系统需要注意'}>
-            <Badge status={statusBadgeColor} text={`系统: ${statusText}`} />
+          <Tooltip 
+            title={systemStatus === 'healthy' ? '系统运行正常' : systemStatus === 'error' ? '系统存在错误' : '系统需要注意'}
+            getPopupContainer={(trigger) => trigger.parentElement || document.body}
+          >
+            <div style={{ display: 'inline-block' }}>
+              <Badge status={statusBadgeColor} text={`系统: ${statusText}`} />
+            </div>
           </Tooltip>
         </div>
 

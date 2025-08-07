@@ -30,7 +30,11 @@ const PopularTags: React.FC<PopularTagsProps> = ({ tags }) => {
       {tags.length > 0 ? (
         <div className="tags-container">
           {tags.map(tag => (
-            <Tooltip title={`${tag.count} 张图片使用此标签`} key={tag.tag}>
+            <Tooltip 
+              title={`${tag.count} 张图片使用此标签`} 
+              key={tag.tag}
+              getPopupContainer={(trigger) => trigger.parentElement || document.body}
+            >
               <Link to={`/images?tags=${tag.tag}`}>
                 <Tag 
                   color={getTagColor(tag.count)} 

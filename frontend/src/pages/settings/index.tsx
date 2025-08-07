@@ -33,7 +33,6 @@ import RefModal from '@/components/RefModal';
 
 
 const { Title, Paragraph } = Typography;
-const { TabPane } = Tabs;
 
 const SettingsPage: React.FC = () => {
   const [form] = Form.useForm();
@@ -254,61 +253,66 @@ const SettingsPage: React.FC = () => {
                   刷新状态
                 </Button>
               }
-            >
-              <TabPane
-                tab={<span><HddOutlined /> 系统状态</span>}
-                key="status"
-              >
-                <SystemRuntime />
-                {systemStatus && <SystemStatus systemStatus={systemStatus} />}
-              </TabPane>
-                <TabPane
-                tab={<span><SettingOutlined /> 系统配置</span>}
-                key="settings"
-              >
-                {activeTab === 'settings' && (
-                  <Form
-                    form={form}
-                    layout="vertical"
-                    onFinish={handleSaveSettings}
-                  >                    <StorageSettings
-                      clearCacheLoading={clearCacheLoading}
-                      onClearCache={showClearCacheConfirm}
-                      systemStatus={systemStatus}
-                      loading={loading}
-                    />
+              items={[
+                {
+                  key: 'status',
+                  label: <span><HddOutlined /> 系统状态</span>,
+                  children: (
+                    <>
+                      <SystemRuntime />
+                      {systemStatus && <SystemStatus systemStatus={systemStatus} />}
+                    </>
+                  )
+                },
+                {
+                  key: 'settings',
+                  label: <span><SettingOutlined /> 系统配置</span>,
+                  children: activeTab === 'settings' ? (
+                    <Form
+                      form={form}
+                      layout="vertical"
+                      onFinish={handleSaveSettings}
+                    >
+                      <StorageSettings
+                        clearCacheLoading={clearCacheLoading}
+                        onClearCache={showClearCacheConfirm}
+                        systemStatus={systemStatus}
+                        loading={loading}
+                      />
 
-                  <ApiSettings loading={loading} />
+                      <ApiSettings loading={loading} />
 
-                  <ModelSettings systemStatus={systemStatus} loading={loading} form={form} />
+                      <ModelSettings systemStatus={systemStatus} loading={loading} form={form} />
 
-                  <VectorDbSettings systemStatus={systemStatus} loading={loading} />
+                      <VectorDbSettings systemStatus={systemStatus} loading={loading} />
 
-                  <Card>
-                    <div className="settings-actions">
-                      <Space size="large">
-                        <Button
-                          type="primary"
-                          htmlType="submit"
-                          icon={<SaveOutlined />}
-                          loading={saveLoading}
-                          size="large"
-                        >
-                          保存设置
-                        </Button>
-                        <Button
-                          icon={<ReloadOutlined />}
-                          onClick={() => form.resetFields()}
-                          size="large"
-                        >
-                          重置
-                        </Button>
-                      </Space>                    </div>
-                  </Card>
-                  </Form>
-                )}
-              </TabPane>
-            </Tabs>
+                      <Card>
+                        <div className="settings-actions">
+                          <Space size="large">
+                            <Button
+                              type="primary"
+                              htmlType="submit"
+                              icon={<SaveOutlined />}
+                              loading={saveLoading}
+                              size="large"
+                            >
+                              保存设置
+                            </Button>
+                            <Button
+                              icon={<ReloadOutlined />}
+                              onClick={() => form.resetFields()}
+                              size="large"
+                            >
+                              重置
+                            </Button>
+                          </Space>
+                        </div>
+                      </Card>
+                    </Form>
+                  ) : null
+                }
+              ]}
+            />
           </Col>
         </Row>      </Spin>
 

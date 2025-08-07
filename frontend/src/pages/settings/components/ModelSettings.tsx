@@ -63,7 +63,10 @@ const ModelSettings: React.FC<ModelSettingsProps> = ({ systemStatus, loading = f
       title={
         <span>
           模型设置
-          <Tooltip title="配置用于图像分析和向量嵌入的AI模型">
+          <Tooltip 
+            title="配置用于图像分析和向量嵌入的AI模型"
+            getPopupContainer={(trigger) => trigger.parentElement || document.body}
+          >
             <InfoCircleOutlined style={{ marginLeft: 8, color: '#1890ff' }} />
           </Tooltip>
         </span>

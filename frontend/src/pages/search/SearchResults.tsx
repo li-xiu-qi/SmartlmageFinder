@@ -144,7 +144,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({
           width={640} // 修改宽度为 640
           onClose={handleDrawerClose}
           open={isDrawerVisible}
-          destroyOnClose
+          destroyOnHidden
         >
           {drawerLoading ? (
             <div className="drawer-loading-indicator"> {/* 使用 CSS 类替代内联样式 */}

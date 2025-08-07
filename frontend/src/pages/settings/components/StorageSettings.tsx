@@ -36,7 +36,10 @@ const StorageSettings: React.FC<StorageSettingsProps> = ({
       title={
         <span>
           存储设置 
-          <Tooltip title="配置图像数据和缓存的存储位置与策略">
+          <Tooltip 
+            title="配置图像数据和缓存的存储位置与策略"
+            getPopupContainer={(trigger) => trigger.parentElement || document.body}
+          >
             <InfoCircleOutlined style={{ marginLeft: 8, color: '#1890ff' }} />
           </Tooltip>
         </span>

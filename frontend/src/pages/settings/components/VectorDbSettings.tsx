@@ -30,7 +30,10 @@ const VectorDbSettings: React.FC<VectorDbSettingsProps> = ({
       title={
         <span>
           向量数据库设置 
-          <Tooltip title="配置向量数据库驱动，用于存储和检索向量数据">
+          <Tooltip 
+            title="配置向量数据库驱动，用于存储和检索向量数据"
+            getPopupContainer={(trigger) => trigger.parentElement || document.body}
+          >
             <InfoCircleOutlined style={{ marginLeft: 8, color: '#1890ff' }} />
           </Tooltip>
           {driverStatus && (

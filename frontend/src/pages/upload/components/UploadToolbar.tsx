@@ -57,7 +57,10 @@ const UploadToolbar: React.FC<UploadToolbarProps> = ({
       
       {/* 按钮区域 */}
       <Space size="middle" style={{ display: 'flex', justifyContent: 'center' }}>
-        <Tooltip title={getUploadTooltip()}>
+        <Tooltip 
+          title={getUploadTooltip()}
+          getPopupContainer={(trigger) => trigger.parentElement || document.body}
+        >
           <Button
             type="primary"
             icon={<CloudUploadOutlined />}
@@ -70,7 +73,10 @@ const UploadToolbar: React.FC<UploadToolbarProps> = ({
           </Button>
         </Tooltip>
         
-        <Tooltip title="清空当前选择，重新开始">
+        <Tooltip 
+          title="清空当前选择，重新开始"
+          getPopupContainer={(trigger) => trigger.parentElement || document.body}
+        >
           <Button
             icon={<ReloadOutlined />}
             onClick={onReset}

@@ -86,7 +86,10 @@ const BatchAnalyzeButton: React.FC<BatchAnalyzeButtonProps> = ({
 
   return (
     <div className="batch-analyze-container" style={{ marginBottom: 16 }}>
-      <Tooltip title={getTooltipText()}>
+      <Tooltip 
+        title={getTooltipText()}
+        getPopupContainer={(trigger) => trigger.parentElement || document.body}
+      >
         <Dropdown
           menu={{ items: menuItems, onClick: handleMenuClick }}
           disabled={isDisabled}

@@ -54,7 +54,7 @@ const SimilarImagesModal: React.FC<SimilarImagesModalProps> = ({
       onCancel={onClose}
       footer={null}
       width={800}
-      destroyOnClose
+      destroyOnHidden
     >
       <div style={{ marginBottom: 16 }}>
         <Select

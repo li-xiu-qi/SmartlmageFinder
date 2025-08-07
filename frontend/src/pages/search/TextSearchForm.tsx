@@ -146,7 +146,10 @@ const TextSearchForm: React.FC<TextSearchFormProps> = ({ onSearch, loading, tags
             label={
               <span>
                 向量搜索目标 
-                <Tooltip title="选择用于向量搜索的字段">
+                <Tooltip 
+                  title="选择用于向量搜索的字段"
+                  getPopupContainer={(trigger) => trigger.parentElement || document.body}
+                >
                   <QuestionCircleOutlined style={{ marginLeft: 4 }} />
                 </Tooltip>
               </span>

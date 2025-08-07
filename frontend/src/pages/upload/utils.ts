@@ -362,70 +362,108 @@ export const uploadImages = async (
   setUploading(true);    // 开始上传，设置状态
   setUploadProgress(0);  // 初始化上传进度
   const totalFiles = fileList.length; // 总文件数
-  let uploadedCount = 0; // 已处理文件计数（包括成功和失败）
   const results: UploadResultItem[] = []; // 存储每个文件的上传结果
 
-  // 遍历文件列表进行上传
-  for (const file of fileList) {
-    // 检查文件对象是否有效
-    if (!file.originFileObj) {
-      results.push({
+  // 检查是否有有效文件
+  const validFiles = fileList.filter(file => file.originFileObj);
+  if (validFiles.length === 0) {
+    setUploadResult({
+      items: fileList.map(file => ({
         id: file.uid,
         fileName: file.name,
         success: false,
         message: '无效的文件对象'
-      });
-      uploadedCount++;
-      setUploadProgress(Math.round((uploadedCount / totalFiles) * 100));
-      continue; // 处理下一个文件
-    }
+      })),
+      overallStatus: 'failure',
+      successCount: 0,
+      failureCount: totalFiles,
+    });
+    setUploading(false);
+    setHasUploaded(true);
+    message.error('没有有效的文件可以上传');
+    return;
+  }
 
-    // 获取当前文件的元数据
-    const metadata = imageMetadataMap[file.uid] || { title: '', description: '', tags: [] };
-    try {
-      // 调用图片服务上传图片
-      // imageService.uploadImages 期望参数是一个包含 File 对象的数组
-      // 此处为每个文件单独调用上传服务，符合逐个处理并反馈进度的场景
-      const response = await imageService.uploadImages({
-        files: [file.originFileObj], // 将单个文件包装在数组中
-        title: metadata.title || '',       // 图片标题，确保不为undefined
-        description: metadata.description || '', // 图片描述，确保不为undefined
-        tags: metadata.tags || [],         // 图片标签，确保不为undefined
-        // metadata: { location: metadata.location, event: metadata.event } // 可选：传递其他自定义元数据
-      });
+  try {
+    setUploadProgress(25); // 开始上传进度
 
-      // 处理上传响应
-      if (response.status === 'success' && response.data && response.data.length > 0) {
-        // 上传成功
-        results.push({
-          id: file.uid,
-          fileName: file.name,
-          success: true,
-          image: response.data[0] as ImageModel, // 假设API总是返回一个包含已上传图片信息的数组
-        });
-      } else {
-        // 上传失败（API层面）
+    // 批量上传：一次性上传所有文件
+    // 注意：这里不再逐个上传，而是真正的批量上传
+    const allFiles = validFiles.map(file => file.originFileObj!);
+    
+    // 对于批量上传，我们使用第一个文件的元数据作为公共元数据
+    // 如果需要每个文件都有不同的元数据，需要后端API支持
+    const firstFileMetadata = imageMetadataMap[validFiles[0].uid] || { title: '', description: '', tags: [] };
+    
+    setUploadProgress(50); // 准备完成，开始实际上传
+
+    const response = await imageService.uploadImages({
+      files: allFiles, // 批量上传所有文件
+      title: firstFileMetadata.title || '',
+      description: firstFileMetadata.description || '',
+      tags: firstFileMetadata.tags || [],
+    });
+
+    setUploadProgress(90); // 上传完成，处理响应
+
+    // 处理批量上传响应
+    if (response.status === 'success' && response.data) {
+      const uploadedImages = response.data;
+      
+      // 为每个成功上传的文件创建结果项
+      validFiles.forEach((file, index) => {
+        if (index < uploadedImages.length) {
+          results.push({
+            id: file.uid,
+            fileName: file.name,
+            success: true,
+            image: uploadedImages[index] as ImageModel,
+          });
+        } else {
+          results.push({
+            id: file.uid,
+            fileName: file.name,
+            success: false,
+            message: '服务器响应中缺少对应的图片数据'
+          });
+        }
+      });
+      
+      // 处理无效文件
+      fileList.filter(file => !file.originFileObj).forEach(file => {
         results.push({
           id: file.uid,
           fileName: file.name,
           success: false,
-          message: response.message || '上传失败'
+          message: '无效的文件对象'
         });
-      }
-    } catch (error) {
-      // 上传过程中发生异常
+      });
+      
+    } else {
+      // 批量上传失败
+      validFiles.forEach(file => {
+        results.push({
+          id: file.uid,
+          fileName: file.name,
+          success: false,
+          message: response.message || '批量上传失败'
+        });
+      });
+    }
+  } catch (error) {
+    // 批量上传过程中发生异常
+    validFiles.forEach(file => {
       results.push({
         id: file.uid,
         fileName: file.name,
         success: false,
-        message: (error as ApiError)?.message || '上传时发生未知错误'
+        message: (error as ApiError)?.message || '批量上传时发生未知错误'
       });
-      console.error('上传图片错误:', error);
-    }
-    uploadedCount++; // 更新已处理文件计数
-    // 更新上传进度条
-    setUploadProgress(Math.round((uploadedCount / totalFiles) * 100));
+    });
+    console.error('批量上传图片错误:', error);
   }
+
+  setUploadProgress(100); // 完成进度
 
   // 统计上传结果
   const successCount = results.filter(r => r.success).length;
@@ -438,5 +476,13 @@ export const uploadImages = async (
   });
   setUploading(false);  // 上传结束，重置状态
   setHasUploaded(true); // 标记已执行过上传
-  message.info('图片上传处理完成。');
+  
+  // 显示批量上传结果消息
+  if (successCount === totalFiles) {
+    message.success(`批量上传成功！共上传 ${successCount} 张图片`);
+  } else if (successCount > 0) {
+    message.warning(`批量上传部分成功：${successCount}/${totalFiles} 张图片上传成功`);
+  } else {
+    message.error('批量上传失败，所有图片都上传失败');
+  }
 };

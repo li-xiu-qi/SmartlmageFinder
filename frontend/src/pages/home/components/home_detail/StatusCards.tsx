@@ -15,7 +15,10 @@ const StatusCards: React.FC<StatusCardsProps> = ({ stats }) => {
       <Row gutter={[16, 16]} className="gutter-row">
         <Col xs={24} sm={8}>
           <Card className="stat-card" hoverable>
-            <Tooltip title={stats.status === 'healthy' ? '系统正常运行中' : '系统存在异常，请检查'}>
+            <Tooltip 
+              title={stats.status === 'healthy' ? '系统正常运行中' : '系统存在异常，请检查'}
+              getPopupContainer={(trigger) => trigger.parentElement || document.body}
+            >
               <Statistic
                 title="系统状态"
                 value={stats.status === 'healthy' ? '正常' : '异常'}
@@ -27,7 +30,10 @@ const StatusCards: React.FC<StatusCardsProps> = ({ stats }) => {
         </Col>
         <Col xs={24} sm={8}>
           <Card className="stat-card" hoverable>
-            <Tooltip title={`系统目前共有 ${stats.totalImages} 张图片`}>
+            <Tooltip 
+              title={`系统目前共有 ${stats.totalImages} 张图片`}
+              getPopupContainer={(trigger) => trigger.parentElement || document.body}
+            >
               <Statistic
                 title="图片总数"
                 value={stats.totalImages}
@@ -38,7 +44,10 @@ const StatusCards: React.FC<StatusCardsProps> = ({ stats }) => {
         </Col>
         <Col xs={24} sm={8}>
           <Card className="stat-card" hoverable>
-            <Tooltip title={`系统目前共有 ${stats.totalTags} 个标签`}>
+            <Tooltip 
+              title={`系统目前共有 ${stats.totalTags} 个标签`}
+              getPopupContainer={(trigger) => trigger.parentElement || document.body}
+            >
               <Statistic
                 title="标签总数"
                 value={stats.totalTags}
