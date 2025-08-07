@@ -1,4 +1,4 @@
-// 导入 antd 的 message 组件，用于显示提示信息
+// 导入 antd 的 message 组件，用于显示提示信息  
 import { message } from 'antd';
 // 导入当前目录下的类型定义
 import { UploadFile, ImageMetadata, SelectableTag, UploadResult, UploadResultItem, AnalysisMode } from './types';

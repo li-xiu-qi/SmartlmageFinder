@@ -34,7 +34,9 @@ import './styles/uploadPage.css';
 const UploadPage: React.FC = () => {
   const { message } = App.useApp();
   // 表单实例，用于元数据编辑
-  const [metadataForm] = Form.useForm();  const navigate = useNavigate();
+  const [metadataForm] = Form.useForm();
+  
+  const navigate = useNavigate();
 
   // 状态管理
   const [fileList, setFileList] = useState<UploadFile[]>([]);
