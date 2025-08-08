@@ -39,6 +39,17 @@ const TextSearchForm: React.FC<TextSearchFormProps> = ({ onSearch, loading, tags
   const [form] = Form.useForm();  // 从Form.useWatch获取当前搜索类型值
   const searchType = Form.useWatch('search_type', form);
   const isVectorSearch = searchType === SearchType.VECTOR;
+  
+  // 标签变更时自动应用过滤（仅当已填写关键词时）
+  const handleTagsChange = (values: string[]) => {
+    form.setFieldsValue({ tags: values });
+    const current = form.getFieldsValue();
+    // 只有在存在关键词时才触发搜索（后端 q 为必填）
+    if (current.q && String(current.q).trim().length > 0) {
+      // 直接复用提交逻辑
+      handleSubmit({ ...current, tags: values });
+    }
+  };
     // 初始化表单值
   useEffect(() => {
     const query = searchParams.get('q');
@@ -184,6 +195,7 @@ const TextSearchForm: React.FC<TextSearchFormProps> = ({ onSearch, loading, tags
                 placeholder="选择标签筛选"
                 optionFilterProp="children"
                 allowClear
+                onChange={handleTagsChange}
               >
                 {tags.map(tag => (
                   <Option key={tag.tag} value={tag.tag}>{tag.tag} ({tag.count})</Option>

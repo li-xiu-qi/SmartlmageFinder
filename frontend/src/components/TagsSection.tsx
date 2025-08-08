@@ -7,22 +7,39 @@ const { Title } = Typography;
 
 interface TagsSectionProps {
   imageId: number;
-  tags: string[] | undefined;
+  tags: string[] | string | undefined;
   onTagsUpdate: (tags: string[]) => void;
 }
 
 /**
  * 标签管理组件
  */
+const normalizeTags = (tags: string[] | string | undefined): string[] => {
+  if (Array.isArray(tags)) return tags.filter((t) => typeof t === 'string');
+  if (typeof tags === 'string') {
+    // 优先尝试按 JSON 数组解析，其次回退为逗号分隔
+    try {
+      const parsed = JSON.parse(tags);
+      if (Array.isArray(parsed)) return parsed.filter((t) => typeof t === 'string');
+    } catch {}
+    return tags
+      .split(',')
+      .map((t) => t.trim())
+      .filter((t) => t.length > 0);
+  }
+  return [];
+};
+
 const TagsSection: React.FC<TagsSectionProps> = ({ imageId, tags, onTagsUpdate }) => {
   const [newTag, setNewTag] = useState('');
   const [loading, setLoading] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [editableTags, setEditableTags] = useState<string[]>([]);
+  const safeTags = normalizeTags(tags);
 
   // 打开批量编辑标签模态框
   const showEditTagsModal = () => {
-    setEditableTags([...(tags || [])]);
+    setEditableTags([...(safeTags || [])]);
     setIsEditModalVisible(true);
   };
 
@@ -74,7 +91,7 @@ const TagsSection: React.FC<TagsSectionProps> = ({ imageId, tags, onTagsUpdate }
     <div className="detail-section">
       <Title level={5} className="section-title">标签</Title>
       <div style={{ marginBottom: 12 }}>
-        {(tags || []).map(tag => (
+        {safeTags.map(tag => (
           <Tag
             key={tag}
             style={{ marginBottom: 8 }}

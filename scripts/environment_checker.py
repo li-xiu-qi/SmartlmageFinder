@@ -20,14 +20,16 @@ def is_environment_ready():
 def check_config_file():
     """检查配置文件"""
     base_path = Path(__file__).parent.parent.absolute()
-    config_file = base_path / "backend" / "config_files" / "config.yaml"
+    # 配置文件实际位于 backend/config/files/config.yaml
+    config_file = base_path / "backend" / "config" / "files" / "config.yaml"
     return config_file.exists()
 
 
 def check_model_exists():
     """检查模型是否存在"""
     base_path = Path(__file__).parent.parent.absolute()
-    config_file = base_path / "backend" / "config_files" / "config.yaml"
+    # 与 check_config_file 保持一致的真实路径
+    config_file = base_path / "backend" / "config" / "files" / "config.yaml"
     if not config_file.exists():
         return False
     

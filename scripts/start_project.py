@@ -45,7 +45,7 @@ class LogLevel:
 
 
 class SmartImageFinderStarter:
-    def __init__(self, backend_only: bool = False, frontend_only: bool = False):
+    def __init__(self, backend_only: bool = False, frontend_only: bool = False, reload: bool = False):
         self.base_path = Path(__file__).parent.parent.absolute()
         self.backend_process: Optional[subprocess.Popen] = None
         self.frontend_process: Optional[subprocess.Popen] = None
@@ -54,6 +54,7 @@ class SmartImageFinderStarter:
         # 命令行选项
         self.backend_only = backend_only
         self.frontend_only = frontend_only
+        self.reload = reload
         
         # 设置信号处理器
         signal.signal(signal.SIGINT, self.signal_handler)
@@ -218,8 +219,13 @@ class SmartImageFinderStarter:
             my_env["PYTHONIOENCODING"] = "utf-8"
             
             # 使用subprocess.Popen直接启动后端进程
+            # 通过命令行传递是否启用热加载到 main.py
+            backend_cmd = [sys.executable, str(main_script)]
+            if self.reload:
+                backend_cmd.append("--reload")
+
             self.backend_process = subprocess.Popen(
-                [sys.executable, str(main_script)],
+                backend_cmd,
                 cwd=self.base_path,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -411,6 +417,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description="SmartImageFinder 项目启动脚本")
     parser.add_argument("--backend-only", action="store_true", help="仅启动后端服务")
     parser.add_argument("--frontend-only", action="store_true", help="仅启动前端服务")
+    parser.add_argument("--reload", action="store_true", help="启用后端热加载 (开发模式)")
     
     return parser.parse_args()
 
@@ -421,7 +428,8 @@ def main():
     
     starter = SmartImageFinderStarter(
         backend_only=args.backend_only,
-        frontend_only=args.frontend_only
+        frontend_only=args.frontend_only,
+        reload=args.reload,
     )
     
     try:

@@ -122,8 +122,10 @@ def encode_image(
     cache_dir = cache_dir or config.IMAGE_VECTOR_CACHE_DIR
 
     cache_key = get_image_cache_key(image_input)
+    # 注意: diskcache 的 size_limit 单位为字节
+    # 之前错误地传入了以 GB 为单位的浮点数，导致几乎所有写入都会被立即逐出
     cache_instance = diskcache.Cache(
-        directory=cache_dir, size_limit=config.MAX_CACHE_SIZE_GB
+        directory=cache_dir, size_limit=int(config.MAX_CACHE_SIZE_GB * (2**30))
     )
 
     embeddings = cache_instance.get(cache_key)

@@ -6,6 +6,7 @@ from fastapi.templating import Jinja2Templates
 import time
 import uvicorn
 import os
+import argparse
 
 from backend.routers import ai_router, images, search, tags, system, metadata, ai_recommendation_router # 导入配置
 from backend.config import settings  # 导入配置
@@ -115,5 +116,17 @@ async def root(request: Request):
     
 
 if __name__ == "__main__":
-    # 启动FastAPI应用
-    uvicorn.run("main:app", host=settings.get_config().HOST, port=settings.get_config().PORT, log_level="info",reload=True)
+    # 启动FastAPI应用（默认不启用热加载，除非显式传入 --reload 或设置环境变量 SIF_RELOAD=1）
+    parser = argparse.ArgumentParser(description="Run SmartImageFinder API server")
+    parser.add_argument("--reload", action="store_true", help="Enable hot reload (development mode)")
+    args, _ = parser.parse_known_args()
+
+    reload_enabled = bool(args.reload or os.environ.get("SIF_RELOAD") == "1")
+
+    uvicorn.run(
+        "main:app",
+        host=settings.get_config().HOST,
+        port=settings.get_config().PORT,
+        log_level="info",
+        reload=reload_enabled,
+    )

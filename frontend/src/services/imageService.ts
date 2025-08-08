@@ -22,7 +22,19 @@ const imageService: ImageClient = {
    * GET /api/v1/images/
    */
   getImagesList: async (params?: GetImagesListParams): Promise<ImagesListResponse> => {
-    const response = await apiClient.getWithTransform<ImageModel[]>('/images', { params });
+    // 将 tags 统一为逗号分隔字符串，防止 axios 序列化为 tags[]
+    let finalParams: Record<string, any> | undefined = undefined;
+    if (params) {
+      const { tags, ...rest } = params;
+      finalParams = { ...rest } as Record<string, any>;
+      if (Array.isArray(tags)) {
+        finalParams.tags = tags.join(',');
+      } else if (typeof tags === 'string') {
+        finalParams.tags = tags;
+      }
+    }
+
+    const response = await apiClient.getWithTransform<ImageModel[]>('/images', { params: finalParams });
     // 假设此端点的服务器响应包含 ImagesListResponse 定义的正确元数据结构
     return response as ImagesListResponse;
   },

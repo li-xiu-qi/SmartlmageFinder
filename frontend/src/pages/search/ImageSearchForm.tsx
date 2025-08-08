@@ -95,6 +95,14 @@ const ImageSearchForm: React.FC<ImageSearchFormProps> = ({ onSearch, loading, ta
     }
   };
 
+  // 标签变更时自动应用（仅当已选择图片时才触发搜索）
+  const handleTagsChange = async (values: string[]) => {
+    form.setFieldsValue({ tags: values });
+    if (searchFile) {
+      await handleSearch();
+    }
+  };
+
   return (
     <Card className="search-form-card">      <Form
         form={form}
@@ -165,6 +173,7 @@ const ImageSearchForm: React.FC<ImageSearchFormProps> = ({ onSearch, loading, ta
                 placeholder="选择标签筛选"
                 optionFilterProp="children"
                 allowClear
+                onChange={handleTagsChange}
               >
                 {tags.map(tag => (
                   <Option key={tag.tag} value={tag.tag}>{tag.tag} ({tag.count})</Option>

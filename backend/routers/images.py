@@ -40,6 +40,7 @@ async def get_images_list(
     title: Optional[str] = Query(None, description="标题过滤"),
     description: Optional[str] = Query(None, description="描述过滤"),
     tags: Optional[str] = Query(None, description="标签过滤 (逗号分隔)"),
+    tags_list: Optional[List[str]] = Query(None, alias="tags[]", description="标签过滤 (多值参数，等价于 tags 的数组形式)"),
     start_date: Optional[str] = Query(None, description="开始日期 (YYYY-MM-DD)"),
     end_date: Optional[str] = Query(None, description="结束日期 (YYYY-MM-DD)"),
     conn = Depends(get_db)
@@ -58,9 +59,17 @@ async def get_images_list(
             filters['start_date'] = start_date
         if end_date:
             filters['end_date'] = end_date
+        # 统一处理标签过滤，兼容 tags=逗号分隔字符串 与 tags[]=多值数组
+        merged_tags: List[str] = []
         if tags:
-            # 将逗号分隔的标签字符串转换为列表
-            filters['tags'] = [tag.strip() for tag in tags.split(',') if tag.strip()]
+            merged_tags.extend([tag.strip() for tag in tags.split(',') if tag.strip()])
+        if tags_list:
+            for item in tags_list:
+                if isinstance(item, str):
+                    merged_tags.extend([t.strip() for t in item.split(',') if t.strip()])
+        if merged_tags:
+            # 去重
+            filters['tags'] = list(set(merged_tags))
         
         image_repo = ImageRepository()
         images, total_count = image_repo.get_list(
@@ -164,8 +173,9 @@ async def upload_images(
                 'height': 0,
                 'created_at': datetime.now(),
                 'updated_at': datetime.now(),
-                'metadata': '{}',
-                'tags': '[]'
+                # 使用Python原生类型，入库时由仓库层统一转换为JSON字符串
+                'metadata': {},
+                'tags': []
             }
             
             uploaded_images.append(image_data)
