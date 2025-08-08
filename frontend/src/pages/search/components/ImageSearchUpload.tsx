@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button, Space } from 'antd';
 import { DeleteOutlined, CopyOutlined, FileImageOutlined } from '@ant-design/icons';
 import type { RcFile, UploadFile } from 'antd/es/upload';
-import EnhancedUploadDropzone from '@/components/EnhancedUploadDropzone';
+import UploadDropzone from '@/components/UploadDropzone';
 
 interface ImageSearchUploadProps {
   fileList: UploadFile[];
@@ -138,7 +138,7 @@ const ImageSearchUpload: React.FC<ImageSearchUploadProps> = ({
   // 显示上传区域
   return (
     <div>
-      <EnhancedUploadDropzone
+      <UploadDropzone
         fileList={localFileList}
         onChange={handleUploadChange}
         onRemove={handleRemove}

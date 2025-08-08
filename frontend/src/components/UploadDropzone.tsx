@@ -6,7 +6,7 @@ import type { UploadProps, UploadFile, RcFile } from 'antd/es/upload';
 const { Dragger } = Upload;
 const { Text } = Typography;
 
-interface EnhancedUploadDropzoneProps {
+interface UploadDropzoneProps {
   fileList: UploadFile[];
   onChange: UploadProps['onChange'];
   onRemove: (file: UploadFile) => boolean | Promise<boolean>;
@@ -15,13 +15,13 @@ interface EnhancedUploadDropzoneProps {
   maxSize?: number; // MB
   multiple?: boolean;
   onPasteUpload?: (file: File) => void; // 复制粘贴上传回调
+  showPasteArea?: boolean; // 是否显示粘贴区域
 }
 
 /**
- * 增强的上传组件，支持复制粘贴功能
- * 通过分离粘贴区域和上传区域来避免点击冲突
+ * 统一的上传组件，支持拖拽、点击选择和复制粘贴功能
  */
-const EnhancedUploadDropzone: React.FC<EnhancedUploadDropzoneProps> = ({
+const UploadDropzone: React.FC<UploadDropzoneProps> = ({
   fileList,
   onChange,
   onRemove,
@@ -29,7 +29,8 @@ const EnhancedUploadDropzone: React.FC<EnhancedUploadDropzoneProps> = ({
   accept = 'image/*',
   maxSize = 10,
   multiple = true,
-  onPasteUpload
+  onPasteUpload,
+  showPasteArea = true
 }) => {
   const pasteAreaRef = useRef<HTMLDivElement>(null);
 
@@ -115,13 +116,13 @@ const EnhancedUploadDropzone: React.FC<EnhancedUploadDropzoneProps> = ({
   // 设置粘贴事件监听器
   useEffect(() => {
     const pasteArea = pasteAreaRef.current;
-    if (pasteArea) {
+    if (pasteArea && showPasteArea) {
       pasteArea.addEventListener('paste', handlePaste);
       return () => {
         pasteArea.removeEventListener('paste', handlePaste);
       };
     }
-  }, [disabled, fileList, onPasteUpload]);
+  }, [disabled, fileList, onPasteUpload, showPasteArea]);
 
   // 上传组件配置
   const uploadProps: UploadProps = {
@@ -147,45 +148,47 @@ const EnhancedUploadDropzone: React.FC<EnhancedUploadDropzoneProps> = ({
     <div>
       <Row gutter={[16, 16]}>
         {/* 粘贴区域 */}
-        <Col span={24}>
-          <Card
-            size="small"
-            style={{
-              border: '2px dashed #1890ff',
-              backgroundColor: '#f6ffed',
-              cursor: 'text'
-            }}
-          >
-            <div
-              ref={pasteAreaRef}
-              tabIndex={0}
+        {showPasteArea && (
+          <Col span={24}>
+            <Card
+              size="small"
               style={{
-                padding: '12px',
-                textAlign: 'center',
-                outline: 'none',
-                minHeight: '60px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-              onClick={() => {
-                pasteAreaRef.current?.focus();
+                border: '2px dashed #1890ff',
+                backgroundColor: '#f6ffed',
+                cursor: 'text'
               }}
             >
-              <Space direction="vertical" size="small">
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <CopyOutlined style={{ color: '#52c41a', fontSize: 16 }} />
-                  <Text strong style={{ color: '#52c41a' }}>
-                    点击此区域，然后按 Ctrl+V 粘贴剪贴板中的图片
+              <div
+                ref={pasteAreaRef}
+                tabIndex={0}
+                style={{
+                  padding: '12px',
+                  textAlign: 'center',
+                  outline: 'none',
+                  minHeight: '60px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+                onClick={() => {
+                  pasteAreaRef.current?.focus();
+                }}
+              >
+                <Space direction="vertical" size="small">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <CopyOutlined style={{ color: '#52c41a', fontSize: 16 }} />
+                    <Text strong style={{ color: '#52c41a' }}>
+                      点击此区域，然后按 Ctrl+V 粘贴剪贴板中的图片
+                    </Text>
+                  </div>
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    支持从网页、截图工具、图片编辑器等复制的图片
                   </Text>
-                </div>
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  支持从网页、截图工具、图片编辑器等复制的图片
-                </Text>
-              </Space>
-            </div>
-          </Card>
-        </Col>
+                </Space>
+              </div>
+            </Card>
+          </Col>
+        )}
 
         {/* 上传区域 */}
         <Col span={24}>
@@ -206,4 +209,4 @@ const EnhancedUploadDropzone: React.FC<EnhancedUploadDropzoneProps> = ({
   );
 };
 
-export default EnhancedUploadDropzone;
+export default UploadDropzone;

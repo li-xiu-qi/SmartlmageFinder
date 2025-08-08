@@ -6,7 +6,7 @@ import SharedImageDetail from '@/components/SharedImageDetail';
 import { imageService } from '@/services/api';
 import { SearchImageItem } from '@/types/models';
 import { ImageDetail } from '@/types';
-import './styles/SearchResults.less'; // 导入新的样式文件
+import './SearchResults.less'; // 导入新的样式文件
 
 const { Text, Title } = Typography;
 

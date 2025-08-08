@@ -4,7 +4,7 @@ import { UploadProps } from 'antd';
 // 导入自定义的 UploadFile 类型
 import { UploadFile } from '../types';
 // 导入增强的复制粘贴上传组件
-import EnhancedUploadDropzone from '@/components/EnhancedUploadDropzone';
+import UploadDropzoneBase from '@/components/UploadDropzone';
 
 // 定义 UploadDropzone 组件的 props 类型接口
 interface UploadDropzoneProps {
@@ -19,7 +19,7 @@ interface UploadDropzoneProps {
 // 文件列表的显示由单独的 FileListView 组件负责
 const UploadDropzone: React.FC<UploadDropzoneProps> = ({ fileList, onChange, onRemove, disabled }) => {
   return (
-    <EnhancedUploadDropzone
+    <UploadDropzoneBase
       fileList={fileList}
       onChange={onChange}
       onRemove={onRemove}

@@ -7,7 +7,7 @@ const { Title } = Typography;
 
 interface TagsSectionProps {
   imageId: number;
-  tags: string[];
+  tags: string[] | undefined;
   onTagsUpdate: (tags: string[]) => void;
 }
 
@@ -22,7 +22,7 @@ const TagsSection: React.FC<TagsSectionProps> = ({ imageId, tags, onTagsUpdate }
 
   // 打开批量编辑标签模态框
   const showEditTagsModal = () => {
-    setEditableTags([...tags]);
+    setEditableTags([...(tags || [])]);
     setIsEditModalVisible(true);
   };
 
@@ -74,7 +74,7 @@ const TagsSection: React.FC<TagsSectionProps> = ({ imageId, tags, onTagsUpdate }
     <div className="detail-section">
       <Title level={5} className="section-title">标签</Title>
       <div style={{ marginBottom: 12 }}>
-        {tags.map(tag => (
+        {(tags || []).map(tag => (
           <Tag
             key={tag}
             style={{ marginBottom: 8 }}

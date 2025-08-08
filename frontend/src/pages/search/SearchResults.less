@@ -1,0 +1,43 @@
+
+.search-loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  text-align: center;
+}
+
+.search-results-empty {
+  .ant-card-body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px; // 确保空状态有一定高度
+  }
+}
+
+.search-results-container {
+  // 可以添加容器的特定样式
+}
+
+.search-results-header {
+  margin-bottom: 16px;
+  .ant-card-body {
+    padding: 16px 24px; // 调整内边距
+  }
+}
+
+.search-results-grid {
+  // Grid的样式，如果需要可以添加
+}
+
+// 与 ImagePage.tsx 中 Drawer 内加载指示器样式一致
+.drawer-loading-indicator {
+  text-align: center;
+  padding-top: 20px;
+
+  p {
+    margin-top: 8px;
+  }
+}
