@@ -5,6 +5,17 @@ from typing import List, Union, Dict, Any
 import os
 import hashlib
 
+def build_public_url(filepath: str) -> str:
+    """根据文件绝对/相对路径生成 public_url (/static/images/filename)。
+    若无法提取文件名返回空串。统一供各处调用，避免重复拼接。
+    """
+    if not filepath:
+        return ""
+    filename = os.path.basename(filepath)
+    if not filename:
+        return ""
+    return f"/static/images/{filename}"
+
 def get_image_cache_key(image_input: Union[Image.Image, List[Image.Image], str, List[str]]) -> str:
     """生成图像的缓存键"""
     if isinstance(image_input, str):

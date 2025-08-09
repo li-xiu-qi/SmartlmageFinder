@@ -15,6 +15,7 @@ from ..db_func.core.connection import get_db
 from ..global_schemas import ResponseModel
 # 导入图片相关的数据库操作
 from ..db_func.repositories.images import ImageRepository
+from ..utils.image_utils import build_public_url
 
 router = APIRouter()
 
@@ -29,6 +30,12 @@ class BatchDeleteRequest(BaseModel):
 class BatchUpdateRequest(BaseModel):
     image_ids: List[int]
     updates: dict
+
+
+def _attach_public_url(image: dict) -> dict:
+    if image and 'public_url' not in image:
+        image['public_url'] = build_public_url(image.get('filepath') or '')
+    return image
 
 @router.get("/")
 async def get_images_list(
@@ -80,8 +87,10 @@ async def get_images_list(
             filters=filters
         )
         
+        # 添加 public_url
+        images_with_url = [_attach_public_url(img) for img in images]
         return ResponseModel.paginated_response(
-            data=images,
+            data=images_with_url,
             page=page,
             page_size=page_size,
             total_items=total_count,
@@ -111,7 +120,7 @@ async def get_image_by_id(
             )
         
         return ResponseModel.success(
-            data=image,
+            data=_attach_public_url(image),
             message="获取图片信息成功"
         )
     except Exception as e:
@@ -195,7 +204,7 @@ async def upload_images(
         for image_id in image_ids:
             image = image_repo.get_by_id(image_id)
             if image:
-                result_images.append(image)
+                result_images.append(_attach_public_url(image))
         
         # 如果启用自动分析，异步处理
         if auto_analyze:

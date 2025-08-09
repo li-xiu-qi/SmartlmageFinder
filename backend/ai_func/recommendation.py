@@ -3,7 +3,7 @@ AI智能推荐功能模块
 基于现有搜索结果，使用AI模型进行智能筛选和推荐
 """
 import json
-from typing import List, Dict, Any, Optional, Union
+from typing import List, Dict, Any, Optional, Union, Iterable
 from ..config import settings
 from ..config.init_service import get_openai_client
 from ..db_func.repositories.search import SearchRepository
@@ -26,7 +26,7 @@ class RecommendationService:
                 return {"success": False, "error": "OpenAI 客户端未配置"}
             
             config = settings.get_config()
-            model = config.CHAT_MODEL if config else "Qwen/Qwen3-8B"
+            model = config.CHAT_MODEL 
             
             response = client.chat.completions.create(
                 model=model,
@@ -59,7 +59,15 @@ class RecommendationService:
             "original_query": user_query,
             "optimized_query": user_query,
             "rewrite_success": False,
-            "error": None
+            response = client.chat.completions.create(
+                model=model,
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens
+            )
+            if system_prompt:
+                messages = ([{"role": "system", "content": system_prompt}] + messages)
+
         }
         
         try:
@@ -146,9 +154,11 @@ class RecommendationService:
         image_id: Optional[int] = None,
         limit: int = 20,
         filters: Dict[str, Any] = None
-    ) -> Dict[str, Any]:
+                response = self._chat_completion(
+                    messages=[{"role": "user", "content": rewrite_prompt}],
         """
-        获取AI智能推荐结果
+                    max_tokens=100,
+                    system_prompt=self._build_rewrite_system_prompt(),
         
         Args:
             query: 搜索查询词
@@ -270,6 +280,237 @@ class RecommendationService:
                 filters=filters,
                 limit=limit
             )
+
+    # =============== 对话式推荐 ===============
+    def _merge_state(self, prev: Optional[Dict[str, Any]], new_part: Dict[str, Any]) -> Dict[str, Any]:
+        prev = prev or {}
+        merged = {**prev}
+        for k, v in new_part.items():
+            if v is None:
+                continue
+            if isinstance(v, dict) and isinstance(merged.get(k), dict):
+                # 深度合并 filters 等
+                merged[k] = {**merged[k], **{ik: iv for ik, iv in v.items() if iv is not None}}
+            else:
+                merged[k] = v
+        return merged
+
+    def chat_recommend(
+        self,
+        messages: List[Dict[str, str]],
+        state: Optional[Dict[str, Any]] = None,
+        vector_targets: Optional[List[str]] = None,
+        limit: int = 20,
+        filters: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """
+        对话式推荐：依据最近一条用户消息（可选经 AI 改写）进行搜索，并返回更新后的 state。
+
+        state 约定（轻量）：
+        - query: 当前有效查询
+        - vector_targets: 使用的向量目标
+        - filters: { tags: [], start_date, end_date, ... }
+        - history_hint: 最近摘要（可用于前端展示）
+        """
+        try:
+            if not messages or not isinstance(messages, list):
+                return {"success": False, "error": "messages 不能为空"}
+
+            # 取最后一条用户消息作为本轮意图
+            last_user_msg = next((m for m in reversed(messages) if m.get("role") == "user"), None)
+            if not last_user_msg or not last_user_msg.get("content", "").strip():
+                return {"success": False, "error": "请输入有效的用户消息"}
+
+            curr_query = last_user_msg["content"].strip()
+            vt = vector_targets or state.get("vector_targets") if state else None
+            if not vt:
+                vt = ["title", "description", "image"]
+
+            # 合并 filters：优先入参 filters，再合并 state.filters
+            merged_filters = {}
+            if state and isinstance(state.get("filters"), dict):
+                merged_filters.update({k: v for k, v in state.get("filters").items() if v is not None})
+            if filters:
+                merged_filters.update({k: v for k, v in filters.items() if v is not None})
+
+            # 可选：AI 改写
+            effective_query = curr_query
+            rewrite_info = self.rewrite_search_query(curr_query)
+            if rewrite_info and rewrite_info.get("rewrite_success"):
+                effective_query = rewrite_info.get("optimized_query", curr_query)
+
+            # 执行搜索（向量搜索统一入口）
+            search_repo = SearchRepository()
+            results = search_repo.unified_search(
+                query_type="text",
+                query_content=effective_query,
+                search_targets=vt,
+                filters=merged_filters,
+                limit=limit,
+                offset=0,
+            )
+
+            # 组装新的 state
+            new_state = self._merge_state(
+                state,
+                {
+                    "query": effective_query,
+                    "vector_targets": vt,
+                    "filters": merged_filters,
+                    "history_hint": f"Q: {curr_query} -> {effective_query}",
+                },
+            )
+
+            return {
+                "images": results or [],
+                "query_rewrite": rewrite_info,
+                "total_found": len(results) if isinstance(results, list) else 0,
+                "search_time_ms": 0,
+                "success": True,
+                "state": new_state,
+            }
+        except Exception as e:
+            return {
+                "images": [],
+                "query_rewrite": None,
+                "total_found": 0,
+                "search_time_ms": 0,
+                "success": False,
+                "error": str(e),
+                "state": state or {},
+            }
+
+    # =============== 流式（SSE）对话式推荐 ===============
+    def _sse_event(self, event: str, data: Any) -> str:
+        try:
+            payload = json.dumps(data, ensure_ascii=False)
+        except Exception:
+            payload = json.dumps({"message": str(data)}, ensure_ascii=False)
+        return f"event: {event}\n" f"data: {payload}\n\n"
+
+    def stream_chat_recommend(
+        self,
+        messages: List[Dict[str, str]],
+        state: Optional[Dict[str, Any]] = None,
+        vector_targets: Optional[List[str]] = None,
+        limit: int = 20,
+        filters: Optional[Dict[str, Any]] = None,
+    ) -> Iterable[str]:
+        """
+        SSE 流式接口：
+        - rewrite_start / rewrite_delta / rewrite_done：流式返回 AI 改写关键词
+        - search_started：开始搜索（包含元信息）
+        - result：逐条返回图片结果（或一次性返回）
+        - complete：完成，包含最终 state 和统计
+        - error：错误信息
+        """
+        try:
+            if not messages or not isinstance(messages, list):
+                yield self._sse_event("error", {"message": "messages 不能为空"})
+                return
+
+            # 最近一条用户输入
+            last_user_msg = next((m for m in reversed(messages) if m.get("role") == "user"), None)
+            if not last_user_msg or not last_user_msg.get("content", "").strip():
+                yield self._sse_event("error", {"message": "请输入有效的用户消息"})
+                return
+
+            original_query = last_user_msg["content"].strip()
+            vt = vector_targets or (state.get("vector_targets") if state else None) or ["title", "description", "image"]
+
+            # 合并 filters
+            merged_filters: Dict[str, Any] = {}
+            if state and isinstance(state.get("filters"), dict):
+                merged_filters.update({k: v for k, v in state.get("filters").items() if v is not None})
+            if filters:
+                merged_filters.update({k: v for k, v in filters.items() if v is not None})
+
+            # 1) 流式改写
+            client = get_openai_client()
+            optimized_query = ""
+            if client:
+                try:
+                    yield self._sse_event("rewrite_start", {"original": original_query})
+                    config = settings.get_config()
+                    model = config.CHAT_MODEL if config else "Qwen/Qwen3-8B"
+                    system_prompt = self._build_rewrite_system_prompt()
+
+                    # 组合对话：系统提示 + 原始上下文 + 收尾指令
+                    chat_messages = [{"role": "system", "content": system_prompt}]
+                    for m in messages[-20:]:  # 限最近 20 条
+                        role = m.get("role") or "user"
+                        content = (m.get("content") or "").strip()
+                        if content:
+                            chat_messages.append({"role": role, "content": content})
+                    chat_messages.append({"role": "user", "content": "请只输出关键词。"})
+
+                    stream = client.chat.completions.create(
+                        model=model,
+                        messages=chat_messages,
+                        temperature=0.3,
+                        max_tokens=100,
+                        stream=True,
+                    )
+
+                    for chunk in stream:
+                        try:
+                            delta = chunk.choices[0].delta.content if chunk and chunk.choices else None
+                        except Exception:
+                            delta = None
+                        if delta:
+                            optimized_query += delta
+                            yield self._sse_event("rewrite_delta", {"delta": delta})
+                    optimized_query = (optimized_query or "").strip()
+                    yield self._sse_event("rewrite_done", {"optimized": optimized_query or original_query})
+                    if not optimized_query:
+                        optimized_query = original_query
+                except Exception as e:
+                    # 改写失败，降级
+                    yield self._sse_event("rewrite_skipped", {"reason": f"AI 改写失败: {str(e)}"})
+                    optimized_query = original_query
+            else:
+                # 无 AI，直接使用原始查询
+                yield self._sse_event("rewrite_skipped", {"reason": "AI 未配置，使用原始查询"})
+                optimized_query = original_query
+
+            # 2) 搜索阶段
+            yield self._sse_event("search_started", {"query": optimized_query, "vector_targets": vt, "filters": merged_filters, "limit": limit})
+
+            search_repo = SearchRepository()
+            results = search_repo.unified_search(
+                query_type="text",
+                query_content=optimized_query,
+                search_targets=vt,
+                filters=merged_filters,
+                limit=limit,
+                offset=0,
+            ) or []
+
+            # 逐条推送结果（如需要也可一次性发送）
+            for idx, img in enumerate(results):
+                # 可裁剪字段以降低体积
+                yield self._sse_event("result", {"index": idx, "image": img})
+
+            # 3) 完成并返回新的 state
+            new_state = self._merge_state(
+                state,
+                {
+                    "query": optimized_query,
+                    "vector_targets": vt,
+                    "filters": merged_filters,
+                    "history_hint": f"Q: {original_query} -> {optimized_query}",
+                },
+            )
+
+            yield self._sse_event(
+                "complete",
+                {
+                    "total_found": len(results),
+                    "state": new_state,
+                },
+            )
+        except Exception as e:
+            yield self._sse_event("error", {"message": str(e)})
 
 # 全局推荐服务实例
 recommendation_service = RecommendationService()

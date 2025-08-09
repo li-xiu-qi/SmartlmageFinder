@@ -11,7 +11,7 @@
 
 ### 1. 获取所有标签
 
-**GET** `/api/v1/tags/`
+GET `/api/v1/tags/`
 
 获取系统中所有已使用标签及其使用频率。
 
@@ -52,7 +52,7 @@
 
 ### 2. 搜索标签
 
-**GET** `/api/v1/tags/search`
+GET `/api/v1/tags/search`
 
 搜索符合关键字的标签，用于自动完成功能。
 
@@ -86,7 +86,7 @@
 
 ### 3. 根据标签获取图片
 
-**GET** `/api/v1/tags/by-tag/{tag}`
+GET `/api/v1/tags/by-tag/{tag}`
 
 根据标签获取图片列表。
 
@@ -139,7 +139,7 @@
 
 ### 4. 根据多个标签获取图片
 
-**GET** `/api/v1/tags/by-multiple-tags`
+GET `/api/v1/tags/by-multiple-tags`
 
 根据多个标签获取图片列表。
 
@@ -227,7 +227,7 @@
 
 ### 5. 为图片添加标签
 
-**POST** `/api/v1/tags/{image_id}/update`
+POST `/api/v1/tags/{image_id}/update`
 
 为图片添加或更新标签。
 

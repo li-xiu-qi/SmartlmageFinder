@@ -1,27 +1,14 @@
 """
-数据库核心功能模块，包含数据库连接和初始化
+数据库初始化模块
+
+仅负责 init_db：创建表 / 虚表 / 索引。
+运行期获取连接统一使用 core.connection.get_db。
 """
 import sqlite3
-from contextlib import contextmanager
 
-from .connection import get_db_connection_from_pool, get_db_connection
+from .connection import get_db_connection
 from ...config import settings
 from ...ai_func.generate_vector import get_embedding_dimension
-
-
-def get_db():
-    """
-    FastAPI 依赖项，用于获取数据库连接
-    优先使用连接池，如果连接池未初始化则使用单连接模式
-    """
-    try:
-        # 尝试从连接池获取连接
-        with get_db_connection_from_pool() as conn:
-            yield conn
-    except RuntimeError:
-        # 连接池未初始化，使用单连接模式
-        with get_db_connection() as conn:
-            yield conn
 
 
 def init_db():
@@ -96,6 +83,43 @@ def init_db():
         
         # 创建索引
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_images_created_at ON images(created_at)')
+
+        # 请求会话记录表，用于前后端以请求ID维护会话
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS request_sessions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            request_id TEXT NOT NULL UNIQUE,
+            conversation_id TEXT NOT NULL,
+            user_id TEXT,
+            endpoint TEXT NOT NULL,
+            messages TEXT,
+            state TEXT,
+            vector_targets TEXT,
+            filters TEXT,
+            selected_ids TEXT,
+            status TEXT NOT NULL DEFAULT 'pending',
+            error TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        )
+        ''')
+
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_request_sessions_conv ON request_sessions(conversation_id)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_request_sessions_created ON request_sessions(created_at)')
+
+        # 对话消息表（精简化，仅存消息文本与引用的图片ID列表）
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS conversation_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            conversation_id TEXT NOT NULL,
+            role TEXT NOT NULL,
+            content TEXT,
+            image_ids TEXT,
+            metadata TEXT,
+            created_at TEXT NOT NULL
+        )
+        ''')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_conv_messages_conv_created ON conversation_messages(conversation_id, created_at)')
         
         conn.commit()
     

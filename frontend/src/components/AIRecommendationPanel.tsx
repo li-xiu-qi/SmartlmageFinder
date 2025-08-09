@@ -125,7 +125,7 @@ const AIRecommendationPanel: React.FC<AIRecommendationPanelProps> = ({
                   onClick={() => onImageSelect?.(item)}
                 >
                   <List.Item.Meta
-                    avatar={<Avatar src={`/api/v1/images/${item.id}/thumbnail?size=small`} shape="square" size={48} />}
+                    avatar={<Avatar src={(item as any).public_url || (item as any).filepath || undefined} shape="square" size={48} />}
                     title={item.title}
                     description={
                       <div>

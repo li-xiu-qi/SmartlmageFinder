@@ -4,6 +4,5 @@ from .search import router as search_router
 from .images import router as images_router
 from .system import router as system_router
 from .tags import router as tags_router
-from .image_analysis_router import router as ai_router
+from .ai import router as ai_router
 from .metadata import router as metadata_router
-from .ai_recommendation import router as ai_recommendation_router

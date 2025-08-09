@@ -321,10 +321,8 @@ class SearchRepository(BaseRepository):
         
         Args:
             query_type: 查询类型，可选值："text", "image"
-            query_content: 查询内容，对于文本查询是文本字符串，对于图像查询是图像路径
-            search_targets: 要搜索的目标类型列表，可包含："title", "description", "image"
-            filters: 过滤条件字典
-            limit: 返回结果的最大数量
+                        if 'public_url' not in image:
+                            image['public_url'] = build_public_url(image.get('filepath') or '')
             offset: 结果的起始偏移量，用于分页
             
         Returns:
@@ -397,6 +395,10 @@ class SearchRepository(BaseRepository):
             id_to_score = {result[0]: 1 - result[1] for result in paginated_results}  # 将distance转换为score
             for image in images:
                 image['score'] = id_to_score.get(image['id'], 0)
+                # 附加 public_url 便于前端直接显示
+                if 'filepath' in image and image.get('filepath'):
+                    import os
+                    image['public_url'] = f"/static/images/{os.path.basename(image['filepath'])}"
                 
             return images
         
@@ -432,6 +434,9 @@ class SearchRepository(BaseRepository):
         id_to_score = {result[0]: result[1] for result in paginated_results}
         for image in images:
             image['score'] = id_to_score.get(image['id'], 0)
+            if 'filepath' in image and image.get('filepath'):
+                import os
+                image['public_url'] = f"/static/images/{os.path.basename(image['filepath'])}"
             
         # 按得分重新排序（确保返回的顺序正确）
         images.sort(key=lambda x: x['score'], reverse=True)

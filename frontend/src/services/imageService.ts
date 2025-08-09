@@ -163,16 +163,9 @@ const imageService: ImageClient = {
   /**
    * 获取图片文件URL
    */
+  // 改为直接使用后端返回的 public_url，不再拼接 /file 或 /thumbnail
   getImageUrl: (imageId: number | string): string => {
-    return `${API_BASE_URL}/images/${imageId}/file`;
-  },
-
-  /**
-   * 获取图片缩略图URL
-   */
-  getThumbnailUrl: (imageId: number | string, size?: 'small' | 'medium' | 'large'): string => {
-    const thumbSize = size || 'medium';
-    return `${API_BASE_URL}/images/${imageId}/thumbnail?size=${thumbSize}`;
+    return `${API_BASE_URL}/images/${imageId}`; // 若仍需要详情，可再取 public_url 字段
   },
 };
 

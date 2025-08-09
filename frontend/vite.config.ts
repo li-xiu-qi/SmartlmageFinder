@@ -33,13 +33,13 @@ export default defineConfig({
         secure: false,
         timeout: 60000, // 60秒超时，适合AI推荐等长时间操作
       },
-      '/data': {
+      // 直接代理 /static 以支持后端返回的 public_url=/static/images/xxx
+      '/static': {
         target: 'http://localhost:10050',
         changeOrigin: true,
         secure: false,
-        timeout: 30000, // 30秒超时，适合静态资源
-        rewrite: (path: string) => path.replace(/^\/data/, '/static')
-      }
+        timeout: 30000,
+      },
     }
   }
 })

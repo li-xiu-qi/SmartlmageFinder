@@ -8,7 +8,8 @@ from .connection import (
     get_db_connection,
     get_connection_pool
 )
-from .database import init_db, get_db
+from .database import init_db
+from .connection import get_db
 from .extensions import setup_connection, PlatformDetector
 
 __all__ = [

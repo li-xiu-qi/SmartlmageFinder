@@ -11,7 +11,7 @@
 
 ### 1. 获取基本系统信息
 
-**GET** `/api/v1/system/info`
+GET `/api/v1/system/info`
 
 获取基本系统信息，不包括数据库和缓存等详细信息。
 
@@ -39,7 +39,7 @@
 
 ### 2. 获取系统运行时间
 
-**GET** `/api/v1/system/runtime`
+GET `/api/v1/system/runtime`
 
 获取系统运行时间信息。
 
@@ -66,7 +66,7 @@
 
 ### 3. 获取数据库状态
 
-**GET** `/api/v1/system/database`
+GET `/api/v1/system/database`
 
 获取数据库状态信息。
 
@@ -105,7 +105,7 @@
 
 ### 4. 获取存储状态
 
-**GET** `/api/v1/system/storage`
+GET `/api/v1/system/storage`
 
 获取存储状态信息，包括图像和标签统计。
 
@@ -137,7 +137,7 @@
 
 ### 5. 获取缓存状态
 
-**GET** `/api/v1/system/cache`
+GET `/api/v1/system/cache`
 
 获取缓存统计信息。
 
@@ -175,7 +175,7 @@
 
 ### 6. 清除系统缓存
 
-**POST** `/api/v1/system/cache/clear`
+POST `/api/v1/system/cache/clear`
 
 清除系统缓存。
 
@@ -206,7 +206,7 @@
 
 ### 7. 获取系统配置
 
-**GET** `/api/v1/system/config`
+GET `/api/v1/system/config`
 
 获取系统配置信息。
 
@@ -240,7 +240,7 @@
 
 ### 8. 更新系统配置
 
-**POST** `/api/v1/system/config/update`
+POST `/api/v1/system/config/update`
 
 更新系统配置。
 
@@ -290,7 +290,7 @@
 
 ### 9. 获取向量数据库驱动状态
 
-**GET** `/api/v1/system/vector-driver`
+GET `/api/v1/system/vector-driver`
 
 获取向量数据库驱动状态信息。
 

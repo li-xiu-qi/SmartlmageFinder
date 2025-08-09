@@ -62,18 +62,34 @@ def get_query_filter_params(
     filename: Optional[str] = Query(None, description="按文件名过滤"),
     title: Optional[str] = Query(None, description="按标题过滤"),
     description: Optional[str] = Query(None, description="按描述过滤"),
-    tags: Optional[List[str]] = Query(None, description="按标签过滤"),
+    tags: Optional[List[str]] = Query(None, description="按标签过滤 (支持逗号分隔或多值)"),
+    tags_list: Optional[List[str]] = Query(None, alias="tags[]", description="按标签过滤 (多值参数，等价于 tags 的数组形式)"),
     start_date: Optional[str] = Query(None, description="开始日期 (YYYY-MM-DD HH:MM:SS)"),
     end_date: Optional[str] = Query(None, description="结束日期 (YYYY-MM-DD HH:MM:SS)"),
     limit: int = Query(20, description="返回结果数量限制"),
     offset: int = Query(0, description="分页偏移"),
 ) -> CommonFilterParams:
     """获取通用的查询过滤参数，用于GET请求"""
+    # 合并 tags 与 tags[] 两类参数
+    merged_tags: Optional[List[str]] = None
+    if tags or tags_list:
+        merged: List[str] = []
+        if tags:
+            for item in tags:
+                if isinstance(item, str):
+                    merged.extend([t.strip() for t in item.split(',') if t.strip()])
+        if tags_list:
+            for item in tags_list:
+                if isinstance(item, str):
+                    merged.extend([t.strip() for t in item.split(',') if t.strip()])
+        if merged:
+            merged_tags = list(set(merged))
+
     return CommonFilterParams(
         filename=filename,
         title=title,
         description=description,
-        tags=tags,
+        tags=merged_tags,
         start_date=start_date,
         end_date=end_date,
         limit=limit,

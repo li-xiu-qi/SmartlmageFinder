@@ -8,7 +8,7 @@ import uvicorn
 import os
 import argparse
 
-from backend.routers import ai_router, images, search, tags, system, metadata, ai_recommendation_router # 导入配置
+from backend.routers import ai_router, images, search, tags, system, metadata # 导入配置
 from backend.config import settings  # 导入配置
 from backend.db_func.core.database import init_db  # 导入数据库初始化函数
 from backend.db_func.core.connection import initialize_connection_pool  # 导入连接池初始化函数
@@ -52,7 +52,6 @@ app.include_router(images.router, prefix="/api/v1/images", tags=["images"])
 app.include_router(search.router)
 app.include_router(tags.router)
 app.include_router(ai_router)
-app.include_router(ai_recommendation_router)
 app.include_router(system.router)
 app.include_router(metadata.router)
 
@@ -121,7 +120,7 @@ if __name__ == "__main__":
     parser.add_argument("--reload", action="store_true", help="Enable hot reload (development mode)")
     args, _ = parser.parse_known_args()
 
-    reload_enabled = bool(args.reload or os.environ.get("SIF_RELOAD") == "1")
+    reload_enabled = True
 
     uvicorn.run(
         "main:app",

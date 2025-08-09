@@ -178,12 +178,5 @@ export interface ImageClient {
    * @returns 可访问的图片URL
    */
   getImageUrl(imageId: number | string): string;
-
-  /**
-   * 获取图片缩略图URL
-   * @param imageId 图片ID
-   * @param size 缩略图大小，如 "small", "medium", "large"
-   * @returns 缩略图URL
-   */
-  getThumbnailUrl(imageId: number | string, size?: 'small' | 'medium' | 'large'): string;
+  // 说明：缩略图接口已移除，统一由后端返回 public_url（/static/images/{filename})，若需要不同尺寸可后续扩展。
 }
