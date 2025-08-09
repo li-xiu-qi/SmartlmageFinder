@@ -203,15 +203,36 @@ async def upload_images(
             if image:
                 result_images.append(_attach_public_url(image))
         
-        # 如果启用自动分析，异步处理
+        # 如果启用自动分析：执行分析并将结果写回数据库（同步简单实现，后续可改为后台任务）
         if auto_analyze:
-            # 创建图像分析器实例
             image_analyzer = ImageAnalysis()
             for image_id in image_ids:
                 try:
-                    analyze_image_id(image_analyzer, image_id)
+                    analysis = analyze_image_id(image_analyzer, image_id)
+                    if analysis and not analysis.get("error"):
+                        # 仅当分析成功且至少有一个字段非空才更新
+                        update_payload = {}
+                        if analysis.get("title"):
+                            update_payload["title"] = analysis.get("title")
+                        if analysis.get("description"):
+                            update_payload["description"] = analysis.get("description")
+                        # tags 必须是列表且非空
+                        tags_field = analysis.get("tags")
+                        if isinstance(tags_field, list) and tags_field:
+                            update_payload["tags"] = tags_field
+                        if update_payload:
+                            image_repo.update(image_id, update_payload)
                 except Exception as e:
                     print(f"自动分析图片 {image_id} 失败: {str(e)}")
+
+            # 重新获取最新信息（包含回填）
+            refreshed = []
+            for image_id in image_ids:
+                img = image_repo.get_by_id(image_id)
+                if img:
+                    refreshed.append(_attach_public_url(img))
+            if refreshed:
+                result_images = refreshed
         
         return ResponseModel.success(
             data=result_images,

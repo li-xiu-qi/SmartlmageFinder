@@ -11,14 +11,15 @@ import {
   AIRecommendationParams,
   AIRecommendationData
 } from '@/types/recommendation';
-import { SearchImageItem } from '@/types/models';
+import { ImageSearchResult } from '@/types/models';
+import { getImageUrl } from '@/utils/typeConverters';
 
 const { TextArea } = Input;
 
 interface AIRecommendationPanelProps {
   visible: boolean;
   onClose: () => void;
-  onImageSelect?: (image: SearchImageItem) => void;
+  onImageSelect?: (image: ImageSearchResult) => void;
 }
 
 /**
@@ -125,7 +126,7 @@ const AIRecommendationPanel: React.FC<AIRecommendationPanelProps> = ({
                   onClick={() => onImageSelect?.(item)}
                 >
                   <List.Item.Meta
-                    avatar={<Avatar src={(item as any).public_url || (item as any).filepath || undefined} shape="square" size={48} />}
+                     avatar={<Avatar src={getImageUrl(item as any) || undefined} shape="square" size={48} />}
                     title={item.title}
                     description={
                       <div>

@@ -1,7 +1,7 @@
 // 导入 Ant Design 的 UploadFile 类型，用于文件上传列表项
 import { UploadFile as AntUploadFile, RcFile } from 'antd/es/upload/interface';
 // 导入项目中定义的图片数据模型
-import { ImageModel } from '@/types/models';
+import { ImageDetail } from '@/types/models';
 
 // 扩展 Ant Design 的 UploadFile 类型，确保 originFileObj 存在且为 File 类型
 // antd 的 UploadFile 类型中 originFileObj 是可选的，这里我们强制它存在，因为后续操作会依赖它
@@ -27,7 +27,7 @@ export interface UploadResultItem {
   fileName: string;       // 上传的文件名
   success: boolean;       // 上传是否成功
   message?: string;        // 上传结果的消息，成功或失败原因
-  image?: ImageModel;      // 如果上传成功，这里会包含后端返回的图片信息
+  image?: ImageDetail;      // 如果上传成功，这里会包含后端返回的图片信息
   error?: Error | Record<string, unknown>; // 如果上传失败，这里会包含错误详情
 }
 

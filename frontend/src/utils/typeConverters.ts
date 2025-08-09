@@ -1,7 +1,7 @@
 /**
  * 类型转换工具，帮助将API返回的类型转换为UI组件需要的类型
  */
-import { ImageModel, TagInfo, SearchImageItem, PaginationMetadata } from '@/types/models';
+import { ImageDetail, TagInfo, ImageSearchResult, PaginationMetadata } from '@/types/models';
 
 /**
  * ImageCard 组件中使用的图片类型
@@ -28,7 +28,7 @@ export interface ImageCardModel {
 /**
  * 将后端API返回的图片模型转换为前端显示所需的模型
  */
-export function convertToImageCardModel(image: ImageModel | SearchImageItem): ImageCardModel {
+export function convertToImageCardModel(image: ImageDetail | ImageSearchResult): ImageCardModel {
   return {
     id: image.id,
     filename: image.filename,
@@ -52,9 +52,18 @@ export function convertToImageCardModel(image: ImageModel | SearchImageItem): Im
 }
 
 /**
+ * 获取图片可访问URL，统一回退与路径规范化
+ */
+export function getImageUrl(image: { public_url?: string; filepath?: string } | null | undefined): string {
+  if (!image) return '';
+  const raw = image.public_url || image.filepath || '';
+  return raw.replace(/\\/g, '/');
+}
+
+/**
  * 类型守卫：判断是否为搜索图片项
  */
-function isSearchImageItem(image: ImageModel | SearchImageItem): image is SearchImageItem {
+function isSearchImageItem(image: ImageDetail | ImageSearchResult): image is ImageSearchResult {
   return 'score' in image || 'distance' in image;
 }
 

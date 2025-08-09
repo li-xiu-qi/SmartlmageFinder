@@ -14,7 +14,7 @@ import {
   BatchDeleteImageParams,
   BatchDeleteImageResponse,
 } from '@/types/image';
-import { ImageModel, DeletedImageInfo } from '@/types/models';
+import { ImageDetail, DeletedImageInfo } from '@/types/models';
 
 const imageService: ImageClient = {
   /**
@@ -34,9 +34,20 @@ const imageService: ImageClient = {
       }
     }
 
-    const response = await apiClient.getWithTransform<ImageModel[]>('/images', { params: finalParams });
-    // 假设此端点的服务器响应包含 ImagesListResponse 定义的正确元数据结构
-    return response as ImagesListResponse;
+    const apiResp = await apiClient.getWithTransform<ImageDetail[]>('/images', { params: finalParams });
+    const pagination = (apiResp.metadata as any)?.pagination;
+    // 严格校验：后端 images.py 使用 ResponseModel.paginated_response 保证提供 pagination
+    if (!pagination || typeof pagination !== 'object') {
+      throw new Error('服务器响应缺少 pagination 元数据');
+    }
+    // 进一步字段类型校验（若不合法直接抛错，便于尽早发现后端契约偏差）
+    const requiredKeys: Array<keyof typeof pagination> = ['page', 'page_size', 'total_items', 'total_pages'];
+    for (const k of requiredKeys) {
+      if (typeof pagination[k] !== 'number' || Number.isNaN(pagination[k])) {
+        throw new Error(`服务器 pagination 字段无效: ${String(k)}`);
+      }
+    }
+    return apiResp as ImagesListResponse;
   },
 
   /**
@@ -44,7 +55,7 @@ const imageService: ImageClient = {
    * GET /api/v1/images/{image_id}
    */
   getImageDetail: (params: GetImageDetailParams): Promise<ImageDetailResponse> => {
-    return apiClient.getWithTransform<ImageModel>(`/images/${params.image_id}`);
+  return apiClient.getWithTransform<ImageDetail>(`/images/${params.image_id}`);
   },
 
   /**
@@ -84,7 +95,7 @@ const imageService: ImageClient = {
       }
     }
 
-    return apiClient.postWithTransform<ImageModel[]>('/images/upload', formData, {
+  return apiClient.postWithTransform<ImageDetail[]>('/images/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -120,7 +131,7 @@ const imageService: ImageClient = {
       }
     }
 
-    return apiClient.patchWithTransform<ImageModel>(`/images/${params.image_id}`, formData, {
+  return apiClient.patchWithTransform<ImageDetail>(`/images/${params.image_id}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },

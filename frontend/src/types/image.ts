@@ -5,7 +5,7 @@
  */
 
 import { ApiResponse } from './api';
-import { ImageModel, PaginationMetadata, DeletedImageInfo } from './models';
+import { ImageDetail, PaginationMetadata, DeletedImageInfo } from './models';
 
 /**
  * 图片列表请求参数
@@ -102,24 +102,24 @@ export enum ImageErrorCode {
 /**
  * 图片列表响应
  */
-export type ImagesListResponse = ApiResponse<ImageModel[]> & {
+export type ImagesListResponse = ApiResponse<ImageDetail[]> & {
   metadata: ImagesListMetadata;
 };
 
 /**
  * 单个图片响应
  */
-export type ImageDetailResponse = ApiResponse<ImageModel>;
+export type ImageDetailResponse = ApiResponse<ImageDetail>;
 
 /**
  * 图片上传响应
  */
-export type UploadImagesResponse = ApiResponse<ImageModel[]>;
+export type UploadImagesResponse = ApiResponse<ImageDetail[]>;
 
 /**
  * 图片更新响应
  */
-export type UpdateImageResponse = ApiResponse<ImageModel>;
+export type UpdateImageResponse = ApiResponse<ImageDetail>;
 
 /**
  * 图片删除响应
@@ -178,5 +178,4 @@ export interface ImageClient {
    * @returns 可访问的图片URL
    */
   getImageUrl(imageId: number | string): string;
-  // 说明：缩略图接口已移除，统一由后端返回 public_url（/static/images/{filename})，若需要不同尺寸可后续扩展。
 }

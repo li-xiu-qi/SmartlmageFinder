@@ -14,7 +14,8 @@ import {
   UnifiedSearchResponse,
   FuzzySearchParams
 } from '@/types/search';
-import { SearchImageItem } from '@/types/models';
+import { ImageSearchResult } from '@/types/models';
+import { validatePagination, enrichSearchMetadata } from '@/utils/responseValidators';
 
 /**
  * 搜索服务实现
@@ -26,7 +27,8 @@ const searchService: SearchClient = {
     const apiParams: Record<string, unknown> = { ...rest };
     if (tags && tags.length > 0) apiParams.tags = tags.join(',');
     if (fields && fields.length > 0) apiParams.fields = fields;
-    return apiClient.getWithTransform<SearchImageItem[]>('/search/fuzzy', { params: apiParams }) as Promise<TextSearchResponse>;
+  return apiClient.getWithTransform<ImageSearchResult[]>('/search/fuzzy', { params: apiParams })
+      .then(resp => { validatePagination(resp, 'fuzzySearch'); return enrichSearchMetadata(resp) as TextSearchResponse; });
   },
 
   /**
@@ -54,10 +56,8 @@ const searchService: SearchClient = {
       }
     }
 
-    return apiClient.getWithTransform<SearchImageItem[]>(
-      `/search/similar/${imageId}`,
-      { params: apiParams }
-    ) as Promise<SimilarSearchResponse>;
+  return apiClient.getWithTransform<ImageSearchResult[]>(`/search/similar/${imageId}`, { params: apiParams })
+      .then(resp => { validatePagination(resp, 'similarSearch'); return enrichSearchMetadata(resp) as SimilarSearchResponse; });
   },
   
 
@@ -80,9 +80,8 @@ const searchService: SearchClient = {
       apiParams['vector_targets[]'] = vector_targets;
     }
     
-    return apiClient.getWithTransform<SearchImageItem[]>('/search/unified', { 
-      params: apiParams 
-    }) as Promise<UnifiedSearchResponse>;
+  return apiClient.getWithTransform<ImageSearchResult[]>('/search/unified', { params: apiParams })
+      .then(resp => { validatePagination(resp, 'unifiedTextSearch'); return enrichSearchMetadata(resp) as UnifiedSearchResponse; });
   },
 
   /**
@@ -123,11 +122,9 @@ const searchService: SearchClient = {
       formData.append('offset', params.offset.toString());
     }
 
-    return apiClient.postWithTransform<SearchImageItem[]>('/search/unified/image', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    }) as Promise<UnifiedSearchResponse>;
+  return apiClient.postWithTransform<ImageSearchResult[]>('/search/unified/image', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }).then(resp => { validatePagination(resp, 'unifiedImageSearch'); return enrichSearchMetadata(resp) as UnifiedSearchResponse; });
   },
 
   /**
@@ -170,11 +167,9 @@ const searchService: SearchClient = {
       formData.append('offset', params.offset.toString());
     }
 
-    return apiClient.postWithTransform<SearchImageItem[]>('/search/unified/vector', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    }) as Promise<UnifiedSearchResponse>;
+  return apiClient.postWithTransform<ImageSearchResult[]>('/search/unified/vector', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }).then(resp => { validatePagination(resp, 'unifiedVectorSearch'); return enrichSearchMetadata(resp) as UnifiedSearchResponse; });
   }
 };
 

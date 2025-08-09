@@ -6,6 +6,7 @@ import SearchResultImageCard from '@/components/SearchResultImageCard';
 import { ImageCardModel } from '@/utils/typeConverters';
 import { ViewMode } from './ViewControls';
 import dayjs from 'dayjs';
+import { getImageUrl } from '@/utils/typeConverters';
 
 interface ImageListProps {
   images: ImageCardModel[];
@@ -144,7 +145,7 @@ const ImageList: React.FC<ImageListProps> = ({
 
                 <div style={{ width: 100, height: 100, overflow: 'hidden', marginRight: 16, position: 'relative' }}>
                   <Image
-                    src={image.public_url || image.filepath}
+                    src={getImageUrl(image as any)}
                     alt={image.title}
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     preview={{

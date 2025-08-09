@@ -7,7 +7,7 @@ import {
   ExclamationCircleOutlined 
 } from '@ant-design/icons';
 import { imageAnalysisService } from '@/services/api';
-import { ImageModel } from '@/types/models';
+import { ImageDetail } from '@/types/models';
 import { AnalysisDetailLevel } from '@/types/imageAnalysis';
 
 const { Option } = Select;
@@ -20,12 +20,12 @@ const searchTypeOptions = [
 ];
 
 interface ActionsPanelProps {
-  image: ImageModel;
+  image: ImageDetail;
   searchType: string;
   onSearchTypeChange: (value: string) => void;
   onFindSimilar: () => void;
   onDelete: (id: number) => void;
-  onUpdate: (image: ImageModel) => void;
+  onUpdate: (image: ImageDetail) => void;
   loading: boolean;
 }
 

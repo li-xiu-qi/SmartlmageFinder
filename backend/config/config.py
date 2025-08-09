@@ -160,7 +160,6 @@ class Settings:
             except ValidationError as e:
                 print(f"无法使用默认值创建配置模型: {e}")
                 # 如果 VECTOR_DB_DRIVER_DIR 等是必需的，则需要一个空的 AppConfig 或处理
-                # 此处假设 AppConfig 可以处理空初始化或有默认值
                 # 为了安全起见，如果关键路径不存在，则不应继续
                 self._config_model = None  # 明确设置为 None
                 return False  # 指示加载失败
@@ -271,7 +270,6 @@ class Settings:
 
         # 获取当前配置的字典表示
         # 使用 .model_dump() (Pydantic V2) or .dict() (Pydantic V1)
-        # 假设是 Pydantic V1 或 V2 兼容的 .model_dump()
         try:
             current_config_dict = self._config_model.model_dump()
         except AttributeError:  # 兼容 Pydantic V1

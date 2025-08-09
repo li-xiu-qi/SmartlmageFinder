@@ -4,7 +4,7 @@
  */
 
 import { ApiResponse } from './api';
-import { SearchImageItem } from './models';
+import { ImageSearchResult } from './models';
 
 /**
  * 查询改写信息
@@ -34,7 +34,7 @@ export interface AIRecommendationParams {
  * AI推荐响应数据
  */
 export interface AIRecommendationData {
-  images: SearchImageItem[];             // 推荐的图片列表
+  images: ImageSearchResult[];             // 推荐的图片列表
   query_rewrite?: QueryRewriteInfo;      // 查询改写信息
   total_found?: number;                  // 找到的总数
   search_time_ms?: number;               // 搜索耗时

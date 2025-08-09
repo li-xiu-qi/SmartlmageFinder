@@ -4,7 +4,7 @@
  */
 
 import { ApiResponse } from './api';
-import { SearchImageItem, PaginationMetadata } from './models';
+import { ImageSearchResult, PaginationMetadata } from './models';
 
 /**
  * 搜索类型枚举
@@ -14,10 +14,7 @@ export enum SearchType {
   FUZZY = 'fuzzy'               // 模糊搜索（独立接口）
 }
 
-/**
- * 查询类型枚举（用于统一搜索）
- */
-// QueryType 已不再在前端使用，移除
+
 
 /**
  * 向量搜索目标枚举
@@ -118,13 +115,13 @@ export interface SearchMetadata {
  * 文本搜索响应
  */
 // 统一使用 SearchResponse / SimilarSearchResponse；保留 TextSearchResponse 作为模糊搜索返回类型别名
-export type TextSearchResponse = ApiResponse<SearchImageItem[]> & { metadata: SearchMetadata };
-export type SimilarSearchResponse = ApiResponse<SearchImageItem[]> & { metadata: SearchMetadata };
+export type TextSearchResponse = ApiResponse<ImageSearchResult[]> & { metadata: SearchMetadata };
+export type SimilarSearchResponse = ApiResponse<ImageSearchResult[]> & { metadata: SearchMetadata };
 
 /**
  * 统一搜索响应
  */
-export type UnifiedSearchResponse = ApiResponse<SearchImageItem[]> & {
+export type UnifiedSearchResponse = ApiResponse<ImageSearchResult[]> & {
   metadata: SearchMetadata;
 };
 

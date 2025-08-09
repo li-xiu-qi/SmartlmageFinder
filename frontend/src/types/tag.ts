@@ -5,7 +5,7 @@
  */
 
 import { ApiResponse } from './api';
-import { ImageModel, TagInfo, PaginationMetadata } from './models';
+import { ImageDetail, TagInfo, PaginationMetadata } from './models';
 
 /**
  * 标签匹配模式
@@ -105,14 +105,14 @@ export type TagSearchResponse = ApiResponse<string[]> & {
 /**
  * 根据标签获取图片响应
  */
-export type ImagesByTagResponse = ApiResponse<ImageModel[]> & {
+export type ImagesByTagResponse = ApiResponse<ImageDetail[]> & {
   metadata: ImagesByTagMetadata;
 };
 
 /**
  * 根据多个标签获取图片响应
  */
-export type ImagesByMultipleTagsResponse = ApiResponse<ImageModel[]> & {
+export type ImagesByMultipleTagsResponse = ApiResponse<ImageDetail[]> & {
   metadata: ImagesByMultipleTagsMetadata;
 };
 
@@ -154,20 +154,4 @@ export interface TagClient {
    * @returns 更新后的标签列表Promise
    */
   updateImageTags(imageId: number, tags: string[]): Promise<ApiResponse<{ tags: string[] }>>;
-
-  /**
-   * 为图片添加标签
-   * @param imageId 图片ID
-   * @param tags 要添加的标签列表
-   * @returns 更新后的标签列表Promise
-   */
-  addTagsToImage(imageId: number, tags: string[]): Promise<ApiResponse<{ tags: string[] }>>;
-
-  /**
-   * 从图片移除标签
-   * @param imageId 图片ID
-   * @param tag 要移除的标签
-   * @returns 更新后的标签列表Promise
-   */ 
-  removeTagFromImage(imageId: number, tag: string): Promise<ApiResponse<{ tags: string[] }>>;
 }

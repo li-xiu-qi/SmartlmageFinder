@@ -46,9 +46,11 @@ def get_image_statistics(conn: sqlite3.Connection) -> Tuple[int, int]:
 def get_tag_count(conn: sqlite3.Connection) -> int:
     """获取标签总数"""
     try:
-        from ..db_func.tags_func.get_tags import get_all_tags
-        tags = get_all_tags(conn)
-        return len(tags)
+        # 使用新的仓库模式获取全部标签
+        from ..db_func.repositories.tags import TagRepository
+        repo = TagRepository(conn)
+        all_tags = repo.get_all_tags()
+        return len(all_tags)
     except Exception as e:
         print(f"获取标签数量失败: {e}")
         return 0

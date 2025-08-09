@@ -2,6 +2,7 @@ import React from 'react';
 import { Image } from 'antd';
 import { EyeOutlined } from '@ant-design/icons';
 import { ImageDetail } from '@/types';
+import { getImageUrl } from '@/utils/typeConverters';
 
 interface ImagePreviewProps {
   image: ImageDetail;
@@ -14,7 +15,7 @@ const ImagePreview: React.FC<ImagePreviewProps> = ({ image }) => {
   return (
     <div className="image-preview">
       <Image 
-        src={((image as any).public_url || image.filepath || '').replace(/\\/g,'/')} 
+        src={getImageUrl(image as any)} 
         alt={image.title} 
         preview={{
           mask: <div>

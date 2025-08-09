@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Select, Button, Row, Col, Card, Tag, Spin, Empty, Typography } from 'antd';
 import { SearchOutlined, ArrowLeftOutlined } from '@ant-design/icons';
-import { SearchImageItem } from '@/types/models';
+import { ImageSearchResult } from '@/types/models';
+import { getImageUrl } from '@/utils/typeConverters';
 import { VectorType } from '@/types/search'; // Changed from VectorSearchTarget to VectorType
 import RefModal from '@/components/RefModal';
 import ImagePreview from '@/components/ImagePreview';
@@ -22,7 +23,7 @@ interface SimilarImagesModalProps {
   searchTarget: VectorType; // Changed from VectorSearchTarget to VectorType
   onSearchTargetChange: (value: VectorType) => void; // Changed from VectorSearchTarget to VectorType
   onSearch: () => void;
-  similarImages: SearchImageItem[];
+  similarImages: ImageSearchResult[];
 }
 
 /**
@@ -37,9 +38,9 @@ const SimilarImagesModal: React.FC<SimilarImagesModalProps> = ({
   onSearch,
   similarImages
 }) => {
-  const [selectedPreviewImage, setSelectedPreviewImage] = useState<SearchImageItem | null>(null);
+  const [selectedPreviewImage, setSelectedPreviewImage] = useState<ImageSearchResult | null>(null);
 
-  const handleImageClick = (image: SearchImageItem) => {
+  const handleImageClick = (image: ImageSearchResult) => {
     setSelectedPreviewImage(image);
   };
 
@@ -117,7 +118,7 @@ const SimilarImagesModal: React.FC<SimilarImagesModalProps> = ({
                   <div style={{ height: 160, overflow: 'hidden' }}>
                     <img
                       alt={img.title}
-                      src={((img as any).public_url || img.filepath || '').replace(/\\/g,'/')}
+                      src={getImageUrl(img as any)}
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
                   </div>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, Tag, Checkbox } from 'antd';
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
-import { ImageCardModel } from '@/utils/typeConverters';
+import { ImageCardModel, getImageUrl } from '@/utils/typeConverters';
 import dayjs from 'dayjs';
 import '../styles/components.less';
 
@@ -87,7 +87,7 @@ const ImageCard: React.FC<ImageCardProps> = ({
         <div className="image-cover">
           <img
             alt={image.title}
-            src={image.public_url || image.filepath}
+            src={getImageUrl(image as any)}
           />
           {multiSelectMode && (
             <div className="selection-overlay">

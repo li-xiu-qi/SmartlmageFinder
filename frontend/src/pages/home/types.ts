@@ -1,7 +1,7 @@
 /**
  * 首页组件所需的类型定义
  */
-import { ImageModel, TagInfo } from '@/types/models';
+import { ImageDetail, TagInfo } from '@/types/models';
 import { SystemStatusData } from '@/types/system';
 import { SystemStatus } from '@/hooks/useSystemStatus';
 
@@ -32,7 +32,7 @@ export interface SystemDetailsProps {
  * 最近图片组件属性
  */
 export interface RecentImagesProps {
-  images: ImageModel[];
+  images: ImageDetail[];
 }
 
 /**

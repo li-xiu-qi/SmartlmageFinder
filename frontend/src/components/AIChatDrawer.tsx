@@ -4,8 +4,9 @@ import ReactMarkdown from 'react-markdown';
 import { RobotOutlined, SendOutlined, StopOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useChatRecommendation } from '@/hooks/useChatRecommendation';
 import SharedImageDetail from '@/components/SharedImageDetail';
+import { getImageUrl } from '@/utils/typeConverters';
 import imageService from '@/services/imageService';
-import { ImageModel } from '@/types/models';
+import { ImageDetail } from '@/types/models';
 
 const { TextArea } = Input;
 const { Text } = Typography;
@@ -20,7 +21,7 @@ const AIChatDrawer: React.FC<AIChatDrawerProps> = ({ open, onClose }) => {
   const [input, setInput] = useState('');
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
-  const [detailImage, setDetailImage] = useState<ImageModel | null>(null);
+  const [detailImage, setDetailImage] = useState<ImageDetail | null>(null);
 
   const openDetail = async (id: number) => {
     try {
@@ -28,7 +29,7 @@ const AIChatDrawer: React.FC<AIChatDrawerProps> = ({ open, onClose }) => {
       setDetailOpen(true);
       const resp = await imageService.getImageDetail({ image_id: id });
       if (resp.status === 'success' && resp.data) {
-        setDetailImage(resp.data as ImageModel);
+  setDetailImage(resp.data as ImageDetail);
       } else {
         message.error(resp.message || '获取图片详情失败');
       }
@@ -39,7 +40,7 @@ const AIChatDrawer: React.FC<AIChatDrawerProps> = ({ open, onClose }) => {
     }
   };
 
-  const handleDetailUpdate = (img: ImageModel) => {
+  const handleDetailUpdate = (img: ImageDetail) => {
     setDetailImage(img);
   };
 
@@ -171,7 +172,7 @@ const AIChatDrawer: React.FC<AIChatDrawerProps> = ({ open, onClose }) => {
                                 size="small"
                                 dataSource={brief}
                                 renderItem={(img:any) => {
-                                  const url = img.public_url || (img.filepath ? img.filepath.replace(/\\/g,'/') : undefined);
+                                  const url = getImageUrl(img as any) || undefined;
                                   return (
                                     <List.Item key={img.id} style={{ cursor:'pointer' }} onClick={()=> openDetail(img.id)}>
                                       <List.Item.Meta

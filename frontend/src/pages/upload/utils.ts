@@ -9,7 +9,7 @@ import imageAnalysisService from '@/services/imageAnalysisService';
 // 导入图片服务，用于图片上传
 import imageService from '@/services/imageService';
 // 导入图片数据模型
-import { ImageModel } from '@/types/models';
+import { ImageDetail } from '@/types/models';
 // 导入AI分析详细程度枚举
 import { AnalysisDetailLevel, ImageAnalysisErrorCode } from '@/types/imageAnalysis';
 import type { ApiError } from '@/types';
@@ -417,7 +417,7 @@ export const uploadImages = async (
             id: file.uid,
             fileName: file.name,
             success: true,
-            image: uploadedImages[index] as ImageModel,
+            image: uploadedImages[index] as ImageDetail,
           });
         } else {
           results.push({

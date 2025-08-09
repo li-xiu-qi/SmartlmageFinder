@@ -44,9 +44,6 @@ async def update_image_metadata_endpoint(
                 message="元数据更新成功"
             )
         else:
-            # 此处假设 update_image_metadata 返回 False 意味着图片未找到或没有实际更新
-            # （例如，元数据与现有数据相同，或者 image_id 无效导致 rowcount 为 0）。
-            # 根据 update_image_metadata 的具体实现，可能需要调整错误代码和消息。
             return ResponseModel.error(
                 code="METADATA_UPDATE_FAILED",
                 message=f"更新图片ID {image_id} 的元数据失败，图片可能不存在或数据无变化",

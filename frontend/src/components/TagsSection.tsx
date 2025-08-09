@@ -50,6 +50,11 @@ const TagsSection: React.FC<TagsSectionProps> = ({ imageId, tags, onTagsUpdate }
 
   // 保存批量编辑的标签
   const handleSaveEditTags = async () => {
+    // 前置校验：不允许空标签列表
+    if (editableTags.length === 0) {
+      message.warning('标签列表不能为空，请至少添加一个标签');
+      return;
+    }
     try {
       setLoading(true);
       // 使用更新标签的API（覆盖方式）
@@ -109,13 +114,16 @@ const TagsSection: React.FC<TagsSectionProps> = ({ imageId, tags, onTagsUpdate }
         style={{ marginTop: 16 }}
       >
         批量编辑标签
-      </Button>      <Modal
+      </Button>
+      <Modal
         title="批量编辑标签"
         open={isEditModalVisible}
         onOk={handleSaveEditTags}
         onCancel={handleCancelEditTags}
         confirmLoading={loading}
-      >        <div>
+        okButtonProps={{ disabled: editableTags.length === 0, title: editableTags.length === 0 ? '至少添加一个标签' : undefined }}
+      >
+        <div>
           <div style={{ marginBottom: 16 }}>
             <Typography.Text style={{ marginBottom: 8, display: 'block' }}>
               当前标签列表：

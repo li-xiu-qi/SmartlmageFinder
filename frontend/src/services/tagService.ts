@@ -1,5 +1,5 @@
 import apiClient from './apiClient';
-import { ImageModel, TagInfo } from '@/types/models';
+import { ImageDetail, TagInfo } from '@/types/models';
 import {
   TagClient,
   GetPopularTagsParams, PopularTagsResponse,
@@ -9,6 +9,7 @@ import {
   TagMatchMode
 } from '@/types/tag';
 import type { ApiResponse } from '@/types';
+import { validatePagination } from '@/utils/responseValidators';
 
 const tagService: TagClient = {
   /**
@@ -16,7 +17,15 @@ const tagService: TagClient = {
    * GET /api/v1/tags/
    */
   async getPopularTags(params?: GetPopularTagsParams): Promise<PopularTagsResponse> {
-    return apiClient.getWithTransform<TagInfo[]>('/tags', { params }) as Promise<PopularTagsResponse>;
+    return apiClient.getWithTransform<TagInfo[]>('/tags', { params })
+      .then(resp => {
+        // 后端已返回 metadata.total，这里仅做存在性断言；若缺失则派生
+        if (resp && (!resp.metadata || (resp.metadata && (resp.metadata as any).total == null))) {
+          const derived = Array.isArray(resp.data) ? resp.data.length : 0;
+          resp.metadata = { ...(resp.metadata || {}), total: derived } as any;
+        }
+        return resp as PopularTagsResponse;
+      });
   },
 
   /**
@@ -24,7 +33,14 @@ const tagService: TagClient = {
    * GET /api/v1/tags/search
    */
   async searchTags(params: SearchTagsParams): Promise<TagSearchResponse> {
-    return apiClient.getWithTransform<string[]>('/tags/search', { params }) as Promise<TagSearchResponse>;
+    return apiClient.getWithTransform<string[]>('/tags/search', { params })
+      .then(resp => {
+        if (resp && (!resp.metadata || (resp.metadata as any).total == null)) {
+          const derived = Array.isArray(resp.data) ? resp.data.length : 0;
+          resp.metadata = { ...(resp.metadata || {}), total: derived } as any;
+        }
+        return resp as TagSearchResponse;
+      });
   },
 
   /**
@@ -34,9 +50,8 @@ const tagService: TagClient = {
   async getImagesByTag(params: GetImagesByTagParams): Promise<ImagesByTagResponse> {
     const { tag, ...restParams } = params;
     // API期望分页参数在查询中，而不是路径中
-    return apiClient.getWithTransform<ImageModel[]>(`/tags/by-tag/${tag}`, { 
-      params: restParams 
-    }) as Promise<ImagesByTagResponse>;
+  return apiClient.getWithTransform<ImageDetail[]>(`/tags/by-tag/${tag}`, { params: restParams })
+      .then(resp => { validatePagination(resp, 'getImagesByTag'); return resp as ImagesByTagResponse; });
   },
 
   /**
@@ -47,37 +62,17 @@ const tagService: TagClient = {
     const { tags, mode = TagMatchMode.OR, ...restParams } = params;
     const tagsParam = Array.isArray(tags) ? tags.join(',') : tags;
     
-    return apiClient.getWithTransform<ImageModel[]>('/tags/by-multiple-tags', {
-      params: {
-        ...restParams,
-        tags: tagsParam,
-        mode,
-      }
-    }) as Promise<ImagesByMultipleTagsResponse>;
+  return apiClient.getWithTransform<ImageDetail[]>('/tags/by-multiple-tags', { params: { ...restParams, tags: tagsParam, mode } })
+      .then(resp => { validatePagination(resp, 'getImagesByMultipleTags'); return resp as ImagesByMultipleTagsResponse; });
   },
   /**
-   * 更新图片标签（覆盖方式）
-   * POST /api/v1/tags/{image_id}/update
+   * 覆盖更新图片标签
+   * 后端当前仅提供 POST /api/v1/tags/{image_id}/update 用于整体替换标签集合。
+   * 之前前端假设存在增量 add/remove 接口（/image/{id}/add, DELETE /image/{id}/{tag}）实际并未实现，已移除，避免404。
    */
   async updateImageTags(imageId: number, tags: string[]): Promise<ApiResponse<{ tags: string[] }>> {
     return apiClient.postWithTransform<{ tags: string[] }>(`/tags/${imageId}/update`, tags);
-  },
-
-  /**
-   * 为图片添加标签
-   * POST /api/v1/tags/image/{image_id}/add
-   */
-  async addTagsToImage(imageId: number, tags: string[]): Promise<ApiResponse<{ tags: string[] }>> {
-    return apiClient.postWithTransform<{ tags: string[] }>(`/tags/image/${imageId}/add`, { tags });
-  },
-
-  /**
-   * 从图片移除标签
-   * DELETE /api/v1/tags/image/{image_id}/{tag}
-   */
-  async removeTagFromImage(imageId: number, tag: string): Promise<ApiResponse<{ tags: string[] }>> {
-    return apiClient.deleteWithTransform<{ tags: string[] }>(`/tags/image/${imageId}/${tag}`);
-  },
+  }
 };
 
 export default tagService;

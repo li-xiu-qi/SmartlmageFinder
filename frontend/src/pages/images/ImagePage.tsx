@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, Spin, message, Drawer, Pagination } from 'antd';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { imageService, tagService } from '@/services/api';
-import { TagInfo, ImageModel } from '@/types/models';
+import { TagInfo, ImageDetail } from '@/types/models';
 import { GetImagesListParams } from '@/types/image';
 import { ImageCardModel, convertToImageCardModel } from '@/utils/typeConverters';
 import FilterForm from './components/FilterForm';
@@ -21,7 +21,7 @@ const ImagesPage: React.FC = () => {
   const [tags, setTags] = useState<TagInfo[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);  const [selectedImage, setSelectedImage] = useState<ImageModel | null>(null);
+  const [pageSize, setPageSize] = useState(20);  const [selectedImage, setSelectedImage] = useState<ImageDetail | null>(null);
   const [detailVisible, setDetailVisible] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [gridColumns, setGridColumns] = useState<number>(4);
@@ -113,7 +113,7 @@ const ImagesPage: React.FC = () => {
   const handleImageClick = async (image: ImageCardModel) => {
     try {
       setLoading(true);
-      const response = await imageService.getImageDetail({ image_id: image.id });
+  const response = await imageService.getImageDetail({ image_id: image.id });
       if (response.status === 'success' && response.data) {
         setSelectedImage(response.data);
         setDetailVisible(true);
@@ -159,7 +159,7 @@ const ImagesPage: React.FC = () => {
   };
 
   // 更新图片信息
-  const handleImageUpdate = (updatedImage: ImageModel) => {
+  const handleImageUpdate = (updatedImage: ImageDetail) => {
     setSelectedImage(updatedImage);
 
     // 更新列表中的图片数据

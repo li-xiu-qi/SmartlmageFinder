@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Spin } from 'antd';
 
 // 导入类型定义
-import { ImageModel, TagInfo } from '@/types/models';
+import { ImageDetail, TagInfo } from '@/types/models';
 import { SystemStats } from './types';
 
 // 导入服务
@@ -24,7 +24,7 @@ import './index.less';
  */
 const HomePage: React.FC = () => {  // 状态定义
   const [loading, setLoading] = useState(true);
-  const [recentImages, setRecentImages] = useState<ImageModel[]>([]);
+  const [recentImages, setRecentImages] = useState<ImageDetail[]>([]);
   const [popularTags, setPopularTags] = useState<TagInfo[]>([]);
   const [systemStats, setSystemStats] = useState<SystemStats>({
     totalImages: 0,

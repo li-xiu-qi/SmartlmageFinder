@@ -4,7 +4,7 @@ import { SearchOutlined, PictureOutlined, FontSizeOutlined } from '@ant-design/i
 import { useSearchParams } from 'react-router-dom';
 import searchService from '@/services/searchService';
 import tagService from '@/services/tagService';
-import { SearchImageItem, TagInfo } from '@/types/models';
+import { ImageSearchResult, TagInfo } from '@/types/models';
 import { UnifiedTextSearchParams, UnifiedImageSearchParams, FuzzySearchParams } from '@/types/search';
 import TextSearchForm from './TextSearchForm';
 import FuzzySearchForm from './FuzzySearchForm.tsx';
@@ -22,7 +22,7 @@ const SearchPage: React.FC = () => {
   // 状态管理
   const [activeTab, setActiveTab] = useState<string>('text');
   const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState<SearchImageItem[]>([]);
+  const [results, setResults] = useState<ImageSearchResult[]>([]);
   const [tags, setTags] = useState<TagInfo[]>([]);
   const [total, setTotal] = useState(0);
   const [searchTime, setSearchTime] = useState<number>(0);

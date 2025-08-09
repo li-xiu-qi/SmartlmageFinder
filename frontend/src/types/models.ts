@@ -4,10 +4,10 @@
  */
 
 /**
- * 图片详细信息
+ * 图片详细信息 (原 ImageModel)
  * 这是系统中最核心的图片数据结构，被多个模块共享使用
  */
-export interface ImageModel {
+export interface ImageDetail {
   id: number;                      // 图片ID
   filename: string;                // 文件名
   filepath: string;                // 文件路径
@@ -42,10 +42,10 @@ export interface TagInfo {
 }
 
 /**
- * 搜索结果中的图片项
- * 扩展了基本的ImageModel，添加了搜索相关的字段
+ * 搜索结果中的图片项 (原 SearchImageItem)
+ * 扩展了基本的 ImageDetail，添加了搜索相关的字段
  */
-export interface SearchImageItem extends ImageModel {
+export interface ImageSearchResult extends ImageDetail {
   score?: number;    // 文本搜索相关性得分（0-1之间）
   distance?: number; // 向量搜索距离（越小越相似）
 }

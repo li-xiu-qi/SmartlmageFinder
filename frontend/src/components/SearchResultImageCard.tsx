@@ -5,6 +5,7 @@ import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 import { ImageCardModel } from '@/utils/typeConverters';
 import dayjs from 'dayjs';
 import './search-result-image-card.less';
+import { getImageUrl } from '@/utils/typeConverters';
 
 interface SearchResultImageCardProps {
   image: ImageCardModel;
@@ -65,7 +66,7 @@ const SearchResultImageCard: React.FC<SearchResultImageCardProps> = ({
       onClick={handleClick}
       cover={
         <div className="image-cover">
-          <img alt={image.title} src={image.public_url || image.filepath} />
+          <img alt={image.title} src={getImageUrl(image as any)} />
           {multiSelectMode && (
             <div className="selection-overlay">
               <Checkbox

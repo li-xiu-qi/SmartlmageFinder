@@ -5,14 +5,14 @@ import SearchResultImageCard from '@/components/SearchResultImageCard';
 import SearchMetaBar from '@/components/SearchMetaBar';
 import SharedImageDetail from '@/components/SharedImageDetail';
 import { imageService } from '@/services/api';
-import { SearchImageItem } from '@/types/models';
+import { ImageSearchResult } from '@/types/models';
 import { ImageDetail } from '@/types';
 import './SearchResults.less'; // 导入新的样式文件
 
 
 interface SearchResultsProps {
   loading: boolean;
-  results: SearchImageItem[];
+  results: ImageSearchResult[];
   total: number;
   searchTime: number;
   searchKeyword?: string;
@@ -36,13 +36,13 @@ const SearchResults: React.FC<SearchResultsProps> = ({
   const [selectedImage, setSelectedImage] = useState<ImageDetail | null>(null);
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
   const [drawerLoading, setDrawerLoading] = useState(false);
-  const [currentResults, setCurrentResults] = useState<SearchImageItem[]>(initialResults);
+  const [currentResults, setCurrentResults] = useState<ImageSearchResult[]>(initialResults);
 
   useEffect(() => {
     setCurrentResults(initialResults);
   }, [initialResults]);
 
-  const handleImageClick = async (imageItem: SearchImageItem) => {
+  const handleImageClick = async (imageItem: ImageSearchResult) => {
     setDrawerLoading(true);
     setIsDrawerVisible(true);
     try {

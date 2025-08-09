@@ -3,7 +3,7 @@
  */
 
 import { ApiResponse } from './api';
-import { ImageModel } from './models';
+import { ImageDetail } from './models';
 
 /**
  * 元数据更新请求参数
@@ -17,7 +17,7 @@ export interface UpdateMetadataParams {
  * 元数据更新响应
  * 通常会返回更新后的整个图片信息
  */
-export type UpdateMetadataResponse = ApiResponse<ImageModel>;
+export type UpdateMetadataResponse = ApiResponse<ImageDetail>;
 
 /**
  * 元数据管理服务客户端接口 (如果需要单独的元数据服务)

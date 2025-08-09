@@ -6,7 +6,7 @@
 
 import apiClient from './apiClient';
 import { UpdateMetadataParams, UpdateMetadataResponse, MetadataClient } from '@/types/metadata';
-import { ImageModel } from '@/types/models';
+import { ImageDetail } from '@/types/models';
 
 class MetadataService implements MetadataClient {
   /**
@@ -18,7 +18,7 @@ class MetadataService implements MetadataClient {
     const { image_id, metadata } = params;
     // 后端期望的请求体格式是 { "metadata": { ... } }
     const payload = { metadata };
-    return apiClient.putWithTransform<ImageModel>(
+  return apiClient.putWithTransform<ImageDetail>(
       `/metadata/${image_id}/update`,
       payload
     );
