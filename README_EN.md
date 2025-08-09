@@ -13,7 +13,7 @@
   </div>
 
   <div>
-    <a href="README.md">中文</a> | 
+    <a href="README.md">中文</a> |
     <a href="README_EN.md">English</a>
   </div>
 </div>
@@ -45,7 +45,7 @@ Current version uses a unified backend (FastAPI) + frontend (React) architecture
 - **Vector Search** - Multi-dimensional search based on title, description, and image content
 - **Similarity Search** - Similarity retrieval based on reference images
 - **Filter Search** - Support for combined tag and time filtering
-- **Fuzzy Search (LIKE)** - Fast lightweight keyword LIKE matching for coarse filtering before semantic search
+**Fuzzy Search (LIKE)** - Fast lightweight keyword LIKE matching, suitable for quick coarse-grained search
 
 #### 💬 Conversational Image Search (Chat-driven Retrieval)
 
@@ -123,10 +123,10 @@ Frontend can stream-render states: rewriting / thinking / partial answer / final
 - **🎨 Modern Technology Stack** - React 18 + TypeScript + FastAPI ensuring code quality and development experience
 - **🔧 Smart Startup Management** - One-click startup script with automatic environment configuration and dependency management
 
-
 ## 🚀 Quick Start
 
 ### Environment Initialization
+
 (Please make sure your computer has both Node.js and Python installed)
 
 First-time use requires environment initialization:
@@ -211,14 +211,6 @@ The startup script will automatically:
 - **Windows**: x86_64
 - **Linux**: x86_64, aarch64  
 - **macOS**: x86_64 (Intel), aarch64 (Apple Silicon)
-
-### Software Requirements
-
-- **Python**: 3.8+
-- **Node.js**: 16+
-- **Memory**: Recommended 4GB+
-- **Storage**: Sufficient space for storing images and vector data
-- **Network**: Internet connection required for first-time AI model download
 
 ## 📁 Project Structure
 
