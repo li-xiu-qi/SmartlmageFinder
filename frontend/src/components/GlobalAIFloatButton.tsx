@@ -7,14 +7,12 @@ import React, { useState } from 'react';
 import { FloatButton } from 'antd';
 import { RobotOutlined } from '@ant-design/icons';
 import AIChatDrawer from '@/components/AIChatDrawer';
-// 仅保留一个入口按钮 + 对话抽屉
 
 /**
  * 全局AI推荐悬浮按钮组件
  */
 export const GlobalAIFloatButton: React.FC = () => {
   const [chatOpen, setChatOpen] = useState(false);
-  // 旧的推荐模式已移除，直接使用对话抽屉
 
   return (
     <>
