@@ -2,7 +2,7 @@
   <img src="assets/logo/logo.png" alt="SmartImageFinder Logo" width="200">
   <h1>SmartImageFinder</h1>
 
-  <p>Intelligent image search engine and management system based on dual-layer microservice architecture</p>
+  <p>Intelligent image search / management with integrated AI conversational recommendation</p>
 
   <div>
     <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License"></a>
@@ -24,17 +24,9 @@ SmartImageFinder is a modern intelligent image search engine and management syst
 
 ## 🏗️ System Architecture
 
-### Dual-Layer Microservice Design
+### Architecture Overview
 
-#### Main Service Layer
-
-- **Backend Service** (`backend/`) - Core image management API, Port: 10020
-- **Frontend Service** (`frontend/`) - Image management interface, Port: 5173
-
-#### AI Service Layer  
-
-- **AI Backend** (`ai_backend/`) - AI recommendation and analysis services
-- **AI Frontend** (`ai_frontend/`) - AI intelligent search interface
+Current version uses a unified backend (FastAPI) + frontend (React) architecture. The conversational AI recommendation agent lives in `backend/ai_func/recommendation`, leveraging sqlite-vec vector search and SSE streaming without a separate AI microservice.
 
 ## Features
 
@@ -71,7 +63,9 @@ SmartImageFinder is a modern intelligent image search engine and management syst
 
 ## 🎯 Core Technical Features
 
-- **🏗️ Dual-Layer Microservice Architecture** - Separation of main services and AI services for better scalability and maintainability
+- **🧠 Conversational Recommendation Agent** - Multi-turn (64K rolling window) + tool calls
+- **🛡️ Vector Target Whitelist** - Prevents invalid table access / injection
+- **🔌 Streaming SSE Output** - Incremental events (rewrite, search, results) improve UX
 - **⚡ High-Performance Vector Retrieval** - SQLite + sqlite-vec lightweight vector database with millisecond search response
 - **🧠 Advanced AI Models** - Integration with Jina CLIP V2 model providing precise multimodal search capabilities
 - **🎨 Modern Technology Stack** - React 18 + TypeScript + FastAPI ensuring code quality and development experience
@@ -188,11 +182,7 @@ SmartImageFinder/
 │   ├── src/pages/         # Page components
 │   ├── src/components/    # Common components
 │   └── src/services/      # API service layer
-├── ai_backend/            # AI backend service
-│   ├── app/routers/       # AI API routes
-│   └── app/services/      # AI service logic
-├── ai_frontend/           # AI frontend service
-│   └── src/pages/ai/      # AI search interface
+├── backend/ai_func/recommendation/  # Chat recommendation & tool calling logic
 ├── models/                # AI model files
 ├── data/                  # Data storage
 │   ├── db/               # Database files
@@ -207,10 +197,8 @@ SmartImageFinder/
 
 ### Service Ports
 
-- **Main Backend**: 10020 (read from config.yaml)
-- **Main Frontend**: 5173 (Vite default)
-- **AI Backend**: Read from ai_backend configuration
-- **AI Frontend**: Independent port configuration
+- **Backend**: 10050 (from config.yaml)
+- **Frontend**: 5173 (Vite default)
 
 ### Configuration Files
 
@@ -222,7 +210,7 @@ VECTOR_DB_DRIVER_DIR: ./backend/config_files/vector_db_driver  # Vector database
 UPLOAD_DIR: ./data/images  # Image upload directory
 DB_PATH: ./data/db/smartimagefinder.db  # Database path
 HOST: 0.0.0.0  # Service listening address
-PORT: 10020  # Service port
+PORT: 10050  # Service port
 ```
 
 ### Environment Variables
@@ -239,8 +227,8 @@ export OPENAI_API_BASE="https://api.openai.com/v1"
 #### Service Access URLs
 
 - **Main Frontend Interface**: <http://localhost:5173>
-- **Main Backend API**: <http://localhost:10020>  
-- **API Documentation**: <http://localhost:10020/docs>
+- **Main Backend API**: <http://localhost:10050>  
+- **API Documentation**: <http://localhost:10050/docs>
 - **AI Frontend**: Requires starting AI services separately before access
 
 ## 📊 System Monitoring & Management

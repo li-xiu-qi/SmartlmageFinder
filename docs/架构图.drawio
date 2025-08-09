@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram id="aeIVFuxLdpt_nrS-JQ-U" name="第 1 页">
-        <mxGraphModel dx="4160" dy="1886" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2000" pageHeight="2400" background="#ffffff" math="0" shadow="0">
+        <mxGraphModel dx="3000" dy="2865" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2000" pageHeight="2400" background="#ffffff" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -49,6 +49,9 @@
                 <mxCell id="187" value="状态监控, 配置管理, 缓存管理" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontFamily=SimSun;fontSize=9;fontColor=#34495e;" parent="177" vertex="1">
                     <mxGeometry x="1220" y="80" width="220" height="20" as="geometry"/>
                 </mxCell>
+                <mxCell id="304" value="默认使用向量搜索、支持粘贴上传" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontFamily=SimSun;fontSize=9;fontColor=#34495e;" parent="177" vertex="1">
+                    <mxGeometry x="620" y="105" width="280" height="20" as="geometry"/>
+                </mxCell>
                 <mxCell id="188" value="网关层 / API层 (Gateway Layer)" style="group;fontFamily=SimSun;fontSize=18;fontStyle=1;strokeColor=#2ecc71;fillColor=#eafaf1;align=center;verticalAlign=top;spacingTop=10;dashed=0;container=1;collapsible=0;strokeWidth=3;" parent="1" connectable="0" vertex="1">
                     <mxGeometry x="50" y="380" width="1900" height="290" as="geometry"/>
                 </mxCell>
@@ -64,11 +67,29 @@
                 <mxCell id="192" value="Windows/Linux/macOS x86_64/aarch64" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=11;fillColor=#82e0aa;fontColor=#2c3e50;strokeColor=#58d68d;align=center;verticalAlign=middle;" parent="189" vertex="1">
                     <mxGeometry x="1300" y="64.44444444444444" width="400" height="64.44444444444444" as="geometry"/>
                 </mxCell>
+                <mxCell id="290" value="统一检索 /api/v1/search/unified" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=11;fillColor=#82e0aa;fontColor=#2c3e50;strokeColor=#27ae60;align=center;verticalAlign=middle;" parent="189" vertex="1">
+                    <mxGeometry x="60" y="135" width="260" height="24" as="geometry"/>
+                </mxCell>
+                <mxCell id="291" value="相似检索 /api/v1/search/similar/{image_id}" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=11;fillColor=#82e0aa;fontColor=#2c3e50;strokeColor=#27ae60;align=center;verticalAlign=middle;" parent="189" vertex="1">
+                    <mxGeometry x="330" y="135" width="300" height="24" as="geometry"/>
+                </mxCell>
+                <mxCell id="292" value="图片 /api/v1/images" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=11;fillColor=#82e0aa;fontColor=#2c3e50;strokeColor=#27ae60;align=center;verticalAlign=middle;" parent="189" vertex="1">
+                    <mxGeometry x="640" y="135" width="200" height="24" as="geometry"/>
+                </mxCell>
+                <mxCell id="293" value="标签 /api/v1/tags" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=11;fillColor=#82e0aa;fontColor=#2c3e50;strokeColor=#27ae60;align=center;verticalAlign=middle;" parent="189" vertex="1">
+                    <mxGeometry x="850" y="135" width="180" height="24" as="geometry"/>
+                </mxCell>
+                <mxCell id="294" value="元数据 /api/v1/metadata" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=11;fillColor=#82e0aa;fontColor=#2c3e50;strokeColor=#27ae60;align=center;verticalAlign=middle;" parent="189" vertex="1">
+                    <mxGeometry x="1040" y="135" width="220" height="24" as="geometry"/>
+                </mxCell>
+                <mxCell id="295" value="系统 /api/v1/system" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=11;fillColor=#82e0aa;fontColor=#2c3e50;strokeColor=#27ae60;align=center;verticalAlign=middle;" parent="189" vertex="1">
+                    <mxGeometry x="1270" y="135" width="200" height="24" as="geometry"/>
+                </mxCell>
                 <mxCell id="193" value="服务层 (Service Layer)" style="group;fontFamily=SimSun;fontSize=18;fontStyle=1;strokeColor=#2ecc71;fillColor=#eafaf1;align=center;verticalAlign=top;spacingTop=10;dashed=0;container=1;collapsible=0;strokeWidth=3;" parent="1" connectable="0" vertex="1">
                     <mxGeometry x="50" y="690" width="1900" height="940" as="geometry"/>
                 </mxCell>
                 <mxCell id="194" value="核心业务服务" style="rounded=1;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=16;fontStyle=1;fillColor=#52c41a;fontColor=#FFFFFF;strokeColor=#389e0d;verticalAlign=top;spacingTop=15;align=center;strokeWidth=2;" parent="193" vertex="1">
-                    <mxGeometry x="33.79" y="52.22222222222222" width="1806.21" height="417.77777777777777" as="geometry"/>
+                    <mxGeometry x="33.79" y="52.22222222222222" width="1806.21" height="420" as="geometry"/>
                 </mxCell>
                 <mxCell id="195" value="图片上传处理服务" style="rounded=1;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=13;fillColor=#73d13d;fontColor=#2c3e50;strokeColor=#52c41a;verticalAlign=top;spacingTop=10;align=center;" parent="194" vertex="1">
                     <mxGeometry x="766.21" y="59.68117488629722" width="311.42" height="322.4617730009909" as="geometry"/>
@@ -104,7 +125,7 @@
                     <mxGeometry x="15.571000000000003" y="169.49194128956296" width="270" height="20" as="geometry"/>
                 </mxCell>
                 <mxCell id="218" value="系统管理服务" style="rounded=1;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=13;fillColor=#73d13d;fontColor=#2c3e50;strokeColor=#52c41a;verticalAlign=top;spacingTop=10;align=center;" parent="194" vertex="1">
-                    <mxGeometry x="1463.65" y="59.68117488629722" width="311.42" height="303.3546256066265" as="geometry"/>
+                    <mxGeometry x="1463.65" y="59.68117488629722" width="311.42" height="328.0988251137028" as="geometry"/>
                 </mxCell>
                 <mxCell id="278" value="状态监控" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=10;fillColor=#95de64;fontColor=#2c3e50;strokeColor=#73d13d;align=center;verticalAlign=middle;" parent="218" vertex="1">
                     <mxGeometry x="15.571000000000003" y="88.47843246859938" width="62.28400000000001" height="50.55910426777107" as="geometry"/>
@@ -122,37 +143,52 @@
                     <mxGeometry x="15.571000000000003" y="164.31708887025596" width="270" height="20" as="geometry"/>
                 </mxCell>
                 <mxCell id="197" value="智能检索服务" style="rounded=1;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=13;fillColor=#73d13d;fontColor=#2c3e50;strokeColor=#52c41a;verticalAlign=top;spacingTop=10;align=center;" parent="194" vertex="1">
-                    <mxGeometry x="26.21" y="59.68117488629722" width="716.26" height="332.01534669817306" as="geometry"/>
+                    <mxGeometry x="26.21" y="59.68" width="716.26" height="360.32" as="geometry"/>
                 </mxCell>
                 <mxCell id="198" value="向量检索引擎" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=12;fillColor=#95de64;fontColor=#2c3e50;strokeColor=#73d13d;verticalAlign=top;spacingTop=8;align=center;" parent="197" vertex="1">
-                    <mxGeometry x="20.76012493130584" y="70.68453244790787" width="321.80193655559816" height="244.73341284547303" as="geometry"/>
+                    <mxGeometry x="20.880000000000003" y="58.09693913043479" width="321.8" height="124.79604869565216" as="geometry"/>
                 </mxCell>
                 <mxCell id="199" value="文本-图片匹配" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=10;fillColor=#b7eb8f;fontColor=#2c3e50;strokeColor=#95de64;align=center;verticalAlign=middle;" parent="198" vertex="1">
-                    <mxGeometry x="10.380707630825748" y="88.99582234845111" width="88.23601486201885" height="55.62123019215295" as="geometry"/>
+                    <mxGeometry x="10.380645161290325" y="50.483304452304154" width="88.23548387096774" height="31.5514079616909" as="geometry"/>
                 </mxCell>
                 <mxCell id="200" value="文本-文本匹配" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=10;fillColor=#b7eb8f;fontColor=#2c3e50;strokeColor=#95de64;align=center;verticalAlign=middle;" parent="198" vertex="1">
-                    <mxGeometry x="114.1877839390832" y="88.99582234845111" width="88.23601486201885" height="55.62123019215295" as="geometry"/>
+                    <mxGeometry x="114.18709677419353" y="50.483304452304154" width="88.23548387096774" height="31.5514079616909" as="geometry"/>
                 </mxCell>
                 <mxCell id="201" value="图片-图片匹配" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=10;fillColor=#b7eb8f;fontColor=#2c3e50;strokeColor=#95de64;align=center;verticalAlign=middle;" parent="198" vertex="1">
-                    <mxGeometry x="217.9948602473407" y="88.99582234845111" width="88.23601486201885" height="55.62123019215295" as="geometry"/>
+                    <mxGeometry x="217.9935483870968" y="50.483304452304154" width="88.23548387096774" height="31.5514079616909" as="geometry"/>
                 </mxCell>
                 <mxCell id="202" value="sqlite-vec 近邻搜索与过滤" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontFamily=SimSun;fontSize=10;fontColor=#2c3e50;" parent="198" vertex="1">
-                    <mxGeometry x="12.975884538532183" y="163.1537545226422" width="280" height="20" as="geometry"/>
+                    <mxGeometry x="12.975806451612902" y="92.54974497402789" width="280" height="20" as="geometry"/>
                 </mxCell>
                 <mxCell id="203" value="非向量检索引擎" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=12;fillColor=#95de64;fontColor=#2c3e50;strokeColor=#73d13d;verticalAlign=top;spacingTop=8;align=center;" parent="197" vertex="1">
-                    <mxGeometry x="373.70224888386275" y="70.68453244790787" width="332.1819990212511" height="244.73341284547303" as="geometry"/>
+                    <mxGeometry x="373.7" y="58.09693913043479" width="332.18" height="124.79604869565216" as="geometry"/>
                 </mxCell>
                 <mxCell id="204" value="标题文本匹配" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=10;fillColor=#b7eb8f;fontColor=#2c3e50;strokeColor=#95de64;align=center;verticalAlign=middle;" parent="203" vertex="1">
-                    <mxGeometry x="14.62200866401414" y="94.56350749068565" width="91.08216102195597" height="55.62123019215295" as="geometry"/>
+                    <mxGeometry x="14.621920670967741" y="53.64160038926943" width="91.08161290322583" height="31.5514079616909" as="geometry"/>
                 </mxCell>
                 <mxCell id="205" value="描述文本匹配" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=10;fillColor=#b7eb8f;fontColor=#2c3e50;strokeColor=#95de64;align=center;verticalAlign=middle;" parent="203" vertex="1">
-                    <mxGeometry x="132.86937063302665" y="94.56350749068567" width="91.08216102195597" height="55.62123019215295" as="geometry"/>
+                    <mxGeometry x="132.86857104516127" y="53.641600389269435" width="91.08161290322583" height="31.5514079616909" as="geometry"/>
                 </mxCell>
                 <mxCell id="206" value="关键词检索" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=10;fillColor=#b7eb8f;fontColor=#2c3e50;strokeColor=#95de64;align=center;verticalAlign=middle;" parent="203" vertex="1">
-                    <mxGeometry x="241.09812351155827" y="94.56350749068567" width="91.08216102195597" height="55.62123019215295" as="geometry"/>
+                    <mxGeometry x="241.09667261935485" y="53.641600389269435" width="91.08161290322583" height="31.5514079616909" as="geometry"/>
                 </mxCell>
                 <mxCell id="207" value="精确/模糊查找" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontFamily=SimSun;fontSize=10;fontColor=#2c3e50;" parent="203" vertex="1">
-                    <mxGeometry x="26.094793839382724" y="163.16055267299916" width="280" height="20" as="geometry"/>
+                    <mxGeometry x="26.09463680484268" y="92.55360125722329" width="280" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="910" value="对话推荐模块" style="rounded=1;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=12;fontStyle=1;fillColor=#52c41a;fontColor=#FFFFFF;strokeColor=#389e0d;verticalAlign=top;spacingTop=8;align=center;" vertex="1" parent="197">
+                    <mxGeometry x="20.88" y="190" width="685" height="160" as="geometry"/>
+                </mxCell>
+                <mxCell id="911" value="查询改写 / 意图识别" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=10;fillColor=#95de64;fontColor=#2c3e50;strokeColor=#73d13d;align=center;verticalAlign=middle;" vertex="1" parent="910">
+                    <mxGeometry x="15" y="45.714285714285715" width="120" height="45.714285714285715" as="geometry"/>
+                </mxCell>
+                <mxCell id="912" value="上下文窗口 64K" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=10;fillColor=#95de64;fontColor=#2c3e50;strokeColor=#73d13d;align=center;verticalAlign=middle;" vertex="1" parent="910">
+                    <mxGeometry x="145" y="45.714285714285715" width="120" height="45.714285714285715" as="geometry"/>
+                </mxCell>
+                <mxCell id="913" value="工具调用 (search_images / choose_images)" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=10;fillColor=#95de64;fontColor=#2c3e50;strokeColor=#73d13d;align=center;verticalAlign=middle;" vertex="1" parent="910">
+                    <mxGeometry x="275" y="45.714285714285715" width="220" height="45.714285714285715" as="geometry"/>
+                </mxCell>
+                <mxCell id="914" value="SSE流事件 (rewrite/result/complete/error)" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=10;fillColor=#95de64;fontColor=#2c3e50;strokeColor=#73d13d;align=center;verticalAlign=middle;" vertex="1" parent="910">
+                    <mxGeometry x="505" y="45.714285714285715" width="160" height="45.714285714285715" as="geometry"/>
                 </mxCell>
                 <mxCell id="242" value="数据访问总线 (Data Access Bus)" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;strokeColor=#e67e22;fontFamily=SimSun;fontSize=14;fontColor=#e67e22;dashed=0;labelBackgroundColor=#eafaf1;labelBorderColor=none;align=center;verticalAlign=middle;fontStyle=1;" parent="193" edge="1">
                     <mxGeometry x="138.3495145631068" y="542.3076923076924" width="92.23300970873787" as="geometry">
@@ -216,23 +252,8 @@
                 <mxCell id="289" value="0-1标准化相似度分数, 标签/时间/大小过滤与排序" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontFamily=SimSun;fontSize=9;fontColor=#2c3e50;" parent="282" vertex="1">
                     <mxGeometry x="41.03127771911304" y="209.90432098765433" width="580" height="20" as="geometry"/>
                 </mxCell>
-                <mxCell id="290" value="统一检索 /api/v1/search/unified" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=11;fillColor=#82e0aa;fontColor=#2c3e50;strokeColor=#27ae60;align=center;verticalAlign=middle;" parent="189" vertex="1">
-                    <mxGeometry x="60" y="135" width="260" height="24" as="geometry"/>
-                </mxCell>
-                <mxCell id="291" value="相似检索 /api/v1/search/similar/{image_id}" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=11;fillColor=#82e0aa;fontColor=#2c3e50;strokeColor=#27ae60;align=center;verticalAlign=middle;" parent="189" vertex="1">
-                    <mxGeometry x="330" y="135" width="300" height="24" as="geometry"/>
-                </mxCell>
-                <mxCell id="292" value="图片 /api/v1/images" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=11;fillColor=#82e0aa;fontColor=#2c3e50;strokeColor=#27ae60;align=center;verticalAlign=middle;" parent="189" vertex="1">
-                    <mxGeometry x="640" y="135" width="200" height="24" as="geometry"/>
-                </mxCell>
-                <mxCell id="293" value="标签 /api/v1/tags" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=11;fillColor=#82e0aa;fontColor=#2c3e50;strokeColor=#27ae60;align=center;verticalAlign=middle;" parent="189" vertex="1">
-                    <mxGeometry x="850" y="135" width="180" height="24" as="geometry"/>
-                </mxCell>
-                <mxCell id="294" value="元数据 /api/v1/metadata" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=11;fillColor=#82e0aa;fontColor=#2c3e50;strokeColor=#27ae60;align=center;verticalAlign=middle;" parent="189" vertex="1">
-                    <mxGeometry x="1040" y="135" width="220" height="24" as="geometry"/>
-                </mxCell>
-                <mxCell id="295" value="系统 /api/v1/system" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=11;fillColor=#82e0aa;fontColor=#2c3e50;strokeColor=#27ae60;align=center;verticalAlign=middle;" parent="189" vertex="1">
-                    <mxGeometry x="1270" y="135" width="200" height="24" as="geometry"/>
+                <mxCell id="303" value="标签解析兼容 tags 与 tags[]" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=10;fillColor=#ffa940;fontColor=#2c3e50;strokeColor=#fa8c16;align=center;verticalAlign=middle;" parent="282" vertex="1">
+                    <mxGeometry x="14.818469261483639" y="190" width="180" height="26" as="geometry"/>
                 </mxCell>
                 <mxCell id="296" value="向量缓存 (DiskCache Embeddings)" style="rounded=1;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=12;fillColor=#f8c471;fontColor=#2c3e50;strokeColor=#f39c12;align=center;verticalAlign=middle;" parent="244" vertex="1">
                     <mxGeometry x="740" y="62.97129629629629" width="280" height="80" as="geometry"/>
@@ -251,12 +272,6 @@
                 </mxCell>
                 <mxCell id="301" value="SearchRepository" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=11;fillColor=#fdeaa7;fontColor=#2c3e50;strokeColor=#f8c471;align=center;verticalAlign=middle;" parent="297" vertex="1">
                     <mxGeometry x="146" y="84" width="120" height="30" as="geometry"/>
-                </mxCell>
-                <mxCell id="303" value="标签解析兼容 tags 与 tags[]" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=SimSun;fontSize=10;fillColor=#ffa940;fontColor=#2c3e50;strokeColor=#fa8c16;align=center;verticalAlign=middle;" parent="282" vertex="1">
-                    <mxGeometry x="14.818469261483639" y="190" width="180" height="26" as="geometry"/>
-                </mxCell>
-                <mxCell id="304" value="默认使用向量搜索、支持粘贴上传" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontFamily=SimSun;fontSize=9;fontColor=#34495e;" parent="177" vertex="1">
-                    <mxGeometry x="620" y="105" width="280" height="20" as="geometry"/>
                 </mxCell>
             </root>
         </mxGraphModel>

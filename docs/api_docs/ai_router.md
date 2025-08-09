@@ -136,6 +136,23 @@ while (true) {
 }
 ```
 
+### 0.3 上下文记忆与向量白名单说明
+
+对话式推荐内部实现了 64K 字符滚动窗口上下文管理：
+
+```
+MAX_CONTEXT_CHARS = 64_000
+```
+
+超过窗口的历史消息会从最早开始裁剪（保留 system / 最近消息），保证在多轮对话下仍可保持上下文相关性，同时控制成本。
+
+向量相关工具函数使用固定白名单 `{title, description, image}` 过滤用户传入的 `vector_targets`，防止构造非法表名导致数据库错误（例如: `no such table: xxx_vectors`）。
+
+SSE 事件补充：
+
+- `rewrite_skipped`: 当跳过改写时返回原因
+- 列表类结果逐条以 `result` 推送，可实时渲染
+
 ### 1. 分析上传图片（上传文件）
 
 POST `/api/v1/ai/analyze-upload-image`

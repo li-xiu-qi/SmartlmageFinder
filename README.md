@@ -2,7 +2,7 @@
   <img src="assets/logo/logo.png" alt="SmartImageFinder Logo" width="200">
   <h1>SmartImageFinder</h1>
 
-  <p>基于双层架构的智能图片搜索引擎和管理系统</p>
+  <p>智能图片搜索 / 管理与 AI 对话式推荐系统</p>
 
   <div>
     <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License"></a>
@@ -24,17 +24,9 @@ SmartImageFinder 是一个现代化的智能图片搜索引擎和管理系统，
 
 ## 🏗️ 系统架构
 
-### 双层微服务设计
+### 架构概览
 
-#### 主服务层
-
-- **后端服务** (`backend/`) - 核心图片管理API，端口：10020
-- **前端服务** (`frontend/`) - 图片管理界面，端口：5173
-
-#### AI服务层  
-
-- **AI后端** (`ai_backend/`) - AI推荐和分析服务
-- **AI前端** (`ai_frontend/`) - AI智能搜索界面
+当前版本采用轻量一体化后端（FastAPI）+ 前端（React）架构，AI 推荐 / 对话代理集成在 `backend/ai_func/recommendation` 中，结合 sqlite-vec 向量检索与 SSE 流式输出，无需额外独立 AI 微服务即可完成智能搜索与多轮推荐。
 
 ## 功能特性
 
@@ -71,7 +63,9 @@ SmartImageFinder 是一个现代化的智能图片搜索引擎和管理系统，
 
 ## 🎯 核心技术特点
 
-- **🏗️ 双层微服务架构** - 主服务和AI服务分离，提供更好的可扩展性和维护性
+- **🧠 对话式推荐代理** - 支持多轮上下文（64K滚动窗口）+ 工具函数调用
+- **🛡️ 向量目标白名单** - 防止非法表名/注入导致的表不存在错误
+- **🔌 流式SSE输出** - AI 推荐过程逐步推送（改写、搜索、结果）提升交互体验
 - **⚡ 高性能向量检索** - SQLite + sqlite-vec 轻量级向量数据库，毫秒级搜索响应
 - **🧠 先进的AI模型** - 集成Jina CLIP V2模型，提供精准的多模态搜索能力
 - **🎨 现代化技术栈** - React 18 + TypeScript + FastAPI，确保代码质量和开发体验
@@ -188,11 +182,7 @@ SmartImageFinder/
 │   ├── src/pages/         # 页面组件
 │   ├── src/components/    # 通用组件
 │   └── src/services/      # API服务层
-├── ai_backend/            # AI后端服务
-│   ├── app/routers/       # AI API路由
-│   └── app/services/      # AI服务逻辑
-├── ai_frontend/           # AI前端服务
-│   └── src/pages/ai/      # AI搜索界面
+├── backend/ai_func/recommendation/  # 对话式推荐与工具调用逻辑
 ├── models/                # AI模型文件
 ├── data/                  # 数据存储
 │   ├── db/               # 数据库文件
@@ -207,8 +197,8 @@ SmartImageFinder/
 
 ### 服务端口
 
-- **主后端**: 10050 (从config.yaml读取)
-- **主前端**: 5173 (Vite默认)
+- **后端**: 10050 (从 config.yaml 读取)
+- **前端**: 5173 (Vite 默认)
 
 ### 配置文件
 
@@ -237,8 +227,8 @@ export OPENAI_API_BASE="https://api.openai.com/v1"
 #### 服务访问地址
 
 - **主前端界面**: <http://localhost:5173>
-- **主后端API**: <http://localhost:10020>  
-- **API文档**: <http://localhost:10020/docs>
+- **主后端API**: <http://localhost:10050>  
+- **API文档**: <http://localhost:10050/docs>
 - **AI前端**: 需要单独启动AI服务后访问
 
 ## 📊 系统监控与管理

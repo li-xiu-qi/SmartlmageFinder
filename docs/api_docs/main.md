@@ -12,12 +12,7 @@ SmartImageFinder是一个智能图片管理和搜索系统，提供了一系列A
 
 1. [图片管理 API](images_router.md) - 图片上传、获取、更新和删除
 
-1. 搜索 API（统一搜索） - 多种图片搜索方式
-
-- 统一搜索：`GET /api/v1/search/unified`（文本/向量）
-- 统一图片搜索：`POST /api/v1/search/unified/image`
-- 直接向量搜索：`POST /api/v1/search/unified/vector`
-- 相似搜索：`GET /api/v1/search/similar/{image_id}`
+1. [搜索 API](search_router.md) - 统一搜索 / 图片搜索 / 向量搜索 / 相似搜索
 
 1. [AI 分析 API](ai_router.md) - 图片AI分析功能
 
