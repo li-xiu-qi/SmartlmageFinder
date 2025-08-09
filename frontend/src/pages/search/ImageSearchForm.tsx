@@ -17,7 +17,7 @@ import {
 } from '@ant-design/icons';
 import type { UploadFile, RcFile } from 'antd/es/upload';
 import { TagInfo } from '@/types/models';
-import { UnifiedImageSearchParams, VectorSearchTarget } from '@/types/search';
+import { UnifiedImageSearchParams, VectorSearchTarget, SearchType } from '@/types/search';
 import { IMAGE_SEARCH_TARGETS, UPLOAD_CONFIG } from './constants';
 import { getImagePreviewUrl, getVectorSearchTargets } from './utils';
 import ImageSearchUpload from './components/ImageSearchUpload';
@@ -64,8 +64,9 @@ const ImageSearchForm: React.FC<ImageSearchFormProps> = ({ onSearch, loading, ta
       
       // 构造搜索参数
       const params: UnifiedImageSearchParams = {
-        file: searchFile
-      };
+        file: searchFile,
+        search_type: SearchType.VECTOR
+      } as any; // 兼容后端接受 form-data 与 search_type
 
       // 设置搜索目标
       if (selectedSearchTargets.length > 0) {
@@ -107,9 +108,6 @@ const ImageSearchForm: React.FC<ImageSearchFormProps> = ({ onSearch, loading, ta
     <Card className="search-form-card">      <Form
         form={form}
         layout="vertical"
-        initialValues={{
-          search_type: 'vector'
-        }}
         style={{ width: '100%' }}
       >
         <div className="upload-container">
@@ -157,7 +155,7 @@ const ImageSearchForm: React.FC<ImageSearchFormProps> = ({ onSearch, loading, ta
             loading={loading}
             disabled={fileList.length === 0}
           >
-            以图搜图
+            语义图像搜索
           </Button>
         </Space>
 

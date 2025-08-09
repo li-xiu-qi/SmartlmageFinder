@@ -3,7 +3,7 @@ from typing import List, Optional, Dict, Set
 from pydantic import BaseModel, Field
 import json
 
-from backend.db_func.core.connection import get_db
+from backend.db_func.core.connection import get_db  # TODO: 后续可移除，如所有仓库内部完全管理连接
 from backend.db_func.repositories.images import ImageRepository
 from backend.db_func.repositories.tags import TagRepository
 from backend.global_schemas import ResponseModel
@@ -13,8 +13,7 @@ router = APIRouter(prefix="/api/v1/tags", tags=["tags"])
 
 @router.get("/")
 async def get_tags(
-    limit: int = Query(50, ge=1, le=200, description="返回标签数量"),
-    conn = Depends(get_db)
+    limit: int = Query(50, ge=1, le=200, description="返回标签数量")
 ):
     """获取系统中所有已使用标签及其使用频率"""
     tag_repo = TagRepository()
@@ -33,8 +32,7 @@ async def get_tags(
 @router.get("/search")
 async def search_tags(
     query: str = Query(..., description="标签搜索关键字"),
-    limit: int = Query(20, ge=1, le=100, description="返回标签数量"),
-    conn = Depends(get_db)
+    limit: int = Query(20, ge=1, le=100, description="返回标签数量")
 ):
     """搜索符合关键字的标签，用于自动完成功能"""
     tag_repo = TagRepository()
@@ -54,8 +52,7 @@ async def search_tags(
 async def get_images_by_tag_endpoint(
     tag: str = Path(..., description="标签名称"),
     page: int = Query(1, ge=1, description="页码"),
-    page_size: int = Query(20, ge=1, le=100, description="每页数量"),
-    conn = Depends(get_db)
+    page_size: int = Query(20, ge=1, le=100, description="每页数量")
 ):
     """根据标签获取图片列表"""
     tag_repo = TagRepository()
@@ -84,8 +81,7 @@ async def get_images_by_multiple_tags(
     tags: str = Query(..., description="多个标签，以逗号分隔"),
     mode: str = Query("or", description="匹配模式：'or'表示匹配任一标签，'and'表示匹配所有标签"),
     page: int = Query(1, ge=1, description="页码"),
-    page_size: int = Query(20, ge=1, le=100, description="每页数量"),
-    conn = Depends(get_db)
+    page_size: int = Query(20, ge=1, le=100, description="每页数量")
 ):
     """根据多个标签获取图片列表"""
     tag_list = [tag.strip() for tag in tags.split(",") if tag.strip()]
@@ -135,8 +131,7 @@ async def get_images_by_multiple_tags(
 @router.post("/{image_id}/update")
 async def add_tags_to_image_endpoint(
     image_id: int = Path(..., description="图片ID"),
-    tags: List[str] = Body(..., description="标签列表"),
-    conn = Depends(get_db)
+    tags: List[str] = Body(..., description="标签列表")
 ):
     """为图片添加标签"""
     # 检查图片是否存在

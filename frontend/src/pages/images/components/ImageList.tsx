@@ -144,7 +144,7 @@ const ImageList: React.FC<ImageListProps> = ({
 
                 <div style={{ width: 100, height: 100, overflow: 'hidden', marginRight: 16, position: 'relative' }}>
                   <Image
-                    src={image.filepath}
+                    src={image.public_url || image.filepath}
                     alt={image.title}
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     preview={{

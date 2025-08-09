@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Tabs, message } from 'antd';
-import { SearchOutlined, PictureOutlined } from '@ant-design/icons';
+import { SearchOutlined, PictureOutlined, FontSizeOutlined } from '@ant-design/icons';
 import { useSearchParams } from 'react-router-dom';
 import searchService from '@/services/searchService';
 import tagService from '@/services/tagService';
 import { SearchImageItem, TagInfo } from '@/types/models';
-import { UnifiedTextSearchParams, UnifiedImageSearchParams } from '@/types/search';
+import { UnifiedTextSearchParams, UnifiedImageSearchParams, FuzzySearchParams } from '@/types/search';
 import TextSearchForm from './TextSearchForm';
+import FuzzySearchForm from './FuzzySearchForm';
 import ImageSearchForm from './ImageSearchForm';
 import SearchResults from './SearchResults';
 import { formatTagsForParam } from './utils';
@@ -52,10 +53,42 @@ const SearchPage: React.FC = () => {
     
     // 检查搜索参数中是否有tab参数，如果有则切换到对应的tab
     const tab = searchParams.get('tab');
-    if (tab && (tab === 'text' || tab === 'image')) {
+  if (tab && (tab === 'text' || tab === 'image' || tab === 'fuzzy')) {
       setActiveTab(tab);
     }
   }, [searchParams]);
+  // 执行模糊搜索 (LIKE)
+  const handleFuzzySearch = async (params: FuzzySearchParams) => {
+    setLoading(true);
+    setSearchKeyword(params.q);
+
+    try {
+      const response = await searchService.fuzzySearch(params);
+      if (response.status === 'success' && response.data) {
+        setResults(response.data);
+        setTotal(response.metadata?.total_results || response.data.length);
+        setSearchTime(response.metadata?.execution_time_ms || 0);
+        setReferenceImage(undefined);
+
+        updateSearchParams({
+          q: params.q,
+          fields: params.fields ? params.fields.join(',') : undefined,
+          tags: params.tags ? formatTagsForParam(params.tags) : undefined,
+          start_date: params.start_date,
+            end_date: params.end_date,
+          tab: 'fuzzy'
+        });
+      } else {
+        message.error(response.message || '模糊搜索失败');
+      }
+    } catch (error: unknown) {
+      console.error('Fuzzy search failed', error);
+      message.error(error instanceof Error ? error.message : '模糊搜索过程中发生错误');
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   // 执行文本搜索
   const handleTextSearch = async (params: UnifiedTextSearchParams) => {
@@ -157,8 +190,19 @@ const SearchPage: React.FC = () => {
         className="search-tabs"
         items={[
           {
+            key: 'fuzzy',
+            label: <span><FontSizeOutlined /> 模糊搜索</span>,
+            children: (
+              <FuzzySearchForm
+                onSearch={handleFuzzySearch}
+                loading={loading}
+                tags={tags}
+              />
+            )
+          },
+          {
             key: 'text',
-            label: <span><SearchOutlined /> 文本搜索</span>,
+            label: <span><SearchOutlined /> 语义搜索</span>,
             children: (
               <TextSearchForm 
                 onSearch={handleTextSearch} 
@@ -169,7 +213,7 @@ const SearchPage: React.FC = () => {
           },
           {
             key: 'image',
-            label: <span><PictureOutlined /> 图像搜索</span>,
+            label: <span><PictureOutlined /> 以图语义搜索</span>,
             children: (
               <ImageSearchForm 
                 onSearch={handleImageSearch} 

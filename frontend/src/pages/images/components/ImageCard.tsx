@@ -78,6 +78,7 @@ const ImageCard: React.FC<ImageCardProps> = ({
 
   // 处理图片标签
   const tags = processTags(image.tags);
+  // 统一使用后端提供的 public_url (优先)；兼容旧数据回退到 filepath
   return (
     <Card
       hoverable
@@ -86,7 +87,7 @@ const ImageCard: React.FC<ImageCardProps> = ({
         <div className="image-cover">
           <img
             alt={image.title}
-            src={image.filepath}
+            src={image.public_url || image.filepath}
           />
           {multiSelectMode && (
             <div className="selection-overlay">

@@ -19,8 +19,8 @@ import {
 import { useSearchParams } from 'react-router-dom';
 import { TagInfo } from '@/types/models';
 import { UnifiedTextSearchParams, VectorSearchTarget, SearchType } from '@/types/search';
-import { SEARCH_TYPES, VECTOR_SEARCH_TARGETS } from './constants';
-import { mapToApiSearchType, parseTagsFromParam, getVectorSearchTargets } from './utils';
+import { VECTOR_SEARCH_TARGETS } from './constants';
+import { parseTagsFromParam, getVectorSearchTargets } from './utils';
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
@@ -36,9 +36,8 @@ interface TextSearchFormProps {
  */
 const TextSearchForm: React.FC<TextSearchFormProps> = ({ onSearch, loading, tags }) => {
   const [searchParams] = useSearchParams();
-  const [form] = Form.useForm();  // 从Form.useWatch获取当前搜索类型值
-  const searchType = Form.useWatch('search_type', form);
-  const isVectorSearch = searchType === SearchType.VECTOR;
+  const [form] = Form.useForm();
+  const isVectorSearch = true; // 仅向量搜索
   
   // 标签变更时自动应用过滤（仅当已填写关键词时）
   const handleTagsChange = (values: string[]) => {
@@ -52,16 +51,12 @@ const TextSearchForm: React.FC<TextSearchFormProps> = ({ onSearch, loading, tags
   };
     // 初始化表单值
   useEffect(() => {
-    const query = searchParams.get('q');
-    const searchType = searchParams.get('search_type') || 'vector';
+  const query = searchParams.get('q');
     const tagsParam = searchParams.get('tags');
     const vectorTargets = searchParams.get('vector_targets')?.split(',');
     
     // 设置默认表单值
-    const initialValues: Record<string, string | string[]> = {
-      search_type: searchType,
-      q: query || ''
-    };
+  const initialValues: Record<string, string | string[]> = { q: query || '' };
 
     // 如果有标签参数，解析并设置
     if (tagsParam) {
@@ -71,8 +66,7 @@ const TextSearchForm: React.FC<TextSearchFormProps> = ({ onSearch, loading, tags
     // 如果有向量搜索目标参数，设置
     if (vectorTargets && vectorTargets.length > 0) {
       initialValues.vector_targets = vectorTargets;
-    } else if (searchType === 'vector') {
-      // 如果是向量搜索但没有指定目标，使用默认值
+    } else {
       initialValues.vector_targets = [VectorSearchTarget.TITLE, VectorSearchTarget.DESCRIPTION, VectorSearchTarget.IMAGE];
     }
 
@@ -82,15 +76,8 @@ const TextSearchForm: React.FC<TextSearchFormProps> = ({ onSearch, loading, tags
     // 执行文本搜索
   const handleSubmit = (values: Record<string, any>) => {
     // 构造搜索参数
-    const params: UnifiedTextSearchParams = {
-      q: values.q
-    };    // 添加搜索类型
-    params.search_type = mapToApiSearchType(values.search_type);
-    
-    // 设置向量搜索目标
-    if (values.search_type === SearchType.VECTOR) {
-      params.vector_targets = getVectorSearchTargets(values.vector_targets);
-    }
+  const params: UnifiedTextSearchParams = { q: values.q, search_type: SearchType.VECTOR };
+  params.vector_targets = getVectorSearchTargets(values.vector_targets);
 
     // 添加高级搜索参数（如果有）
     if (values.tags && values.tags.length > 0) {
@@ -119,7 +106,6 @@ const TextSearchForm: React.FC<TextSearchFormProps> = ({ onSearch, loading, tags
         onFinish={handleSubmit}
         layout="vertical"
         initialValues={{
-          search_type: 'vector',
           vector_targets: [VectorSearchTarget.TITLE, VectorSearchTarget.DESCRIPTION, VectorSearchTarget.IMAGE]
         }}
       >
@@ -130,24 +116,16 @@ const TextSearchForm: React.FC<TextSearchFormProps> = ({ onSearch, loading, tags
               rules={[{ required: true, message: '请输入搜索关键词！' }]}
             >
               <Input
-                placeholder="输入关键词搜索图片..."
+                placeholder="输入关键词 (多向量语义检索)"
                 size="large"
                 prefix={<SearchOutlined />}
                 allowClear
               />
             </Form.Item>
-          </Col>          <Col xs={24} md={6}>
-            <Form.Item name="search_type">
-              <Select size="large">
-                {SEARCH_TYPES.map(type => (
-                  <Option key={type.value} value={type.value}>{type.label}</Option>
-                ))}
-              </Select>
-            </Form.Item>
           </Col>
         </Row>
 
-        {isVectorSearch && (
+  {isVectorSearch && (
           <Form.Item
             name="vector_targets"
             label={

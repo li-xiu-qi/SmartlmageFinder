@@ -10,7 +10,7 @@ from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends, Q
 from pydantic import BaseModel
 
 # 导入数据库连接函数
-from ..db_func.core.connection import get_db
+# 数据访问通过仓库内部管理连接，无需显式依赖注入 get_db
 # 导入响应模型
 from ..global_schemas import ResponseModel
 # 导入图片相关的数据库操作
@@ -49,8 +49,7 @@ async def get_images_list(
     tags: Optional[str] = Query(None, description="标签过滤 (逗号分隔)"),
     tags_list: Optional[List[str]] = Query(None, alias="tags[]", description="标签过滤 (多值参数，等价于 tags 的数组形式)"),
     start_date: Optional[str] = Query(None, description="开始日期 (YYYY-MM-DD)"),
-    end_date: Optional[str] = Query(None, description="结束日期 (YYYY-MM-DD)"),
-    conn = Depends(get_db)
+    end_date: Optional[str] = Query(None, description="结束日期 (YYYY-MM-DD)")
 ):
     """获取图片列表"""
     try:
@@ -104,8 +103,7 @@ async def get_images_list(
 
 @router.get("/{image_id}")
 async def get_image_by_id(
-    image_id: int,
-    conn = Depends(get_db)
+    image_id: int
 ):
     """根据ID获取单个图片信息"""
     try:
@@ -134,8 +132,7 @@ async def upload_images(
     files: List[UploadFile] = File(...),
     title: Optional[str] = Form(None),
     description: Optional[str] = Form(None),
-    auto_analyze: bool = Form(True),
-    conn = Depends(get_db)
+    auto_analyze: bool = Form(True)
 ):
     """上传图片"""
     try:
@@ -230,8 +227,7 @@ async def upload_images(
 @router.put("/{image_id}")
 async def update_image(
     image_id: int,
-    request: ImageUpdateRequest,
-    conn = Depends(get_db)
+    request: ImageUpdateRequest
 ):
     """更新图片信息"""
     try:
@@ -286,8 +282,7 @@ async def update_image(
 
 @router.delete("/batch")
 async def batch_delete_images(
-    request: BatchDeleteRequest,
-    conn = Depends(get_db)
+    request: BatchDeleteRequest
 ):
     """批量删除图片"""
     try:
@@ -335,8 +330,7 @@ async def batch_delete_images(
 
 @router.delete("/{image_id}")
 async def delete_image(
-    image_id: int,
-    conn = Depends(get_db)
+    image_id: int
 ):
     """删除单张图片"""
     try:
@@ -379,8 +373,7 @@ async def delete_image(
 
 @router.post("/batch-update")
 async def batch_update_images(
-    request: BatchUpdateRequest,
-    conn = Depends(get_db)
+    request: BatchUpdateRequest
 ):
     """批量更新图片"""
     try:

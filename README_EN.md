@@ -45,6 +45,58 @@ Current version uses a unified backend (FastAPI) + frontend (React) architecture
 - **Vector Search** - Multi-dimensional search based on title, description, and image content
 - **Similarity Search** - Similarity retrieval based on reference images
 - **Filter Search** - Support for combined tag and time filtering
+- **Fuzzy Search (LIKE)** - Fast lightweight keyword LIKE matching for coarse filtering before semantic search
+
+#### 💬 Conversational Image Search (Chat-driven Retrieval)
+
+Multi-turn, dialogue-driven intelligent image retrieval and recommendation:
+
+- **Multi-turn Context Memory**: 64K rolling window, auto-trimming while preserving key semantics
+- **Query Rewriting**: Normalization / keyword extraction improves vector recall
+- **Phased Pipeline**: Rewrite -> Multi-vector search (title / description / image content) -> Rerank -> Response generation
+- **SSE Streaming**: Events: `rewrite_start` / `assistant_delta` / `complete` / `error`
+- **Conversation Management**: Create / list / delete conversations; `conversation_id` binds context
+- **Result Enrichment**: Returns compact image info (id / score / title / tags / public_url) + ordered id list
+- **Safety Control**: Vector target whitelist restricts search scope (e.g. `title_vector`, `desc_vector`, `image_vector`)
+
+Key Endpoints:
+
+| Feature | Method | Path |
+|---------|--------|------|
+| Create conversation | POST | `/api/v1/ai/conversations/create` |
+| List conversations | GET | `/api/v1/ai/conversations` |
+| Delete conversation | DELETE | `/api/v1/ai/conversations/{conversation_id}` |
+| Get conversation messages | GET | `/api/v1/ai/conversations/{conversation_id}/messages` |
+| Chat recommend (single shot) | POST | `/api/v1/ai/recommend/chat` |
+| Chat recommend (SSE stream) | POST | `/api/v1/ai/recommend/chat/stream` |
+
+Request Example (Streaming Recommendation):
+
+```bash
+curl -N -X POST http://localhost:10050/api/v1/ai/recommend/chat/stream \
+  -H "Content-Type: application/json" \
+  -d '{
+    "conversation_id": "demo-session-1",
+    "query": "Find me some city architecture photos under a blue sky",
+    "vector_targets": ["title_vector", "desc_vector", "image_vector"],
+    "limit": 12
+  }'
+```
+
+Sample SSE Events:
+
+```text
+event: rewrite_start
+data: {"message":"start","conversation_id":"demo-session-1"}
+
+event: assistant_delta
+data: {"delta":"Searching relevant images..."}
+
+event: complete
+data: {"image_ids":[12,8,5,...],"assistant_text":"Found ...","images_brief":[...]} 
+```
+
+Frontend can stream-render states: rewriting / thinking / partial answer / final images, delivering a smooth interactive UX.
 
 ### 🤖 AI Analysis Features
 
@@ -75,6 +127,7 @@ Current version uses a unified backend (FastAPI) + frontend (React) architecture
 ## 🚀 Quick Start
 
 ### Environment Initialization
+(Please make sure your computer has both Node.js and Python installed)
 
 First-time use requires environment initialization:
 
@@ -108,8 +161,6 @@ The startup script will automatically:
 - **Personal Image Management** - Intelligent organization and retrieval of personal photo libraries
 - **Design Asset Management** - Efficient management and search of design resources
 - **Content Creation** - Providing intelligent image retrieval services for creators
-- **Enterprise Asset Management** - Enterprise-level image resource management solutions
-- **AI Research Applications** - Research and application platform for multimodal AI technology
 
 ## 🛠️ Technical Architecture
 
@@ -190,6 +241,7 @@ SmartImageFinder/
 │   └── caches/           # Vector cache
 ├── scripts/               # Startup and management scripts
 ├── requirements.txt       # Python dependencies
+├── main.py                # Backend main entry (API service main file)
 └── start.py              # Startup entry point
 ```
 

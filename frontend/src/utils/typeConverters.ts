@@ -15,6 +15,7 @@ export interface ImageCardModel {
   id: number;
   filename: string;
   filepath: string;
+  public_url?: string;
   title: string;
   description: string;
   created_at: string;
@@ -37,6 +38,7 @@ export function convertToImageCardModel(image: ImageModel | SearchImageItem): Im
     id: image.id,
     filename: image.filename,
     filepath: image.filepath,
+  public_url: (image as any).public_url,
     title: image.title || image.filename,
     description: image.description || '',
     created_at: image.created_at,

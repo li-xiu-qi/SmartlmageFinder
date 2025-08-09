@@ -1,7 +1,7 @@
 /**
  * 搜索页面工具函数
  */
-import { SearchType, VectorType, VectorSearchTarget } from '@/types/search';
+import { VectorType, VectorSearchTarget } from '@/types/search';
 
 /**
  * 将URL参数中的标签字符串转换为标签数组
@@ -22,23 +22,6 @@ export const formatTagsForParam = (tags: string[]): string => {
   return tags.join(',');
 };
 
-/**
- * 文本搜索类型转换为API搜索类型
- * @param searchType 前端搜索类型
- * @returns API搜索类型
- */
-export const mapToApiSearchType = (searchType: string): SearchType => {
-  const map: Record<string, SearchType> = {
-    'title': SearchType.TITLE,
-    'description': SearchType.DESCRIPTION,
-    'both': SearchType.BOTH,
-    'combined': SearchType.BOTH,
-    'vector': SearchType.VECTOR
-    // 'multi'和'hybrid'类型已不再支持
-  };
-  
-  return map[searchType] || SearchType.BOTH;
-};
 
 /**
  * 向量类型转换为API向量类型
@@ -55,14 +38,6 @@ export const mapToApiVectorType = (vectorType: string): VectorType => {
   return map[vectorType] || VectorType.IMAGE;
 };
 
-/**
- * 检查搜索类型是否是高级搜索（向量或多维）
- * @param searchType 搜索类型
- * @returns 是否是高级搜索
- */
-export const isAdvancedSearch = (searchType: string): boolean => {
-  return ['vector'].includes(searchType);
-};
 
 /**
  * 获取向量搜索目标数组

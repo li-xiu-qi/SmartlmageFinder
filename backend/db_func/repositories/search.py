@@ -7,86 +7,21 @@ import logging
 from typing import Dict, List, Any, Optional, Tuple
 
 from .base import BaseRepository
+from ...utils.image_utils import build_public_url
 
 logger = logging.getLogger(__name__)
 
 
 class SearchRepository(BaseRepository):
-    """搜索数据仓库类"""
+    """搜索数据仓库类
+
+    """
     _ALLOWED_VECTOR_TARGETS = {"title", "description", "image"}
 
     @classmethod
     def _sanitize_targets(cls, targets: List[str]) -> List[str]:
         valid = [t for t in targets if isinstance(t, str) and t in cls._ALLOWED_VECTOR_TARGETS]
         return valid or ["title", "description", "image"]
-    
-    def basic_search(self, text: str = None, search_type: str = "both", 
-                    filters: Dict[str, Any] = None, limit: int = 20, offset: int = 0) -> List[Dict[str, Any]]:
-        """
-        基础文本搜索
-        
-        Args:
-            text: 搜索文本
-            search_type: 搜索类型，可选值：title, description, both
-            filters: 过滤条件字典
-            limit: 返回结果数量限制
-            offset: 结果偏移量
-            
-        Returns:
-            List[Dict]: 搜索结果列表
-        """
-        if not text or not text.strip():
-            return []
-            
-        # 构建基础查询
-        query = "SELECT * FROM images"
-        conditions = []
-        params = []
-        
-        # 处理文本搜索条件
-        search_conditions = []
-        if search_type in ["title", "both"]:
-            search_conditions.append("title LIKE ?")
-            params.append(f"%{text.strip()}%")
-            
-        if search_type in ["description", "both"]:
-            search_conditions.append("description LIKE ?")
-            params.append(f"%{text.strip()}%")
-            
-        if search_conditions:
-            conditions.append("(" + " OR ".join(search_conditions) + ")")
-        
-        # 处理过滤条件
-        if filters:
-            if filters.get('filename'):
-                conditions.append("filename LIKE ?")
-                params.append(f"%{filters['filename']}%")
-                
-            if filters.get('tags'):
-                tag_conditions = []
-                for tag in filters['tags']:
-                    tag_conditions.append("tags LIKE ?")
-                    params.append(f'%"{tag}"%')
-                if tag_conditions:
-                    conditions.append("(" + " OR ".join(tag_conditions) + ")")
-            
-            if filters.get('start_date'):
-                conditions.append("created_at >= ?")
-                params.append(filters['start_date'])
-            
-            if filters.get('end_date'):
-                conditions.append("created_at <= ?")
-                params.append(filters['end_date'])
-        
-        # 组合查询条件
-        if conditions:
-            query += " WHERE " + " AND ".join(conditions)
-        
-        # 添加排序和分页
-        query += " ORDER BY created_at DESC"
-        query += f" LIMIT {limit} OFFSET {offset}"
-        
-        return self.execute_query(query, params)
     
     def search_with_filters(self, filters: Dict[str, Any], 
                            limit: int = 20, offset: int = 0) -> Tuple[List[Dict[str, Any]], int]:
@@ -149,6 +84,59 @@ class SearchRepository(BaseRepository):
         total_count = count_result['count'] if count_result else 0
         
         return results, total_count
+
+    # =============== Fuzzy (模糊) 文本搜索 ===============
+    def fuzzy_search(self, text: str, fields: Optional[List[str]] = None,
+                     filters: Optional[Dict[str, Any]] = None,
+                     limit: int = 20, offset: int = 0) -> List[Dict[str, Any]]:
+        """基于 LIKE 的轻量模糊搜索（不走向量）。
+
+        Args:
+            text: 搜索关键字（至少1个非空字符）
+            fields: 参与匹配的字段集合，支持: title, description, filename
+            filters: 额外过滤（tags / start_date / end_date）
+            limit: 数量限制
+            offset: 分页偏移
+        """
+        if not text or not text.strip():
+            return []
+        fields = fields or ["title", "description"]
+        allowed = {"title", "description", "filename"}
+        use_fields = [f for f in fields if f in allowed] or ["title", "description"]
+
+        query = "SELECT * FROM images"
+        conditions: List[str] = []
+        params: List[Any] = []
+
+        like_exprs = []
+        kw = f"%{text.strip()}%"
+        for f in use_fields:
+            like_exprs.append(f"{f} LIKE ?")
+            params.append(kw)
+        if like_exprs:
+            conditions.append("(" + " OR ".join(like_exprs) + ")")
+
+        filters = filters or {}
+        if filters.get('tags'):
+            tag_conditions = []
+            for tag in filters['tags']:
+                tag_conditions.append("tags LIKE ?")
+                params.append(f'%"{tag}"%')
+            if tag_conditions:
+                conditions.append("(" + " OR ".join(tag_conditions) + ")")
+        if filters.get('start_date'):
+            conditions.append("created_at >= ?")
+            params.append(filters['start_date'])
+        if filters.get('end_date'):
+            conditions.append("created_at <= ?")
+            params.append(filters['end_date'])
+
+        if conditions:
+            query += " WHERE " + " AND ".join(conditions)
+        query += " ORDER BY created_at DESC"
+        query += f" LIMIT {limit} OFFSET {offset}"
+        results = self.execute_query(query, params)
+        return self._attach_public_url(results)
     
     def get_filtered_image_ids(self, filters: Dict[str, Any]) -> List[int]:
         """
@@ -324,15 +312,13 @@ class SearchRepository(BaseRepository):
                       filters: Dict[str, Any] = None, limit: int = 20, offset: int = 0) -> List[Dict[str, Any]]:
         """
         统一的搜索方法，支持文本查询和图像查询
-        
         Args:
             query_type: 查询类型，可选值："text", "image"
-                        if 'public_url' not in image:
-                            image['public_url'] = build_public_url(image.get('filepath') or '')
-            offset: 结果的起始偏移量，用于分页
-            
-        Returns:
-            List[Dict]: 图像信息字典的列表，按综合得分排序
+            query_content: 文本内容或临时图片路径
+            search_targets: 向量搜索目标
+            filters: 过滤条件
+            limit / offset: 分页
+        Returns: 排序后的图像信息列表
         """
         if query_type == "text":
             return self.text_search(query_content, self._sanitize_targets(search_targets), filters, limit, offset)
@@ -388,10 +374,7 @@ class SearchRepository(BaseRepository):
             id2score = {r[0]: 1 - r[1] for r in paginated}
             for img in images:
                 img['score'] = id2score.get(img['id'], 0)
-                if 'filepath' in img and img.get('filepath'):
-                    import os
-                    img['public_url'] = f"/static/images/{os.path.basename(img['filepath'])}"
-            return images
+            return self._attach_public_url(images)
 
         all_results: Dict[int, List[float]] = {}
         for target in search_targets:
@@ -408,11 +391,8 @@ class SearchRepository(BaseRepository):
         id2score = {i: s for i, s in page}
         for img in images:
             img['score'] = id2score.get(img['id'], 0)
-            if 'filepath' in img and img.get('filepath'):
-                import os
-                img['public_url'] = f"/static/images/{os.path.basename(img['filepath'])}"
         images.sort(key=lambda x: x['score'], reverse=True)
-        return images
+        return self._attach_public_url(images)
     
     def search_by_image_id(self, image_id: int, vector_type: str = "image", 
                           k: int = 5, filters: Optional[Dict[str, Any]] = None,
@@ -503,10 +483,19 @@ class SearchRepository(BaseRepository):
             """
             
             results = self.execute_query(sql_query, (image_id, k))
-            
+            results = self._attach_public_url(results)
             logger.info(f"使用图像ID {image_id} 的 {vector_type} 向量找到 {len(results)} 个相似结果")
             return results
             
         except Exception as e:
             logger.error(f"向量搜索失败: {str(e)}")
             return []
+
+    # =============== 辅助：统一附加 public_url ===============
+    def _attach_public_url(self, images: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        for img in images:
+            if not img.get('public_url'):
+                fp = img.get('filepath') or ''
+                if fp:
+                    img['public_url'] = build_public_url(fp)
+        return images

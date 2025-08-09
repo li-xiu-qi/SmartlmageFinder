@@ -7,19 +7,14 @@ import { SearchType, VectorSearchTarget, VectorType } from '@/types/search';
  * 搜索类型选项
  */
 export const SEARCH_TYPES = [
-  { value: SearchType.VECTOR, label: '向量搜索' },
-  { value: SearchType.BOTH, label: '标题+描述' },
-  { value: SearchType.TITLE, label: '仅标题' },
-  { value: SearchType.DESCRIPTION, label: '仅描述' }
+  { value: SearchType.VECTOR, label: '向量搜索' }
 ];
 
 /**
  * 文本搜索类型选项
  */
 export const TEXT_SEARCH_TYPES = [
-  { value: SearchType.TITLE, label: '仅标题' },
-  { value: SearchType.DESCRIPTION, label: '仅描述' },
-  { value: SearchType.BOTH, label: '标题+描述' }
+  { value: SearchType.VECTOR, label: '向量搜索' }
 ];
 
 /**

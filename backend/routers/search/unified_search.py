@@ -1,9 +1,8 @@
-from fastapi import APIRouter, HTTPException, Query, Depends, UploadFile, File, Form
-from typing import List, Optional, Literal, Union
-import sqlite3
+from fastapi import APIRouter, HTTPException, Query, UploadFile, File, Form, Depends
+from typing import List, Optional, Literal
 
 # 导入数据库连接函数
-from ...db_func.core.connection import get_db
+# 已移除直接数据库依赖，仓库内部自管连接
 
 # 导入搜索功能模块
 from ...db_func.repositories.search import SearchRepository
@@ -16,14 +15,26 @@ from .base import (
 
 router = APIRouter()
 
+@router.get("/fuzzy")
+@search_handler(error_code="FUZZY_SEARCH_ERROR")
+async def fuzzy_search_api(
+    q: str = Query(..., description="模糊搜索关键字"),
+    fields: Optional[List[str]] = Query(None, description="指定匹配字段: title,description,filename"),
+    vector_targets: List[str] = Query(["title", "description", "image"], alias="vector_targets[]", include_in_schema=False),  # 占位避免前端失配
+    filter_params: CommonFilterParams = Depends(get_query_filter_params)
+):
+    """轻量模糊搜索（基于 LIKE）。主要用于快速关键词粗筛。"""
+    filters = filter_params.build_filters()
+    repo = SearchRepository()
+    return repo.fuzzy_search(q, fields=fields, filters=filters, limit=filter_params.limit, offset=filter_params.offset)
+
 @router.get("/unified")
 @search_handler(error_code="UNIFIED_SEARCH_ERROR")
 async def unified_text_search_api(
     q: str = Query(..., description="搜索文本"),
-    search_type: Literal["title", "description", "both", "vector"] = Query("vector", description="搜索类型：title-仅标题文本匹配，description-仅描述文本匹配，both-标题和描述文本匹配，vector-向量搜索"),
+    search_type: Literal["vector"] = Query("vector", description="搜索类型固定为 vector（已统一为多向量语义检索）"),
     vector_targets: List[str] = Query(["title", "description", "image"], alias="vector_targets[]", description="向量搜索目标，仅在search_type为vector时有效"),
-    filter_params: CommonFilterParams = Depends(get_query_filter_params),
-    conn = Depends(get_db)
+    filter_params: CommonFilterParams = Depends(get_query_filter_params)
 ):
     """
     统一文本搜索API，支持多种搜索类型:
@@ -38,19 +49,7 @@ async def unified_text_search_api(
     # 创建搜索 repository
     search_repo = SearchRepository()
     
-    if search_type in ["title", "description", "both"]:            
-        # 使用文本匹配搜索
-        results = search_repo.basic_search(
-            text=q,
-            search_type=search_type,
-            filters=filters,
-            limit=filter_params.limit,
-            offset=filter_params.offset
-        )
-        
-        return results
-        
-    elif search_type == "vector":
+    if search_type == "vector":
         # 使用向量搜索 - 统一的搜索方法
         results = search_repo.unified_search(
             query_type="text",
@@ -71,8 +70,7 @@ async def unified_text_search_api(
 async def unified_image_search_api(
     file: UploadFile = File(..., description="上传的图像文件"),
     search_targets: List[str] = Form(["image"], description="搜索目标类型，可选：image-图像向量，title-标题向量，description-描述向量"),
-    filter_params: CommonFilterParams = Depends(get_form_filter_params),
-    conn = Depends(get_db)
+    filter_params: CommonFilterParams = Depends(get_form_filter_params)
 ):
     """
     统一图像搜索API，通过向量搜索寻找相似图片
@@ -110,8 +108,7 @@ async def unified_image_search_api(
 async def unified_vector_search_api(
     query_embedding: List[float] = Form(..., description="查询向量"),
     search_targets: List[str] = Form(["title", "description", "image"], description="搜索目标类型，可选：image-图像向量，title-标题向量，description-描述向量"),
-    filter_params: CommonFilterParams = Depends(get_form_filter_params),
-    conn = Depends(get_db)
+    filter_params: CommonFilterParams = Depends(get_form_filter_params)
 ):
     """
     统一向量搜索API，直接使用提供的向量进行搜索

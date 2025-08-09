@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Path, Body
+from fastapi import APIRouter, Path, Body
 from typing import Dict, Any
 from pydantic import BaseModel, Field
 import sqlite3
@@ -17,8 +17,7 @@ class MetadataUpdateRequest(BaseModel):
 @router.put("/{image_id}/update")
 async def update_image_metadata_endpoint(
     image_id: int = Path(..., description="图片ID", ge=1),
-    payload: MetadataUpdateRequest = Body(..., description="元数据更新请求体"),
-    conn: sqlite3.Connection = Depends(get_db)
+    payload: MetadataUpdateRequest = Body(..., description="元数据更新请求体")
 ):
     """
     更新指定图片的元数据。

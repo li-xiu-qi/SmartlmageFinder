@@ -72,7 +72,7 @@ const RecentImages: React.FC<RecentImagesProps> = ({ images }) => {
                 cover={
                   <div className="image-cover">
                     {/* 图片内容，点击时会触发handleImageClick打开侧边栏 */}
-                    <img alt={image.title} src={image.filepath} />
+                    <img alt={image.title} src={(image as any).public_url || image.filepath} />
                   </div>
                 }
                 className="image-card"

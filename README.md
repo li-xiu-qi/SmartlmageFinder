@@ -26,6 +26,7 @@ SmartImageFinder 是一个现代化的智能图片搜索引擎和管理系统，
 
 ### 架构概览
 
+![系统架构](docs/架构图.png)
 当前版本采用轻量一体化后端（FastAPI）+ 前端（React）架构，AI 推荐 / 对话代理集成在 `backend/ai_func/recommendation` 中，结合 sqlite-vec 向量检索与 SSE 流式输出，无需额外独立 AI 微服务即可完成智能搜索与多轮推荐。
 
 ## 功能特性
@@ -45,6 +46,58 @@ SmartImageFinder 是一个现代化的智能图片搜索引擎和管理系统，
 - **向量搜索** - 基于标题、描述和图片内容的多维度搜索
 - **相似搜索** - 基于参考图片的相似性检索
 - **过滤搜索** - 支持标签和时间的组合过滤
+- **模糊搜索 (Fuzzy LIKE)** - 轻量关键词 LIKE 匹配，适合粗筛后再进行语义检索
+
+#### 💬 对话式图片搜索（Chat-driven Image Retrieval）
+
+基于对话的多轮图片智能检索与推荐：
+
+- **多轮上下文记忆**：支持 64K 滚动窗口对话历史，自动裁剪保留关键信息
+- **智能查询改写**：对用户输入进行归一化/关键词抽取，提升向量检索命中率
+- **分阶段流程**：改写 -> 多向量检索（标题/描述/图像内容）-> 结果重排序 -> 生成回复
+- **SSE 流式输出**：事件包括 `rewrite_start` / `assistant_delta` / `complete` / `error`
+- **会话管理**：支持创建 / 列出 / 删除会话，`conversation_id` 绑定上下文
+- **结果增强**：返回图片精简信息（id/score/title/tags/public_url）+ 选中图片ID列表
+- **安全控制**：向量目标白名单限制检索范围（如 `title_vector` / `desc_vector` / `image_vector`）
+
+主要接口：
+
+| 功能 | 方法 | 路径 |
+|------|------|------|
+| 创建会话 | POST | `/api/v1/ai/conversations/create` |
+| 列出会话 | GET  | `/api/v1/ai/conversations` |
+| 删除会话 | DELETE | `/api/v1/ai/conversations/{conversation_id}` |
+| 获取会话消息 | GET | `/api/v1/ai/conversations/{conversation_id}/messages` |
+| 对话式推荐（一次性） | POST | `/api/v1/ai/recommend/chat` |
+| 对话式推荐（SSE流） | POST | `/api/v1/ai/recommend/chat/stream` |
+
+请求示例（流式推荐）：
+
+```bash
+curl -N -X POST http://localhost:10050/api/v1/ai/recommend/chat/stream \
+  -H "Content-Type: application/json" \
+  -d '{
+    "conversation_id": "demo-session-1",
+    "query": "给我找一些蓝色天空下的城市建筑照片",
+    "vector_targets": ["title_vector", "desc_vector", "image_vector"],
+    "limit": 12
+  }'
+```
+
+SSE 返回关键事件（示例）：
+
+```text
+event: rewrite_start
+data: {"message":"start","conversation_id":"demo-session-1"}
+
+event: assistant_delta
+data: {"delta":"正在为你检索相关图片..."}
+
+event: complete
+data: {"image_ids":[12,8,5,...],"assistant_text":"已为你找到...","images_brief":[...]} 
+```
+
+前端可基于事件类型实时渲染“AI思考中 / 追加回答 / 展示图片结果”等状态，带来顺滑的交互体验。
 
 ### 🤖 AI分析功能
 
@@ -71,11 +124,11 @@ SmartImageFinder 是一个现代化的智能图片搜索引擎和管理系统，
 - **🎨 现代化技术栈** - React 18 + TypeScript + FastAPI，确保代码质量和开发体验
 - **🔧 智能启动管理** - 一键启动脚本，自动处理环境配置和依赖管理
 
-
 ## 🚀 快速开始
 
 ### 环境初始化
 
+(请确保你的的电脑里面带有node和python环境)
 首次使用需要初始化环境：
 
 ```bash
@@ -108,8 +161,6 @@ python start.py --frontend-only
 - **个人图片管理** - 智能整理和检索个人照片库
 - **设计素材管理** - 高效管理和搜索设计资源
 - **内容创作** - 为创作者提供智能图片检索服务
-- **企业资产管理** - 企业级的图片资源管理解决方案
-- **AI研究应用** - 多模态AI技术的研究和应用平台
 
 ## 🛠️ 技术架构
 
@@ -173,24 +224,29 @@ python start.py --frontend-only
 
 ```
 SmartImageFinder/
-├── backend/                 # 主后端服务
-│   ├── routers/            # API路由模块
-│   ├── db_func/           # 数据库操作
-│   ├── ai_func/           # AI分析功能
-│   └── config_files/      # 配置文件
-├── frontend/               # 主前端服务
-│   ├── src/pages/         # 页面组件
-│   ├── src/components/    # 通用组件
-│   └── src/services/      # API服务层
-├── backend/ai_func/recommendation/  # 对话式推荐与工具调用逻辑
-├── models/                # AI模型文件
-├── data/                  # 数据存储
-│   ├── db/               # 数据库文件
-│   ├── images/           # 图片存储
-│   └── caches/           # 向量缓存
-├── scripts/               # 启动和管理脚本
-├── requirements.txt       # Python依赖
-└── start.py              # 启动入口
+├── backend/                       # 后端主服务（API、数据库、AI推荐等）
+│   ├── routers/                   # 路由模块（images/tags/search/metadata等）
+│   ├── db_func/                   # 数据库与向量相关操作
+│   ├── ai_func/                   # AI分析与推荐（含 recommendation/agent.py）
+│   ├── config/                    # 配置文件与驱动
+│   └── global_schemas.py          # 通用响应模型
+├── frontend/                      # 前端主服务（React+AntD）
+│   ├── src/pages/                 # 页面组件
+│   ├── src/components/            # 通用组件
+│   ├── src/services/              # API服务层
+│   └── public/                    # 静态资源
+├── models/                        # AI模型文件（本地或下载）
+├── data/                          # 数据存储
+│   ├── db/                        # SQLite数据库文件
+│   ├── images/                    # 图片存储
+│   ├── caches/                    # 向量缓存
+│   └── temp/                      # 临时文件
+├── scripts/                       # 启动与环境管理脚本
+├── docs/                          # 架构图与API文档
+├── requirements.txt               # Python依赖
+├── main.py                        # 后端主入口（API服务主文件）
+├── start.py                       # 一键启动入口
+└── README.md                      # 项目说明
 ```
 
 ## 🔧 详细配置
@@ -211,15 +267,6 @@ UPLOAD_DIR: ./data/images  # 图片上传目录
 DB_PATH: ./data/db/smartimagefinder.db  # 数据库路径
 HOST: 0.0.0.0  # 服务监听地址
 PORT: 10050  # 服务端口
-```
-
-### 环境变量
-
-支持通过环境变量覆盖配置：
-
-```bash
-export OPENAI_API_KEY="your-api-key"
-export OPENAI_API_BASE="https://api.openai.com/v1"
 ```
 
 ### 💡 使用提示
@@ -243,53 +290,6 @@ export OPENAI_API_BASE="https://api.openai.com/v1"
 - **缓存状态** - 缓存使用情况
 - **向量数据库** - 驱动状态、索引信息
 
-
-## 演示截图
-
-### 系统架构
-
-![系统架构](assets/images/SmartImageFinder-项目架构图-v3.png)
-
-### 首页展示
-
-![首页](assets/images/首页.png)
-![首页图片侧边栏展示](assets/images/首页图片侧边栏展示.png)
-
-### 图片上传和分析
-
-![图片上传](assets/images/图片上传.png)
-![上传时可编辑图片分析内容](assets/images/上传的时候可以编辑图片分析内容.png)
-![上传完成结果显示](assets/images/上传完成的结果显示.png)
-![AI自动分析图片内容](assets/images/AI自动分析图片内容.png)
-![AI自动分析图片内容效果](assets/images/AI自动分析图片内容效果.png)
-
-### 标签管理系统
-
-![标签管理](assets/images/标签管理.png)
-![标签编辑](assets/images/标签编辑.png)
-![标签编辑效果](assets/images/标签编辑效果.png)
-![标签搜索及过滤](assets/images/标签搜索及过滤.png)
-![点击标签可以直接跳转到对应的图片展示部分并过滤图片](assets/images/点击标签可以直接跳转到对应的图片展示部分并过滤图片.png)
-![基于标签的过滤搜索](assets/images/基于标签的过滤搜索.png)
-
-### 智能搜索功能
-
-![基于模糊搜索的图片搜索](assets/images/基于模糊搜索的图片搜索.png)
-![标题向量搜索](assets/images/标题向量搜索.png)
-![标题向量和描述向量混合搜索](assets/images/标题向量和描述向量混合搜索.png)
-![三种混合搜索的搜索效果](assets/images/三种混合搜索的搜索效果.png)
-![使用图搜索图](assets/images/使用图搜索图.png)
-
-### 元数据管理
-
-![元数据编辑](assets/images/元数据编辑.png)
-![元数据编辑效果](assets/images/元数据编辑效果.png)
-![图片描述更新](assets/images/图片描述更新.png)
-
-### 系统管理
-
-![系统设置](assets/images/系统设置.png)
-![系统状态查看](assets/images/系统状态查看.png)
 
 ## 许可证
 
