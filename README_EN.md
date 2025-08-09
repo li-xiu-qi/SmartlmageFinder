@@ -70,7 +70,7 @@ Current version uses a unified backend (FastAPI) + frontend (React) architecture
 - **🧠 Advanced AI Models** - Integration with Jina CLIP V2 model providing precise multimodal search capabilities
 - **🎨 Modern Technology Stack** - React 18 + TypeScript + FastAPI ensuring code quality and development experience
 - **🔧 Smart Startup Management** - One-click startup script with automatic environment configuration and dependency management
-- **📱 Responsive Design** - Perfect adaptation for various devices providing consistent user experience
+
 
 ## 🚀 Quick Start
 
