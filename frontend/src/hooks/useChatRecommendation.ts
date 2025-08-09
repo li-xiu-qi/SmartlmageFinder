@@ -67,5 +67,15 @@ export function useChatRecommendation() {
     setLoading(false);
   }, []);
 
-  return { conversationId, messages, loading, error, start, cancel };
+  const reset = useCallback(() => {
+    // 终止当前流
+    abortRef.current?.abort();
+    assistantBufferRef.current = '';
+    setConversationId(null);
+    setMessages([]);
+    setError(null);
+    setLoading(false);
+  }, []);
+
+  return { conversationId, messages, loading, error, start, cancel, reset };
 }

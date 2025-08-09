@@ -13,6 +13,12 @@ logger = logging.getLogger(__name__)
 
 class SearchRepository(BaseRepository):
     """搜索数据仓库类"""
+    _ALLOWED_VECTOR_TARGETS = {"title", "description", "image"}
+
+    @classmethod
+    def _sanitize_targets(cls, targets: List[str]) -> List[str]:
+        valid = [t for t in targets if isinstance(t, str) and t in cls._ALLOWED_VECTOR_TARGETS]
+        return valid or ["title", "description", "image"]
     
     def basic_search(self, text: str = None, search_type: str = "both", 
                     filters: Dict[str, Any] = None, limit: int = 20, offset: int = 0) -> List[Dict[str, Any]]:
@@ -307,7 +313,7 @@ class SearchRepository(BaseRepository):
         # 使用统一的多向量搜索方法
         return self._multi_vector_search(
             query_embedding=query_embedding,
-            search_targets=search_targets,
+            search_targets=self._sanitize_targets(search_targets),
             filters=filters,
             limit=limit,
             offset=offset
@@ -329,7 +335,7 @@ class SearchRepository(BaseRepository):
             List[Dict]: 图像信息字典的列表，按综合得分排序
         """
         if query_type == "text":
-            return self.text_search(query_content, search_targets, filters, limit, offset)
+            return self.text_search(query_content, self._sanitize_targets(search_targets), filters, limit, offset)
         elif query_type == "image":
             return self.image_search(query_content, search_targets, filters, limit, offset)
         else:
@@ -360,87 +366,52 @@ class SearchRepository(BaseRepository):
     
     def _multi_vector_search(self, query_embedding: list, search_targets: List[str], 
                            filters: Dict[str, Any] = None, limit: int = 20, offset: int = 0) -> List[Dict[str, Any]]:
+        """执行多向量检索并融合得分。
+
+        1. 过滤得到候选 ID
+        2. 针对每个向量目标执行向量检索
+        3. 融合 (平均得分) 并排序 + 分页
+        4. 附加 score 与 public_url
         """
-        执行多维向量搜索的内部方法
-        
-        Args:
-            query_embedding: 查询向量
-            search_targets: 搜索目标列表
-            filters: 过滤条件
-            limit: 结果数量限制
-            offset: 偏移量
-            
-        Returns:
-            List[Dict]: 搜索结果列表，包含相似度得分
-        """
-        # 首先根据过滤条件获取符合条件的图像ID
+        search_targets = self._sanitize_targets(search_targets)
         filtered_ids = self.get_filtered_image_ids(filters or {})
         if not filtered_ids:
             return []
-        
-        # 如果只有一个搜索目标，直接使用单一向量搜索
+
         if len(search_targets) == 1:
-            vector_results = self._vector_search_with_filter(
-                search_targets[0], query_embedding, filtered_ids, limit + offset
-            )
+            vector_results = self._vector_search_with_filter(search_targets[0], query_embedding, filtered_ids, limit + offset)
             if not vector_results:
                 return []
-            
-            # 应用偏移量和限制
-            paginated_results = vector_results[offset:offset + limit]
-            image_ids = [result[0] for result in paginated_results]
-            images = self._get_images_by_ids(image_ids)
-            
-            # 添加相似度得分
-            id_to_score = {result[0]: 1 - result[1] for result in paginated_results}  # 将distance转换为score
-            for image in images:
-                image['score'] = id_to_score.get(image['id'], 0)
-                # 附加 public_url 便于前端直接显示
-                if 'filepath' in image and image.get('filepath'):
+            paginated = vector_results[offset:offset + limit]
+            ids = [r[0] for r in paginated]
+            images = self._get_images_by_ids(ids)
+            id2score = {r[0]: 1 - r[1] for r in paginated}
+            for img in images:
+                img['score'] = id2score.get(img['id'], 0)
+                if 'filepath' in img and img.get('filepath'):
                     import os
-                    image['public_url'] = f"/static/images/{os.path.basename(image['filepath'])}"
-                
+                    img['public_url'] = f"/static/images/{os.path.basename(img['filepath'])}"
             return images
-        
-        # 多向量搜索：为每个目标类型获取结果，然后合并
-        all_results = {}
-        
+
+        all_results: Dict[int, List[float]] = {}
         for target in search_targets:
-            vector_results = self._vector_search_with_filter(
-                target, query_embedding, filtered_ids, limit * 2
-            )
-            for image_id, distance in vector_results:
-                score = 1 - distance  # 将distance转换为score
-                if image_id not in all_results:
-                    all_results[image_id] = []
-                all_results[image_id].append(score)
-        
-        # 计算综合得分（使用平均得分）
-        scored_results = []
-        for image_id, scores in all_results.items():
-            avg_score = sum(scores) / len(scores)
-            scored_results.append((image_id, avg_score))
-        
-        # 按得分排序（得分越高越相似）
-        scored_results.sort(key=lambda x: x[1], reverse=True)
-        
-        # 应用分页
-        paginated_results = scored_results[offset:offset + limit]
-        image_ids = [result[0] for result in paginated_results]
-        
-        images = self._get_images_by_ids(image_ids)
-        
-        # 添加相似度得分
-        id_to_score = {result[0]: result[1] for result in paginated_results}
-        for image in images:
-            image['score'] = id_to_score.get(image['id'], 0)
-            if 'filepath' in image and image.get('filepath'):
+            vres = self._vector_search_with_filter(target, query_embedding, filtered_ids, limit * 2)
+            for iid, dist in vres:
+                score = 1 - dist
+                all_results.setdefault(iid, []).append(score)
+
+        scored = [(iid, sum(scores)/len(scores)) for iid, scores in all_results.items()]
+        scored.sort(key=lambda x: x[1], reverse=True)
+        page = scored[offset:offset + limit]
+        ids = [i for i, _ in page]
+        images = self._get_images_by_ids(ids)
+        id2score = {i: s for i, s in page}
+        for img in images:
+            img['score'] = id2score.get(img['id'], 0)
+            if 'filepath' in img and img.get('filepath'):
                 import os
-                image['public_url'] = f"/static/images/{os.path.basename(image['filepath'])}"
-            
-        # 按得分重新排序（确保返回的顺序正确）
+                img['public_url'] = f"/static/images/{os.path.basename(img['filepath'])}"
         images.sort(key=lambda x: x['score'], reverse=True)
-        
         return images
     
     def search_by_image_id(self, image_id: int, vector_type: str = "image", 

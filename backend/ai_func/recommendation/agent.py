@@ -5,7 +5,56 @@ from ...config import settings
 from .tools import tool_search_images
 from ...utils.image_utils import build_public_url
 
+# 指定的系统提示词
+SYS_PROMPT = """## 角色
+你是图片推荐助手，仅在用户真正提出图片需求时才执行检索。
 
+## 输出格式要求 (务必严格遵守 Markdown)
+当已完成检索并向用户展示候选时, 使用标准 Markdown：
+1. 使用有序列表列出每张图片：‘标题 - 简短描述(≤120字)’ 。
+2. 紧接其后单独一行放置图片： ![标题](public_url)  (不要额外文字)。
+3. 不输出本地磁盘路径，只能用 /static/images/...。
+4. 未检索时禁止伪造列表或放置任何 ![]() 占位。
+5. 整体回答仅 Markdown，不加入 HTML，不输出 JSON。
+
+## 内部意图分类 (只在脑中推理, 不把分类标签写进回答)
+greeting = 纯问候/客套 (你好/hi/在吗/早上好/谢谢/测试等)
+search_request = 明确提出需要某类图片 或 描述了可检索的视觉主题/对象/场景/风格/用途
+ambiguous = 想要图片但线索不足 (给我推荐点图 / 发点好看的 / 来几张)
+out_of_scope = 与图片无关的话题
+
+## 工具调用硬规则
+1. 只有 search_request 才能调用 search_images。
+2. greeting → 友好回应 + 引导其描述想找的主题/对象/场景/风格，不调用工具。
+3. ambiguous → 先追问需要的主题/用途/风格，获取足够关键词前不调用工具。
+4. out_of_scope → 简短说明你专注图片推荐，引导给出图片需求。
+5. 未获取明确主题关键词前禁止调用 search_images。
+6. 单轮至多一次 search_images；只有成功检索后才可 choose_images。
+7. 不得臆造检索或虚构结果。
+
+## 回答格式约束
+- 不输出内部标记(分类=/意图=/internal)。
+- 未检索：只给引导/澄清；已检索：先一句概述选择逻辑，随后 Markdown 有序列表展示。
+- 列表项中如果有匹配分值(相似度)可呈现为百分比保留1位小数。
+- 输出简洁自然中文。
+"""
+
+MAX_CONTEXT_CHARS = 64_000  # 64K 字符窗口上限
+
+def _window_messages(messages: List[Dict[str, Any]], system_msg: Dict[str, str], limit: int) -> List[Dict[str, Any]]:
+    """按字符总长度裁剪历史，保留系统提示 + 最近消息。
+    limit 为粗粒度字符上限，不精确到 token。"""
+    if not messages:
+        raise ValueError("消息列表不能为空")
+    total = len(system_msg.get("content", ""))
+    kept: List[Dict[str, Any]] = []
+    for msg in reversed(messages):  # 从最新往前
+        content = (msg.get("content") or "")
+        if total + len(content) > limit:
+            break
+        kept.insert(0, msg)  # 仍保持时间顺序
+        total += len(content)
+    return [system_msg] + kept
 
 class RecommendAgent:
     def __init__(self):
@@ -26,33 +75,7 @@ class RecommendAgent:
         config = settings.get_config()
         model = config.CHAT_MODEL if config else "Qwen/Qwen3-8B"
 
-        sys_prompt = (
-            "## 角色\n"
-            "你是图片推荐助手, 仅在用户真正提出图片需求时才执行检索。\n\n"
-            "## 输出格式要求\n"
-            "当已完成检索并向用户展示候选时, 使用 Markdown 排版：\n"
-            "- 利用有序列表列出每张图片: 标题 + 简短描述 (不超过120字)。\n"
-            "- 每张图片后紧跟一行 Markdown 图片语法: ![标题](public_url) ，public_url 直接使用提供的字段。\n"
-            "- 不要输出原始文件系统路径, 只用 /static/images/...。\n"
-            "- 未执行检索时不要伪造图片列表或使用占位图片语法。\n\n"
-            "## 内部意图分类 (只在脑中推理, 不把分类标签写进回答)\n"
-            "greeting = 纯问候/客套 (你好/hi/在吗/早上好/谢谢/测试等)\n"
-            "search_request = 明确提出需要某类图片 或 描述了可检索的视觉主题/对象/场景/风格/用途\n"
-            "ambiguous = 想要图片但线索不足 (给我推荐点图 / 发点好看的 / 来几张)\n"
-            "out_of_scope = 与图片无关的话题\n\n"
-            "## 工具调用硬规则\n"
-            "1. 只有 search_request 才能调用 search_images。\n"
-            "2. greeting → 友好回应 + 引导其描述想找的主题/对象/场景/风格，不调用工具。\n"
-            "3. ambiguous → 先追问需要的主题/用途/风格，获取足够关键词前不调用工具。\n"
-            "4. out_of_scope → 简短说明你专注图片推荐，引导给出图片需求。\n"
-            "5. 未获取明确主题关键词前禁止调用 search_images。\n"
-            "6. 单轮至多一次 search_images；只有成功检索后才可 choose_images。\n"
-            "7. 不得臆造检索或虚构结果。\n\n"
-            "## 回答格式约束\n"
-            "- 不输出内部标记(分类=/意图=/internal)。\n"
-            "- 未检索：只给引导/澄清；已检索：一句概述选择逻辑后用 Markdown 有序列表展示图片。\n"
-            "- 输出简洁自然中文。\n"
-        )
+  
 
         tools = [
             {
@@ -98,8 +121,8 @@ class RecommendAgent:
                 temperature=0.3,
                 stream=True,
             )
-
-        history = [{"role": "system", "content": sys_prompt}] + messages[-20:]
+        system_msg = {"role": "system", "content": SYS_PROMPT}
+        history = _window_messages(messages, system_msg, MAX_CONTEXT_CHARS)
         stream = start_stream(history)
 
         tool_calls: List[Optional[Dict[str, Any]]] = []
@@ -168,9 +191,9 @@ class RecommendAgent:
                 "content": json.dumps({"candidates": compact}, ensure_ascii=False),
             })
 
-        follow_messages = [{"role": "system", "content": sys_prompt}] + messages[-20:]
-        if tool_calls and candidates_full:
-            follow_messages += [assistant_msg] + tool_msgs
+        follow_messages = _window_messages(messages, system_msg, MAX_CONTEXT_CHARS)
+        if tool_calls and candidates_full:  # 将本轮工具调用放在截断后的历史之后
+            follow_messages = follow_messages + [assistant_msg] + tool_msgs
 
         stream2 = None
         if candidates_full:
@@ -227,7 +250,6 @@ class RecommendAgent:
             id_map = {img.get("id"): img for img in candidates_full if isinstance(img, dict)}
             final_images = [id_map[i] for i in ordered_ids if i in id_map]
 
-        # 为返回的最终图片也补 public_url，保证前端直接展示
         if final_images:
             for img in final_images:
                 if img and 'public_url' not in img:
