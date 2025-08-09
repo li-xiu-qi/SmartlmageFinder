@@ -273,7 +273,6 @@ export OPENAI_API_BASE="https://api.openai.com/v1"
 - **Main Frontend Interface**: <http://localhost:5173>
 - **Main Backend API**: <http://localhost:10050>  
 - **API Documentation**: <http://localhost:10050/docs>
-- **AI Frontend**: Requires starting AI services separately before access
 
 ## 📊 System Monitoring & Management
 

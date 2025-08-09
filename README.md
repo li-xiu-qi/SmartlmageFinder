@@ -268,7 +268,6 @@ PORT: 10050  # 服务端口
 - **主前端界面**: <http://localhost:5173>
 - **主后端API**: <http://localhost:10050>  
 - **API文档**: <http://localhost:10050/docs>
-- **AI前端**: 需要单独启动AI服务后访问
 
 ## 📊 系统监控与管理
 
