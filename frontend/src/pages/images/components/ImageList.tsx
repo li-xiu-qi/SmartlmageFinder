@@ -2,7 +2,7 @@ import React from 'react';
 import { Row, Col, Card, Empty, Image, Button, Tag, Popconfirm, Checkbox } from 'antd';
 import { EyeOutlined, DeleteOutlined } from '@ant-design/icons';
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
-import ImageCard from './ImageCard';
+import SearchResultImageCard from '@/components/SearchResultImageCard';
 import { ImageCardModel } from '@/utils/typeConverters';
 import { ViewMode } from './ViewControls';
 import dayjs from 'dayjs';
@@ -77,7 +77,7 @@ const ImageList: React.FC<ImageListProps> = ({
             xl={24 / gridColumns}
             key={image.id}
           >            <div className="image-card-wrapper">
-              <ImageCard
+              <SearchResultImageCard
                 image={image}
                 onClick={onImageClick}
                 showTags={true}

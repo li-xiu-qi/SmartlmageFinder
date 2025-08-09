@@ -1,12 +1,7 @@
 /**
  * 类型转换工具，帮助将API返回的类型转换为UI组件需要的类型
  */
-import {
-  ImageModel,
-  TagInfo,
-  SearchImageItem,
-  PaginationMetadata,
-} from '@/types/models';
+import { ImageModel, TagInfo, SearchImageItem, PaginationMetadata } from '@/types/models';
 
 /**
  * ImageCard 组件中使用的图片类型

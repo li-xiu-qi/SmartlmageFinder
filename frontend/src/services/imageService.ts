@@ -13,8 +13,8 @@ import {
   DeleteImageResponse,
   BatchDeleteImageParams,
   BatchDeleteImageResponse,
-} from '../types/image';
-import { ImageModel, DeletedImageInfo } from '../types/models';
+} from '@/types/image';
+import { ImageModel, DeletedImageInfo } from '@/types/models';
 
 const imageService: ImageClient = {
   /**

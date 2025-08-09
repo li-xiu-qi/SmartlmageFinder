@@ -13,8 +13,8 @@ import {
   UnifiedVectorSearchParams,
   UnifiedSearchResponse,
   FuzzySearchParams
-} from '../types/search';
-import { SearchImageItem } from '../types/models';
+} from '@/types/search';
+import { SearchImageItem } from '@/types/models';
 
 /**
  * 搜索服务实现

@@ -1,28 +1,9 @@
 /**
  * 搜索页面常量定义
  */
-import { SearchType, VectorSearchTarget, VectorType } from '@/types/search';
+import { VectorSearchTarget, VectorType } from '@/types/search';
 
-/**
- * 搜索类型选项
- */
-export const SEARCH_TYPES = [
-  { value: SearchType.VECTOR, label: '向量搜索' }
-];
-
-/**
- * 文本搜索类型选项
- */
-export const TEXT_SEARCH_TYPES = [
-  { value: SearchType.VECTOR, label: '向量搜索' }
-];
-
-/**
- * 高级搜索类型选项
- */
-export const ADVANCED_SEARCH_TYPES = [
-  { value: SearchType.VECTOR, label: '向量搜索' }
-];
+// 已移除搜索类型切换，仅保留向量/模糊/以图在不同 Tab 中
 
 /**
  * 向量搜索目标选项

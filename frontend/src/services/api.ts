@@ -5,6 +5,7 @@
  */
 
 import imageAnalysisService from './imageAnalysisService';
+import aiRecommendationService from './aiRecommendationService';
 import imageService from './imageService';
 import searchService from './searchService';
 import systemService from './systemService';
@@ -17,5 +18,6 @@ export {
   searchService,
   systemService,
   tagService,
-  metadataService // 导出 metadataService
+  metadataService, // 导出 metadataService
+  aiRecommendationService
 };

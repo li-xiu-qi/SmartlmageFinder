@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Empty, Row, Col, Card, Spin, Typography, Space, Divider, Drawer, message } from 'antd';
+import { Empty, Row, Col, Card, Spin, Drawer, message } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
-import ImageCard from '@/pages/images/components/ImageCard';
+import SearchResultImageCard from '@/components/SearchResultImageCard';
+import SearchMetaBar from '@/components/SearchMetaBar';
 import SharedImageDetail from '@/components/SharedImageDetail';
 import { imageService } from '@/services/api';
 import { SearchImageItem } from '@/types/models';
 import { ImageDetail } from '@/types';
 import './SearchResults.less'; // 导入新的样式文件
 
-const { Text, Title } = Typography;
 
 interface SearchResultsProps {
   loading: boolean;
@@ -113,23 +113,12 @@ const SearchResults: React.FC<SearchResultsProps> = ({
 
   return (
     <div className="search-results-container">
-      <Card className="search-results-header">
-        <Space direction="vertical" size="small">
-          <Title level={5}>搜索结果</Title>
-          <Space split={<Divider type="vertical" />}>
-            <Text>共找到 {total} 张相关图片</Text>
-            <Text>耗时 {(searchTime / 1000).toFixed(2)} 秒</Text>
-            {referenceImage && (
-              <Text>参照图: {referenceImage.title}</Text>
-            )}
-          </Space>
-        </Space>
-      </Card>
+      <SearchMetaBar total={total} searchTime={searchTime} referenceImage={referenceImage} />
       
       <Row gutter={[16, 16]} className="search-results-grid">
         {currentResults.map(image => (
           <Col xs={24} sm={12} md={8} lg={6} key={image.id} onClick={() => handleImageClick(image)}>
-            <ImageCard 
+            <SearchResultImageCard 
               image={image} 
               showSimilarity={true}
             />

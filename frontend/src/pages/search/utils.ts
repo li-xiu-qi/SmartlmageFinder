@@ -1,7 +1,7 @@
 /**
  * 搜索页面工具函数
  */
-import { VectorType, VectorSearchTarget } from '@/types/search';
+import { VectorSearchTarget } from '@/types/search';
 
 /**
  * 将URL参数中的标签字符串转换为标签数组
@@ -23,20 +23,7 @@ export const formatTagsForParam = (tags: string[]): string => {
 };
 
 
-/**
- * 向量类型转换为API向量类型
- * @param vectorType 前端向量类型
- * @returns API向量类型
- */
-export const mapToApiVectorType = (vectorType: string): VectorType => {
-  const map: Record<string, VectorType> = {
-    'title': VectorType.TITLE,
-    'description': VectorType.DESCRIPTION,
-    'image': VectorType.IMAGE
-  };
-  
-  return map[vectorType] || VectorType.IMAGE;
-};
+// 已移除 mapToApiVectorType：直接在调用处使用枚举
 
 
 /**

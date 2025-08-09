@@ -12,7 +12,7 @@ import imageService from '@/services/imageService';
 import { ImageModel } from '@/types/models';
 // 导入AI分析详细程度枚举
 import { AnalysisDetailLevel, ImageAnalysisErrorCode } from '@/types/imageAnalysis';
-import { ApiError } from '@/types/api';
+import type { ApiError } from '@/types';
 
 // 并发设置选项接口
 interface ConcurrencyOptions {

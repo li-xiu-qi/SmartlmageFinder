@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosResponse, AxiosRequestConfig } from 'axios';
-import { ApiResponse } from '@/types/api';
+import type { ApiResponse } from '@/types';
 
 // 配置参数
 const API_BASE_URL = '/api/v1'; // 包含版本，符合后端路由配置

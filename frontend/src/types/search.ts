@@ -54,7 +54,6 @@ export interface SimilarSearchQueryParams {
  */
 export interface UnifiedTextSearchParams {
   q: string;                                     // 搜索文本
-  search_type?: SearchType;                      // 搜索类型，默认为 vector
   vector_targets?: VectorSearchTarget[];         // 向量搜索目标
   filename?: string;                             // 按文件名过滤
   tags?: string[];                               // 按标签过滤
@@ -80,7 +79,6 @@ export interface FuzzySearchParams {
 export interface UnifiedImageSearchParams {
   file: File;                                    // 上传用于搜索的图片文件
   search_targets?: VectorSearchTarget[];         // 搜索目标，默认为 image
-  search_type?: SearchType;                      // 固定为 vector（表单统一）
   filename?: string;                             // 按文件名过滤
   tags?: string[];                               // 按标签过滤
   start_date?: string;                           // 开始日期
@@ -95,7 +93,6 @@ export interface UnifiedImageSearchParams {
 export interface UnifiedVectorSearchParams {
   query_embedding: number[];                     // 查询向量
   search_targets?: VectorSearchTarget[];         // 搜索目标
-  search_type?: SearchType;                      // 固定为 vector
   filename?: string;                             // 按文件名过滤
   tags?: string[];                               // 按标签过滤
   start_date?: string;                           // 开始日期

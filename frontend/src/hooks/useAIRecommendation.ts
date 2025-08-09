@@ -4,7 +4,7 @@
 
 import { useState, useCallback, useRef } from 'react';
 import { message } from 'antd';
-import { aiRecommendationService } from '@/services/api';
+import { aiRecommendationService } from '@/services/api'; // barrel 现已包含
 import {
   AIRecommendationParams,
   AIRecommendationData

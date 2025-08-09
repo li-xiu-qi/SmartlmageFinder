@@ -14,7 +14,7 @@ const ImagePreview: React.FC<ImagePreviewProps> = ({ image }) => {
   return (
     <div className="image-preview">
       <Image 
-        src={image.filepath} 
+        src={((image as any).public_url || image.filepath || '').replace(/\\/g,'/')} 
         alt={image.title} 
         preview={{
           mask: <div>

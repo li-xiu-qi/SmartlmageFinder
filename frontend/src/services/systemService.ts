@@ -1,5 +1,5 @@
 import apiClient from './apiClient';
-import { ApiResponse } from '../types/api'; // Changed from @/types
+import type { ApiResponse } from '@/types';
 import {
   SystemInfo,
   SystemConfig,
@@ -9,7 +9,7 @@ import {
   StorageInfo,
   CacheInfo,
   VectorDbDriverStatus
-} from '../types/system';
+} from '@/types/system';
 
 const systemService = {
   /**

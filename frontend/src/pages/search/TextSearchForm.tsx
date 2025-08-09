@@ -18,7 +18,7 @@ import {
 } from '@ant-design/icons';
 import { useSearchParams } from 'react-router-dom';
 import { TagInfo } from '@/types/models';
-import { UnifiedTextSearchParams, VectorSearchTarget, SearchType } from '@/types/search';
+import { UnifiedTextSearchParams, VectorSearchTarget } from '@/types/search';
 import { VECTOR_SEARCH_TARGETS } from './constants';
 import { parseTagsFromParam, getVectorSearchTargets } from './utils';
 
@@ -76,7 +76,7 @@ const TextSearchForm: React.FC<TextSearchFormProps> = ({ onSearch, loading, tags
     // 执行文本搜索
   const handleSubmit = (values: Record<string, any>) => {
     // 构造搜索参数
-  const params: UnifiedTextSearchParams = { q: values.q, search_type: SearchType.VECTOR };
+  const params: UnifiedTextSearchParams = { q: values.q };
   params.vector_targets = getVectorSearchTargets(values.vector_targets);
 
     // 添加高级搜索参数（如果有）

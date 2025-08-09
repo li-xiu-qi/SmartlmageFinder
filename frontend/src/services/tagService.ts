@@ -8,6 +8,7 @@ import {
   GetImagesByMultipleTagsParams, ImagesByMultipleTagsResponse,
   TagMatchMode
 } from '@/types/tag';
+import type { ApiResponse } from '@/types';
 
 const tagService: TagClient = {
   /**

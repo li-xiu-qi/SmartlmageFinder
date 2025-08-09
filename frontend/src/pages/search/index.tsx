@@ -7,7 +7,7 @@ import tagService from '@/services/tagService';
 import { SearchImageItem, TagInfo } from '@/types/models';
 import { UnifiedTextSearchParams, UnifiedImageSearchParams, FuzzySearchParams } from '@/types/search';
 import TextSearchForm from './TextSearchForm';
-import FuzzySearchForm from './FuzzySearchForm';
+import FuzzySearchForm from './FuzzySearchForm.tsx';
 import ImageSearchForm from './ImageSearchForm';
 import SearchResults from './SearchResults';
 import { formatTagsForParam } from './utils';
@@ -106,7 +106,6 @@ const SearchPage: React.FC = () => {
         // 更新URL参数
         updateSearchParams({
           q: params.q,
-          search_type: params.search_type,
           vector_targets: params.vector_targets?.join(','),
           tags: params.tags ? formatTagsForParam(params.tags) : undefined,
           start_date: params.start_date,

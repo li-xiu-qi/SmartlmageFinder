@@ -117,7 +117,7 @@ const SimilarImagesModal: React.FC<SimilarImagesModalProps> = ({
                   <div style={{ height: 160, overflow: 'hidden' }}>
                     <img
                       alt={img.title}
-                      src={img.filepath}
+                      src={((img as any).public_url || img.filepath || '').replace(/\\/g,'/')}
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
                   </div>
