@@ -147,35 +147,51 @@ More details, config fields, and rollback strategy: `docs/model_migration.md`.
 
 ## 🚀 Quick Start
 
-### Environment Initialization
 
-(Please ensure you have both Node and Python installed)
-First-time setup:
+git clone https://github.com/li-xiu-qi/SmartImageFinder.git
+
+### Environment Initialization (Recommended: Manual Dependency Installation, Model Download via Script)
+
+> Installing dependencies and downloading models may take a long time. Manual step-by-step installation is recommended.
 
 ```bash
 # Clone project
 git clone https://github.com/li-xiu-qi/SmartImageFinder.git
 cd SmartImageFinder
 
-# Initialize environment (auto install dependencies, download models, generate config)
-python start.py init
+# Manually install Python dependencies
+pip install -r requirements.txt
+
+# Install Node.js dependencies (frontend)
+cd frontend
+npm install
+cd ..
 ```
+
+> ⚠️ Model download is recommended via `python start.py init`. Otherwise, manually download and place the model files in the `models/` directory. Model download is slow, please prepare in advance.
+
+For details on model download, see docs/model_migration.md or relevant README sections.
 
 ### Start Service
 
+#### Method 1: Use start.py for one-click startup (auto install dependencies, download models, generate config)
 ```bash
-# Start main service (frontend + backend)
+python start.py init
 python start.py
-
-# Start backend only
-python start.py --backend-only
-
-# Start frontend only
-python start.py --frontend-only
 ```
 
-Startup script will automatically:
-✅ Check environment dependencies  ✅ Install required packages  ✅ Download AI models  ✅ Start services
+#### Method 2: Manually start backend (recommended)
+```bash
+python main.py
+```
+
+#### Method 3: Manually start frontend
+```bash
+cd frontend
+npm run dev
+```
+
+> Manual installation of dependencies and models is recommended to avoid long waiting times during automatic script installation.
 
 ## Application Scenarios
 

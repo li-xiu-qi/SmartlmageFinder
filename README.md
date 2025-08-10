@@ -147,35 +147,53 @@ python migrate_embeddings.py --resume   # 中断后续传
 
 ## 🚀 快速开始
 
-### 环境初始化
 
-(请确保你的的电脑里面带有node和python环境)
-首次使用需要初始化环境：
+
+
+### 环境初始化（推荐手动安装依赖，模型下载建议使用脚本）
+
+> 安装依赖和下载模型可能耗时较长，建议首次分步手动操作。
 
 ```bash
 # 克隆项目
 git clone https://github.com/li-xiu-qi/SmartImageFinder.git
 cd SmartImageFinder
 
-# 环境初始化（自动安装依赖、下载模型、生成配置）
-python start.py init
+# 手动安装 Python 依赖
+pip install -r requirements.txt
+
+# 安装 Node.js 依赖（前端）
+cd frontend
+npm install
+cd ..
 ```
+
+> ⚠️ AI 模型下载建议使用 `python start.py init`，否则需自行下载并放置到 `models/` 目录。模型下载过程较慢，建议提前准备。
+
+详细模型下载方式请参考 docs/model_migration.md 或 README 相关章节。
+
+> 💡 完成首次环境初始化和模型下载后，后续启动项目可直接使用 `python start.py` 一键启动前后端服务，无需重复初始化。
 
 ### 启动服务
 
+#### 方式一：使用 start.py 一键启动（自动安装依赖、下载模型、生成配置）
 ```bash
-# 启动主服务（前后端）
+python start.py init
 python start.py
-
-# 仅启动后端服务
-python start.py --backend-only
-
-# 仅启动前端服务
-python start.py --frontend-only
 ```
 
-启动脚本会自动：
-✅ 检查环境依赖  ✅ 安装所需包  ✅ 下载AI模型  ✅ 启动服务
+#### 方式二：手动启动后端（推荐）
+```bash
+python main.py
+```
+
+#### 方式三：手动启动前端
+```bash
+cd frontend
+npm run dev
+```
+
+> 推荐手动安装依赖和模型，避免脚本自动安装时等待过久。
 
 ## 应用场景
 
