@@ -1,0 +1,83 @@
+// 共享图片卡片基础样式
+@import '../variables.less';
+
+.image-card {
+  overflow: hidden;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s;
+
+  &:hover {
+    box-shadow: @color-image-card-hover-shadow;
+    transform: translateY(-2px);
+  }
+
+  .image-cover {
+    position: relative;
+    overflow: hidden;
+    background-color: @bg-light;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+
+    &:hover img {
+      transform: scale(1.05);
+    }
+  }
+
+  .image-info {
+    padding: 12px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .image-title {
+    font-weight: 500;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 16px;
+  }
+
+  .image-meta {
+    color: @text-color-secondary;
+    font-size: 12px;
+    margin-bottom: 8px;
+  }
+
+  .image-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: auto;
+  }
+}
+
+.similarity-indicator {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 12px;
+}
+
+.tag-item {
+  margin: 0 8px 8px 0;
+  cursor: pointer;
+  transition: all @transition-fast;
+  font-size: 12px;
+
+  &:hover {
+    opacity: 0.85;
+  }
+}

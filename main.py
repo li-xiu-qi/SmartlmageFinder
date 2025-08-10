@@ -120,7 +120,7 @@ if __name__ == "__main__":
     parser.add_argument("--reload", action="store_true", help="Enable hot reload (development mode)")
     args, _ = parser.parse_known_args()
 
-    reload_enabled = True
+    reload_enabled = False
 
     uvicorn.run(
         "main:app",

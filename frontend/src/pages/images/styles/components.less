@@ -1,61 +1,28 @@
-/* ImageCard组件样式 */
+@import '../../../styles/variables.less';
+@import '../../../styles/components/image-card.less';
+
+/* ImagePage 覆写（覆盖公共样式使图片 contain 展示，并放大高度空间） */
 .image-card {
-  transition: all 0.3s;
-}
+  .image-cover {
+    max-height: 400px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 
-.image-cover {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: #f0f0f0;
-  overflow: hidden;
-  max-height: 400px;
-  position: relative;
-}
+    img {
+      object-fit: contain;
+      max-height: 400px;
+    }
+  }
 
-.image-cover img {
-  width: 100%;
-  max-height: 400px;
-  object-fit: contain;
-}
+  .image-info {
+    padding: 8px 0;
+  }
 
-.similarity-indicator {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  background: rgba(0, 0, 0, 0.65);
-  color: white;
-  padding: 4px 8px;
-  border-top-left-radius: 4px;
-}
-
-.image-info {
-  padding: 8px 0;
-}
-
-.image-title {
-  font-weight: bold;
-  margin-bottom: 8px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.image-meta {
-  color: rgba(0, 0, 0, 0.45);
-  font-size: 12px;
-}
-
-.image-tags {
-  margin-top: 8px;
-}
-
-.tag-item {
-  margin-right: 4px;
-  margin-bottom: 4px;
-  font-size: 12px;
-  padding: 0 5px;
-  cursor: pointer;
+  .image-title {
+    font-weight: bold;
+    margin-bottom: 8px;
+  }
 }
 
 /* FilterForm组件样式 */

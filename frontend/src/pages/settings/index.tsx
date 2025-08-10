@@ -11,6 +11,7 @@ import {
   Card,
   Tabs
 } from 'antd';
+import './styles.less';
 import {
   SaveOutlined,
   ReloadOutlined,

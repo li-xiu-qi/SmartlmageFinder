@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Form, Divider, App } from 'antd';
 import type { UploadProps } from 'antd';
+import './styles.less';
 import { useNavigate } from 'react-router-dom';
 
 // 导入类型

@@ -13,11 +13,13 @@ import './SystemRuntime.css';
 
 const { Text } = Typography;
 
-const SystemRuntime: React.FC = () => {  const [runtime, setRuntime] = useState<RuntimeInfo | null>(null);
+const SystemRuntime: React.FC = () => {
+  const [runtime, setRuntime] = useState<RuntimeInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdateTime, setLastUpdateTime] = useState<Date | null>(null);
-  const timerRef = useRef<number | null>(null);
+  // 使用 ReturnType<typeof setInterval> 兼容浏览器与 Node 类型定义环境
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   // 定义错误计数状态，用于跟踪连续错误次数
   const [, setErrorCount] = useState(0);
   const [systemStatus, setSystemStatus] = useState<'online' | 'offline' | 'warning'>('online');
