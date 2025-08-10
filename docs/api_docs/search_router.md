@@ -35,19 +35,21 @@
 title, description, image
 ```
 
-## 1. 统一文本搜索 (可选文本匹配 / 向量)
+## 1. 统一文本搜索 (仅向量语义检索)
 
 GET `/api/v1/search/unified`
 
 | 参数 | 类型 | 必填 | 说明 | 默认 |
 |------|------|------|------|------|
 | q | string | 是 | 查询文本 | - |
-| search_type | enum[title,description,both,vector] | 否 | 检索模式 | vector |
-| vector_targets[] | string[] | 当 search_type=vector 时 | 参与向量搜索的目标集合 | title,description,image |
+| search_type | 固定值 "vector" | 否 | 已统一，仅支持多向量语义检索 | vector |
+| vector_targets[] | string[] | 否 | 参与向量搜索的目标集合（白名单: title/description/image） | title,description,image |
 
 ### 行为说明
-1. search_type in (title, description, both) → 传统文本匹配 (LIKE / 或组合)
-2. search_type = vector → CLIP 编码后做多向量检索（可指定部分维度，例如只用 `image`）
+ 
+1. 已移除传统纯 LIKE 模式入口（请使用 /search/fuzzy）
+2. 当前仅提供 `search_type=vector`，对查询文本编码后做多向量检索（可指定部分维度）
+
 
 ### 示例
 
@@ -70,7 +72,7 @@ Content-Type: `multipart/form-data`
 示例 (cURL)：
 
 ```bash
-curl -F "file=@sunset.jpg" -F "search_targets=title" -F "search_targets=image" -F limit=10 http://localhost:10020/api/v1/search/unified/image
+curl -F "file=@sunset.jpg" -F "search_targets=title" -F "search_targets=image" -F limit=10 http://localhost:8000/api/v1/search/unified/image
 ```
 
 ## 3. 统一向量搜索 (直接提供向量)
@@ -82,13 +84,13 @@ Content-Type: `application/x-www-form-urlencoded` 或 `multipart/form-data`
 | 字段 | 类型 | 必填 | 说明 |
 |------|------|------|------|
 | query_embedding | float[] | 是 | 查询向量（维度需与模型一致） |
-| search_targets | string[] | 否 | 向量检索维度 | 默认全部 |
+| search_targets | string[] | 否 | 向量检索维度（默认全部） |
 | (过滤参数) | form | 否 | 同上 |
 
 示例：
 
 ```bash
-curl -X POST -F "query_embedding=0.12" -F "query_embedding= ... 多个数值 ..." -F "search_targets=title" http://localhost:10020/api/v1/search/unified/vector
+curl -X POST -F "query_embedding=0.12" -F "query_embedding= ... 多个数值 ..." -F "search_targets=title" http://localhost:8000/api/v1/search/unified/vector
 ```
 
 ## 4. 相似图片搜索 (基于已有图片ID)

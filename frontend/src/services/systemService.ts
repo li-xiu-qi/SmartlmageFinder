@@ -8,7 +8,8 @@ import {
   DatabaseInfo,
   StorageInfo,
   CacheInfo,
-  VectorDbDriverStatus
+  VectorDbDriverStatus,
+  CacheBriefInfo
 } from '@/types/system';
 
 const systemService = {
@@ -42,6 +43,14 @@ const systemService = {
    */
   getCacheInfo: (): Promise<ApiResponse<CacheInfo>> => {
     return apiClient.getWithTransform<CacheInfo>('/system/cache');
+  },
+
+  /**
+   * 获取精简缓存信息（快速刷新）
+   * GET /api/v1/system/cache/brief
+   */
+  getCacheBrief: (): Promise<ApiResponse<CacheBriefInfo>> => {
+    return apiClient.getWithTransform<CacheBriefInfo>('/system/cache/brief');
   },
 
   /**

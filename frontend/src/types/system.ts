@@ -78,22 +78,31 @@ export interface StorageInfo {
  * 单个缓存信息
  */
 export interface CacheStats {
-  path: string;                                    // 缓存路径
-  entries: number;                                 // 缓存条目数量
-  size_mb: number;                                 // 缓存大小(MB)
+  path: string;            // 缓存路径
+  size_mb: number;         // 缓存目录大小(MB)
+  db_file_size_mb?: number;// 底层cache.db文件大小(MB)
 }
 
 /**
  * 缓存系统信息
  */
 export interface CacheInfo {
-  enabled: boolean;                                // 是否启用缓存
-  max_size_gb: number;                             // 最大缓存大小(GB)
-  total_entries: number;                           // 总缓存条目数
-  total_size_mb: number;                           // 总缓存大小(MB)
-  text_vector_cache: CacheStats;                   // 文本向量缓存信息
-  image_vector_cache: CacheStats;                  // 图像向量缓存信息
+  enabled: boolean;        // 是否启用缓存
+  max_size_gb: number;     // 最大缓存大小(GB)
+  total_size_mb: number;   // 总缓存大小(MB)
+  text_vector_cache: CacheStats;
+  image_vector_cache: CacheStats;
+  last_scan?: number;      // 最近一次统计时间戳(秒)
 }
+
+// 精简缓存信息（轮询）
+export interface CacheBriefInfo {
+  total_size_mb: number;
+  last_scan?: number;
+  enabled: boolean;
+}
+
+export type CacheBriefInfoResponse = ApiResponse<CacheBriefInfo>;
 
 /**
  * 模型信息

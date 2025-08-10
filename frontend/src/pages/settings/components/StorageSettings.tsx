@@ -23,9 +23,7 @@ const StorageSettings: React.FC<StorageSettingsProps> = ({
     systemStatus.cache.total_size_mb.toFixed(2) :
     "0.00";
     
-  const totalCacheEntries = systemStatus ? 
-    systemStatus.cache.total_entries :
-    0;
+  const hasCache = systemStatus ? systemStatus.cache.total_size_mb > 0 : false;
 
   const maxCachePercent = systemStatus && systemStatus.cache.max_size_gb > 0 ? 
     Math.min(100, (systemStatus.cache.total_size_mb / (systemStatus.cache.max_size_gb * 1024)) * 100).toFixed(1) : 
@@ -106,13 +104,13 @@ const StorageSettings: React.FC<StorageSettingsProps> = ({
                     icon={<ClearOutlined />} 
                     onClick={onClearCache}
                     loading={clearCacheLoading}
-                    disabled={totalCacheEntries === 0}
+                    disabled={!hasCache}
                   >
                     清除缓存
                   </Button>
                   <div>
                     <Text type="secondary">
-                      当前缓存: {totalCacheEntries} 条, {totalCacheSize} MB 
+                      当前缓存: {totalCacheSize} MB 
                       {systemStatus?.cache.max_size_gb ? ` (${maxCachePercent}%)` : ''}
                     </Text>
                     <br />

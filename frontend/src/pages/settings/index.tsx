@@ -184,14 +184,43 @@ const SettingsPage: React.FC = () => {
   const handleConfirmClearCache = async () => {
     try {
       setClearCacheLoading(true);
-
-      const response = await systemService.clearCache();
+  const beforeLastScan = systemStatus?.cache.last_scan;
+  const response = await systemService.clearCache();
 
       if (response.status === 'success') {
         message.success(`缓存清除成功，释放了 ${response.data?.total_size_freed_mb.toFixed(2)} MB 空间`);
 
-        // 重新获取系统状态以更新缓存信息
-        fetchSystemInfo();
+        // 快速轮询缓存精简信息，等待 last_scan 变化（最多 5 次，每 600ms）
+        let attempts = 0;
+        let updated = false;
+        while (attempts < 5) {
+          attempts += 1;
+          try {
+            const brief = await systemService.getCacheBrief();
+            if (brief.status === 'success') {
+              if (!beforeLastScan || (brief.data.last_scan && brief.data.last_scan !== beforeLastScan)) {
+                // 局部更新 systemStatus.cache 以减少一次完整刷新耗时
+                setSystemStatus(prev => prev ? {
+                  ...prev,
+                  cache: {
+                    ...prev.cache,
+                    total_size_mb: brief.data.total_size_mb,
+                    last_scan: brief.data.last_scan ?? prev.cache.last_scan
+                  }
+                } : prev);
+                updated = true;
+                break;
+              }
+            }
+          } catch {
+            // 忽略单次失败
+          }
+          await new Promise(r => setTimeout(r, 600));
+        }
+        // 若轮询未成功更新，再做一次完整刷新
+        if (!updated) {
+          fetchSystemInfo();
+        }
       } else {
         message.error(response.error?.message || '清除缓存失败');
       }
@@ -333,7 +362,8 @@ const SettingsPage: React.FC = () => {
       >
         <p>清除缓存将删除所有向量缓存数据，可能会导致下次搜索速度变慢。确定要继续吗？</p>
         <Paragraph type="secondary">
-          当前缓存: {systemStatus?.cache.total_entries || 0} 条, {systemStatus?.cache.total_size_mb.toFixed(2) || "0.00"} MB        </Paragraph>
+          当前缓存大小: {systemStatus?.cache.total_size_mb.toFixed(2) || "0.00"} MB
+        </Paragraph>
       </RefModal>
 
       {/* 保存设置确认对话框 */}

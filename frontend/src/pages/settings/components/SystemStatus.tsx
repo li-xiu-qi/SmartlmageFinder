@@ -152,9 +152,11 @@ const SystemStatus: React.FC<SystemStatusProps> = ({ systemStatus }) => {
             <div className="cache-info">
               <p><strong>缓存状态:</strong> {getStatusBadge(systemStatus.cache.enabled ? 'enabled' : 'disabled')}</p>
               <p><strong>最大缓存 (GB):</strong> {systemStatus.cache.max_size_gb}</p>
-              <p><strong>缓存总条目:</strong> {systemStatus.cache.total_entries}条</p>
-              <p><strong>文本向量缓存:</strong> {systemStatus.cache.text_vector_cache.entries}条 ({systemStatus.cache.text_vector_cache.size_mb.toFixed(2)} MB)</p>
-              <p><strong>图像向量缓存:</strong> {systemStatus.cache.image_vector_cache.entries}条 ({systemStatus.cache.image_vector_cache.size_mb.toFixed(2)} MB)</p>
+              <p><strong>文本向量缓存大小:</strong> {systemStatus.cache.text_vector_cache.size_mb.toFixed(2)} MB {systemStatus.cache.text_vector_cache.db_file_size_mb !== undefined ? `(DB ${systemStatus.cache.text_vector_cache.db_file_size_mb} MB)` : ''}</p>
+              <p><strong>图像向量缓存大小:</strong> {systemStatus.cache.image_vector_cache.size_mb.toFixed(2)} MB {systemStatus.cache.image_vector_cache.db_file_size_mb !== undefined ? `(DB ${systemStatus.cache.image_vector_cache.db_file_size_mb} MB)` : ''}</p>
+              {systemStatus.cache.last_scan && (
+                <p><strong>统计时间:</strong> {new Date(systemStatus.cache.last_scan * 1000).toLocaleString()}</p>
+              )}
             </div>
           </Card>
         </Col>

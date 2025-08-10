@@ -73,7 +73,7 @@ Key Endpoints:
 Request Example (Streaming Recommendation):
 
 ```bash
-curl -N -X POST http://localhost:10050/api/v1/ai/recommend/chat/stream \
+curl -N -X POST http://localhost:8000/api/v1/ai/recommend/chat/stream \
   -H "Content-Type: application/json" \
   -d '{
     "conversation_id": "demo-session-1",
@@ -241,7 +241,7 @@ SmartImageFinder/
 
 ### Service Ports
 
-- **Backend**: 10050 (from config.yaml)
+- **Backend**: 8000 (default, configurable)
 - **Frontend**: 5173 (Vite default)
 
 ### Configuration Files
@@ -254,7 +254,7 @@ VECTOR_DB_DRIVER_DIR: ./backend/config_files/vector_db_driver  # Vector database
 UPLOAD_DIR: ./data/images  # Image upload directory
 DB_PATH: ./data/db/smartimagefinder.db  # Database path
 HOST: 0.0.0.0  # Service listening address
-PORT: 10050  # Service port
+PORT: 8000  # Service port (default)
 ```
 
 ### Environment Variables
@@ -271,8 +271,8 @@ export OPENAI_API_BASE="https://api.openai.com/v1"
 #### Service Access URLs
 
 - **Main Frontend Interface**: <http://localhost:5173>
-- **Main Backend API**: <http://localhost:10050>  
-- **API Documentation**: <http://localhost:10050/docs>
+- **Main Backend API**: <http://localhost:8000>  
+- **API Documentation**: <http://localhost:8000/docs>
 
 ## 📊 System Monitoring & Management
 
@@ -283,8 +283,16 @@ Through the system settings page, you can monitor in real-time:
 - **System Information** - CPU, memory, disk usage
 - **Database Status** - Connection pool status, table statistics
 - **Storage Information** - Image count, tag count, storage usage
-- **Cache Status** - Cache usage information
+- **Cache Status** - Cache directory size only (entry counts removed)
 - **Vector Database** - Driver status, index information
+
+### Cache Statistics
+
+`/api/v1/system/cache` now returns only directory size (MB), optional cache.db file size and last_scan timestamp. Use `/api/v1/system/cache/brief` to poll after clearing.
+
+### Chat Recommendation SSE Events
+
+Streaming endpoint sends only: `rewrite_start`, repeated `assistant_delta`, final `complete`, and `error`. Internal selection is merged into `complete`.
 
 ## Demo Screenshots
 

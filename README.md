@@ -20,7 +20,7 @@
 
 ## 项目概述
 
-SmartImageFinder 是一个现代化的智能图片搜索引擎和管理系统，采用双层微服务架构设计，提供高性能的图片管理和智能检索功能。系统集成了先进的向量搜索技术和AI分析能力，为用户提供一站式图片管理解决方案。
+SmartImageFinder 是一个现代化的智能图片搜索与管理系统，采用轻量一体化 FastAPI 后端 + React 前端架构，集成向量语义检索、以图搜图、模糊检索与对话式 AI 推荐。
 
 ## 🏗️ 系统架构
 
@@ -71,10 +71,10 @@ SmartImageFinder 是一个现代化的智能图片搜索引擎和管理系统，
 | 对话式推荐（一次性） | POST | `/api/v1/ai/recommend/chat` |
 | 对话式推荐（SSE流） | POST | `/api/v1/ai/recommend/chat/stream` |
 
-请求示例（流式推荐）：
+请求示例（流式推荐，默认端口 8000，可在 config.yaml 调整）：
 
 ```bash
-curl -N -X POST http://localhost:10050/api/v1/ai/recommend/chat/stream \
+curl -N -X POST http://localhost:8000/api/v1/ai/recommend/chat/stream \
   -H "Content-Type: application/json" \
   -d '{
     "conversation_id": "demo-session-1",
@@ -198,7 +198,7 @@ python start.py --frontend-only
 
 ### 核心组件
 
-- **向量搜索引擎** - 支持多种搜索模式（文本、图片、向量、相似）
+- **向量搜索引擎** - 统一向量语义搜索（文本 / 图片 / 直接向量 / 相似）
 - **AI分析引擎** - 自动图片内容分析和标注
 - **标签管理系统** - 智能标签分类和管理
 - **缓存系统** - 高性能向量缓存机制
@@ -245,7 +245,7 @@ SmartImageFinder/
 
 ### 服务端口
 
-- **后端**: 10050 (从 config.yaml 读取)
+- **后端**: 8000 (默认，可配置)
 - **前端**: 5173 (Vite 默认)
 
 ### 配置文件
@@ -258,7 +258,7 @@ VECTOR_DB_DRIVER_DIR: ./backend/config_files/vector_db_driver  # 向量数据库
 UPLOAD_DIR: ./data/images  # 图片上传目录
 DB_PATH: ./data/db/smartimagefinder.db  # 数据库路径
 HOST: 0.0.0.0  # 服务监听地址
-PORT: 10050  # 服务端口
+PORT: 8000  # 服务端口（默认）
 ```
 
 ### 💡 使用提示
@@ -266,8 +266,8 @@ PORT: 10050  # 服务端口
 #### 服务访问地址
 
 - **主前端界面**: <http://localhost:5173>
-- **主后端API**: <http://localhost:10050>  
-- **API文档**: <http://localhost:10050/docs>
+- **主后端API**: <http://localhost:8000>  
+- **API文档**: <http://localhost:8000/docs>
 
 ## 📊 系统监控与管理
 
@@ -278,8 +278,16 @@ PORT: 10050  # 服务端口
 - **系统信息** - CPU、内存、磁盘使用情况
 - **数据库状态** - 连接池状态、表统计信息
 - **存储信息** - 图片数量、标签数量、存储使用情况
-- **缓存状态** - 缓存使用情况
+- **缓存状态** - 缓存目录大小（已简化，不再显示条目数）
 - **向量数据库** - 驱动状态、索引信息
+
+### 缓存统计说明
+
+缓存接口 `/api/v1/system/cache` 现在仅返回目录大小 (MB)、可选 cache.db 文件大小与 last_scan；清理后前端轮询 `/api/v1/system/cache/brief` 快速确认已归零。
+
+### 对话式推荐 SSE 事件
+
+流式端点只发送事件：`rewrite_start`、`assistant_delta`（多次）、`complete`、`error`；内部 selection 已聚合在 complete。
 
 ## 许可证
 

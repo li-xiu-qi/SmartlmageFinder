@@ -1,43 +1,13 @@
 import json
 from typing import List, Dict, Any, Optional, Iterable
+
+from backend.ai_func.recommendation.prompts import SYS_PROMPT
 from ...config.init_service import get_openai_client
 from ...config import settings
 from .tools import tool_search_images
 from ...utils.image_utils import build_public_url
 
-# 指定的系统提示词
-SYS_PROMPT = """## 角色
-你是图片推荐助手，仅在用户真正提出图片需求时才执行检索。
 
-## 输出格式要求 (务必严格遵守 Markdown)
-当已完成检索并向用户展示候选时, 使用标准 Markdown：
-1. 使用有序列表列出每张图片：‘标题 - 简短描述(≤120字)’ 。
-2. 紧接其后单独一行放置图片： ![标题](public_url)  (不要额外文字)。
-3. 不输出本地磁盘路径，只能用 /static/images/...。
-4. 未检索时禁止伪造列表或放置任何 ![]() 占位。
-5. 整体回答仅 Markdown，不加入 HTML，不输出 JSON。
-
-## 内部意图分类 (只在脑中推理, 不把分类标签写进回答)
-greeting = 纯问候/客套 (你好/hi/在吗/早上好/谢谢/测试等)
-search_request = 明确提出需要某类图片 或 描述了可检索的视觉主题/对象/场景/风格/用途
-ambiguous = 想要图片但线索不足 (给我推荐点图 / 发点好看的 / 来几张)
-out_of_scope = 与图片无关的话题
-
-## 工具调用硬规则
-1. 只有 search_request 才能调用 search_images。
-2. greeting → 友好回应 + 引导其描述想找的主题/对象/场景/风格，不调用工具。
-3. ambiguous → 先追问需要的主题/用途/风格，获取足够关键词前不调用工具。
-4. out_of_scope → 简短说明你专注图片推荐，引导给出图片需求。
-5. 未获取明确主题关键词前禁止调用 search_images。
-6. 单轮至多一次 search_images；只有成功检索后才可 choose_images。
-7. 不得臆造检索或虚构结果。
-
-## 回答格式约束
-- 不输出内部标记(分类=/意图=/internal)。
-- 未检索：只给引导/澄清；已检索：先一句概述选择逻辑，随后 Markdown 有序列表展示。
-- 列表项中如果有匹配分值(相似度)可呈现为百分比保留1位小数。
-- 输出简洁自然中文。
-"""
 
 MAX_CONTEXT_CHARS = 64_000  # 64K 字符窗口上限
 
@@ -68,14 +38,8 @@ class RecommendAgent:
         limit: int = 20,
     ) -> Iterable[str]:
         client = get_openai_client()
-        if client is None:
-            # 无客户端直接返回空 selection
-            yield json.dumps({"event": "selection", "ids": [], "images": []}, ensure_ascii=False) + "\n\n"
-            return
         config = settings.get_config()
         model = config.CHAT_MODEL if config else "Qwen/Qwen3-8B"
-
-  
 
         tools = [
             {

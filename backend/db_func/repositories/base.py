@@ -11,27 +11,30 @@ from ..utils.common import row_to_dict, rows_to_dicts
 
 
 class BaseRepository(ABC):
+    """基础数据仓库类
+
+    支持两种使用方式:
+    1. 无参构造: 每次操作自动从连接池 / 单连接获取连接
+    2. 传入外部已打开的 sqlite3.Connection: 复用该连接（不负责关闭）
     """
-    基础数据仓库类，提供通用的数据库操作模式
-    所有具体的仓库类都应该继承这个基类
-    """
-    
-    def __init__(self):
-        """初始化仓库"""
-        pass
+
+    def __init__(self, conn: sqlite3.Connection | None = None):
+        self._external_conn = conn  # 外部提供的连接（可选）
     
     @contextmanager
     def get_connection(self):
-        """
-        获取数据库连接的上下文管理器
-        优先使用连接池，如果连接池未初始化则使用单连接模式
-        """
+        """获取数据库连接
+
+        优先复用构造时传入的连接；否则使用连接池 / 单连接。
+        当复用外部连接时不负责关闭。"""
+        if self._external_conn is not None:
+            # 直接复用外部连接
+            yield self._external_conn
+            return
         try:
-            # 尝试从连接池获取连接
             with get_db_connection_from_pool() as conn:
                 yield conn
         except RuntimeError:
-            # 连接池未初始化，使用单连接模式
             with get_db_connection() as conn:
                 yield conn
     

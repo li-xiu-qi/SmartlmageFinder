@@ -43,7 +43,8 @@ SmartImageFinder系统采用灵活的配置管理机制，所有配置项集中�
 ### 服务器配置
 
 - **HOST**: 服务器主机地址
-- **PORT**: 服务器端口号，默认为10020
+- **PORT**: 服务器端口号，默认为8000
+- **CHAT_MODEL**: 对话式推荐所用聊天模型（默认 Qwen/Qwen3-8B，可在 config.yaml 覆盖）
 
 ## 配置系统特性
 
@@ -153,7 +154,8 @@ AVAILABLE_VISION_MODELS:
 - Pro/Qwen/Qwen2.5-VL-7B-Instruct
 DB_PATH: ./data/db/smartimagefinder.db
 HOST: 0.0.0.0
-PORT: 1000
+PORT: 8000
+CHAT_MODEL: Qwen/Qwen3-8B
 IMAGE_VECTOR_CACHE_DIR: ./data/caches/image_vector_cache
 TEXT_VECTOR_CACHE_DIR: ./data/caches/text_vector_cache
 MAX_CACHE_SIZE_GB: 1.5
@@ -198,7 +200,8 @@ class AppConfig(BaseModel):
         ]
     )
     HOST: str = "0.0.0.0"
-    PORT: int = 10020
+    PORT: int = 8000
+    CHAT_MODEL: Optional[str] = "Qwen/Qwen3-8B"
 ```
 
 Pydantic 提供了以下好处：

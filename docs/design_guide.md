@@ -4,7 +4,7 @@
 
 SmartImageFinder 是一个基于 Jina CLIP V2 模型的个人智能图片管理与检索系统。该系统集成 FastAPI、SQLite（含 sqlite-vec 向量搜索扩展）和 React + Ant Design 前端框架，并结合多模态模型 API（如硅基流动），提供全面的图片智能管理解决方案。
 
-**核心定位**：本系统专为个人本地桌面Web应用场景设计，优先保障功能完整性与用户易用性，而非追求极致的性能扩展或复杂的网络优化。实际部署使用FastAPI后端运行在本地10020端口。
+**核心定位**：本系统专为个人本地桌面Web应用场景设计，优先保障功能完整性与用户易用性，而非追求极致的性能扩展或复杂的网络优化。当前默认 FastAPI 服务端口为 8000（可在 config.yaml 中修改）。
 
 ### 核心功能
 
@@ -22,12 +22,15 @@ SmartImageFinder 是一个基于 Jina CLIP V2 模型的个人智能图片管理�
 - **支持**：单标签查询、多标签OR/AND模式查询
 
 ##### b. 向量检索模式
-- **文本-图片匹配**：通过AI分析端点实现，上传图片后生成文本描述和标签
+
+- **统一语义检索**：`/api/v1/search/unified` 固定使用多向量语义检索（`search_type=vector`），可通过 `vector_targets[]` 指定 `title/description/image`
+- **以图搜图**：`/api/v1/search/unified/image` 上传图片后进行图片向量相似检索
+- **直接向量检索**：`/api/v1/search/unified/vector` 传入 embedding 数组直接检索
+- **相似图片检索**：`/api/v1/search/similar/{image_id}` 基于已存在图片的向量做相似检索
 - **技术实现**：
-  - 基于 `sqlite-vec` 扩展和Jina CLIP V2模型（1024维向量）
-  - 向量存储在 `title_vectors`、`description_vectors`、`image_vectors` 三个专用表中
-  - 通过 `image_id` 外键与 `images` 表关联
-- **实际限制**：当前实现不直接支持文本搜索向量，而是通过AI分析生成元数据后使用标签和描述进行检索
+  - 基于 `sqlite-vec` 与 Jina CLIP V2 模型（维度以实际模型加载结果为准）
+  - 三张向量表：`title_vectors`、`description_vectors`、`image_vectors` 与 `images` 通过 `image_id` 关联
+- **安全约束**：向量目标白名单校验，拒绝非法表名注入
 
 #### 2. 图片管理
 
@@ -115,15 +118,15 @@ SmartImageFinder 是一个基于 Jina CLIP V2 模型的个人智能图片管理�
     - `POST /api/v1/ai/analyze-upload-image`：上传图片时分析
     - `POST /api/v1/ai/analyze-image-id/{image_id}`：分析已有图片
   - **实际生成内容**：基于 `backend/ai_func/` 中的实现
-    - 标题：10字以内的简洁描述
-    - 描述：50字以内的详细描述  
-    - 标签：5个关键标签的JSON数组
+  - 标题：简洁主题描述（长度不做硬性截断，前端可裁剪）
+  - 描述：简要语义描述
+  - 标签：关键标签 JSON 数组（去空/去重）
   - **技术细节**：
     - 使用配置的 `VISION_MODEL`（默认 Qwen2.5-VL-32B-Instruct）
     - 通过兼容OpenAI格式的API调用（硅基流动等）
     - 提示词固定为文档中展示的格式
     - 结果直接更新到 `images` 表的对应字段
-  - **限制**：仅支持单个图片分析，无批量处理接口
+  - **说明**：上传流程中可直接触发分析并持久化（标题 / 描述 / 标签），当前未提供批量异步分析端点
 
 #### 7. 实际搜索功能（基于现有实现）
 
@@ -137,7 +140,19 @@ SmartImageFinder 是一个基于 Jina CLIP V2 模型的个人智能图片管理�
 - **分页与排序**：
   - 所有列表接口支持分页（page, page_size参数）
   - 支持按创建时间排序（默认为时间倒序）
-- **实际限制**：
-  - 当前未实现基于向量的相似度搜索
-  - 搜索主要基于标签和元数据文本匹配
-  - 无权重调整和混合搜索功能
+**搜索能力概览**：已支持标签过滤、时间过滤、模糊搜索(`/search/fuzzy`)、统一向量检索、图片向量检索、相似检索、直接向量检索。旧文档中“未实现基于向量相似度搜索”已过时。
+
+**后续潜力**：可扩展权重融合 / rerank / 多模态重排序（暂未内置）。
+
+#### 8. 对话式推荐与流式事件
+
+- 端点：`POST /api/v1/ai/recommend/chat`（非流式）、`POST /api/v1/ai/recommend/chat/stream`（SSE）
+- SSE 事件：`rewrite_start` / `assistant_delta` / `complete` / `error`
+- 内部 agent 产生的 `selection` 事件被聚合为 `complete`
+- 向量目标白名单：`["title","description","image"]`
+
+#### 9. 缓存统计简化
+
+- `/system/cache` 返回目录大小（MB）、cache.db 文件大小（可选）、last_scan 时间戳
+- `/system/cache/brief` 供清理后轮询确认大小归零
+- 不再统计条目数量，避免磁盘文件结构差异造成误导

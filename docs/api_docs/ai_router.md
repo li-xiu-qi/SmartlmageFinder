@@ -9,68 +9,6 @@ AI分析API提供图片智能分析功能，包括自动生成标题、描述和
 
 ## 端点列表
 
-### 0. AI 智能推荐（文本驱动）
-
-GET `/api/v1/ai/recommend`
-
-基于用户自然语言查询，先进行查询改写（若可用），再进行向量检索并返回推荐结果。
-
-#### 查询参数
-
-| 参数 | 类型 | 必填 | 描述 | 示例 |
-|---|---|---|---|---|
-| user_query | string | 是 | 用户自然语言查询 | 美丽的自然风景 |
-| vector_targets[] | array[string] | 否 | 向量搜索目标，支持 title/description/image，默认三者并用 | vector_targets[]=title&vector_targets[]=description&vector_targets[]=image |
-| tags / tags[] | string / array[string] | 否 | 标签过滤（支持逗号分隔或多值） | tags=风景,自然 或 tags[]=风景&tags[]=自然 |
-| limit | number | 否 | 返回条数，默认 20 | 20 |
-
-#### 示例请求
-
-```http
-GET /api/v1/ai/recommend?user_query=%E7%BE%8E%E4%B8%BD%E7%9A%84%E8%87%AA%E7%84%B6%E9%A3%8E%E6%99%AF&limit=20&vector_targets[]=title&vector_targets[]=description&vector_targets[]=image
-```
-
-#### 响应
-
-成功时返回统一响应模型，data 字段内包含推荐结果与改写信息：
-
-```json
-{
-  "status": "success",
-  "code": 200,
-  "message": "AI推荐成功",
-  "data": {
-    "images": [
-      { "id": 1, "title": "山水风景", "score": 0.87, "tags": ["风景","自然"] }
-    ],
-    "query_rewrite": {
-      "original_query": "美丽的自然风景",
-      "optimized_query": "自然风景 山水风景",
-      "rewrite_success": true,
-      "error": null
-    },
-    "total_found": 42,
-    "search_time_ms": 0,
-    "success": true
-  },
-  "error": null,
-  "metadata": {}
-}
-```
-
-错误时返回：
-
-```json
-{
-  "status": "error",
-  "code": 500,
-  "message": "推荐服务失败",
-  "data": null,
-  "error": { "code": "AI_RECOMMENDATION_ERROR", "message": "具体错误" },
-  "metadata": {}
-}
-```
-
 ### 0.1 AI 对话式推荐（非流式）
 
 POST `/api/v1/ai/recommend/chat`
@@ -86,7 +24,7 @@ POST `/api/v1/ai/recommend/chat`
   "vector_targets": ["title","description","image"],
   "limit": 20
 }
-```
+```ts
 
 响应：统一响应模型，data 内包含 images、query_rewrite、state 等。
 
@@ -97,16 +35,14 @@ POST `/api/v1/ai/recommend/chat/stream`
 - Content-Type: `application/json`
 - Response: `text/event-stream`（SSE）
 
-事件流说明：
+事件流说明（当前实现只会向客户端发送以下 4 类事件；内部 agent 还有 selection 事件被封装为 complete）：
 
-- `rewrite_start`: { original }
-- `rewrite_delta`: { delta }
-- `rewrite_done`: { optimized }
-- `rewrite_skipped`: { reason }
-- `search_started`: { query, vector_targets, filters, limit }
-- `result`: { index, image }
-- `complete`: { total_found, state }
-- `error`: { message }
+- `rewrite_start`：流开始，包含 request_id / conversation_id
+- `assistant_delta`：助手增量文本（可能多次）
+- `complete`：包含已排序 image_ids、images_brief、assistant_text、total_found
+- `error`：出错时返回错误信息
+
+已废弃 / 未实现的旧事件（rewrite_delta / rewrite_done / search_started / result 等）不再发送，文档中移除以避免混淆。
 
 使用示例（前端）：
 
@@ -134,13 +70,13 @@ while (true) {
     // 根据 event 处理 UI
   }
 }
-```
+```text
 
 ### 0.3 上下文记忆与向量白名单说明
 
 对话式推荐内部实现了 64K 字符滚动窗口上下文管理：
 
-```
+```text
 MAX_CONTEXT_CHARS = 64_000
 ```
 
@@ -148,10 +84,9 @@ MAX_CONTEXT_CHARS = 64_000
 
 向量相关工具函数使用固定白名单 `{title, description, image}` 过滤用户传入的 `vector_targets`，防止构造非法表名导致数据库错误（例如: `no such table: xxx_vectors`）。
 
-SSE 事件补充：
+SSE 事件补充：内部 agent 会产生 `selection` 事件（包含最终排序及完整候选），路由层转换为对外的 `complete` 事件一次性返回，不再逐条推送 `result`。
 
-- `rewrite_skipped`: 当跳过改写时返回原因
-- 列表类结果逐条以 `result` 推送，可实时渲染
+向量目标 whitelist 固定为 `["title","description","image"]`，传入其他值会被忽略或过滤，防止非法表访问。
 
 ### 1. 分析上传图片（上传文件）
 
