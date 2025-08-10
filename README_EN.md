@@ -20,7 +20,7 @@
 
 ## Project Overview
 
-SmartImageFinder is a modern intelligent image search engine and management system featuring a dual-layer microservice architecture design, providing high-performance image management and intelligent retrieval capabilities. The system integrates advanced vector search technology and AI analysis capabilities to offer users a one-stop image management solution.
+SmartImageFinder is a modern intelligent image search engine and management system, providing high-performance image management and intelligent retrieval capabilities. The system integrates advanced vector search technology and AI analysis capabilities to offer users a one-stop image management solution. The default multimodal / text embedding model has been upgraded to Jina Embeddings v4 (replacing legacy Jina CLIP V2) for higher-quality semantic representations.
 
 ## 🏗️ System Architecture
 
@@ -119,7 +119,7 @@ Frontend can stream-render states: rewriting / thinking / partial answer / final
 - **🛡️ Vector Target Whitelist** - Prevents invalid table access / injection
 - **🔌 Streaming SSE Output** - Incremental events (rewrite, search, results) improve UX
 - **⚡ High-Performance Vector Retrieval** - SQLite + sqlite-vec lightweight vector database with millisecond search response
-- **🧠 Advanced AI Models** - Integration with Jina CLIP V2 model providing precise multimodal search capabilities
+- **🧠 Advanced AI Models** - Integration with Jina Embeddings v4 model (unified text / image embeddings). Compared with legacy Jina CLIP V2 it offers better semantic recall and representation quality
 - **🎨 Modern Technology Stack** - React 18 + TypeScript + FastAPI ensuring code quality and development experience
 - **🔧 Smart Startup Management** - One-click startup script with automatic environment configuration and dependency management
 
@@ -170,7 +170,7 @@ The startup script will automatically:
 
 - **FastAPI** - High-performance asynchronous web framework
 - **SQLite + sqlite-vec** - Lightweight vector database
-- **Jina CLIP V2** - Multimodal vector encoding model
+- **Jina Embeddings v4** - Next‑generation unified multimodal/text vector encoding model (default 2048 dimensions)
 - **Connection Pool Management** - Efficient database connection management
 - **Vector Cache** - Vector cache system implemented with diskcache
 
@@ -246,16 +246,19 @@ SmartImageFinder/
 
 ### Configuration Files
 
-Main configuration file is located at `backend/config_files/config.yaml`:
+Main configuration file is located at `backend/config/files/config.yaml`:
 
 ```yaml
-MODEL_PATH: ./models/yizhixiaoke/xiaoke-jina-clip-v2  # Model path
-VECTOR_DB_DRIVER_DIR: ./backend/config_files/vector_db_driver  # Vector database driver
+MODEL_PATH: ./models/jina-embeddings-v4  # New model path (old: ./models/yizhixiaoke/xiaoke-jina-clip-v2)
+VECTOR_DB_DRIVER_DIR: ./backend/config/files/vector_db_driver  # Vector database driver directory
+EMBEDDING_DIMENSION: 2048  # Embedding dimension (unchanged for backward compatibility)
 UPLOAD_DIR: ./data/images  # Image upload directory
 DB_PATH: ./data/db/smartimagefinder.db  # Database path
 HOST: 0.0.0.0  # Service listening address
 PORT: 10050  # Service port (default)
 ```
+
+> Migrating from older version: update `MODEL_PATH` in `config.yaml` to the new directory and ensure the model is downloaded. If embedding dimension stays 2048 no vector table rebuild is required; only rebuild when switching to a different dimension.
 
 ### Environment Variables
 

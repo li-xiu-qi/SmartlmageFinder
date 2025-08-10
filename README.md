@@ -20,7 +20,7 @@
 
 ## 项目概述
 
-SmartImageFinder 是一个现代化的智能图片搜索与管理系统，采用轻量一体化 FastAPI 后端 + React 前端架构，集成向量语义检索、以图搜图、模糊检索与对话式 AI 推荐。
+SmartImageFinder 是一个现代化的智能图片搜索与管理系统，采用轻量一体化 FastAPI 后端 + React 前端架构，集成向量语义检索、以图搜图、模糊检索与对话式 AI 推荐。当前默认内置多模态/文本统一向量模型已升级为 Jina Embeddings v4（替代原 Jina CLIP V2），提供更高质量的语义表示。
 
 ## 🏗️ 系统架构
 
@@ -120,7 +120,7 @@ data: {"image_ids":[12,8,5,...],"assistant_text":"已为你找到...","images_br
 - **🛡️ 向量目标白名单** - 防止非法表名/注入导致的表不存在错误
 - **🔌 流式SSE输出** - AI 推荐过程逐步推送（改写、搜索、结果）提升交互体验
 - **⚡ 高性能向量检索** - SQLite + sqlite-vec 轻量级向量数据库，毫秒级搜索响应
-- **🧠 先进的AI模型** - 集成Jina CLIP V2模型，提供精准的多模态搜索能力
+- **🧠 先进的AI模型** - 集成 Jina Embeddings v4 模型（支持文本/图片多模态向量），相比旧版 Jina CLIP V2 召回与语义表示更优
 - **🎨 现代化技术栈** - React 18 + TypeScript + FastAPI，确保代码质量和开发体验
 - **🔧 智能启动管理** - 一键启动脚本，自动处理环境配置和依赖管理
 
@@ -170,7 +170,7 @@ python start.py --frontend-only
 
 - **FastAPI** - 高性能异步Web框架
 - **SQLite + sqlite-vec** - 轻量级向量数据库
-- **Jina CLIP V2** - 多模态向量编码模型
+- **Jina Embeddings v4** - 新一代多模态/文本统一向量编码模型（默认 2048 维）
 - **连接池管理** - 高效的数据库连接管理
 - **向量缓存** - diskcache实现的向量缓存系统
 
@@ -250,16 +250,19 @@ SmartImageFinder/
 
 ### 配置文件
 
-主要配置文件位于 `backend/config_files/config.yaml`：
+主要配置文件位于 `backend/config/files/config.yaml`：
 
 ```yaml
-MODEL_PATH: ./models/yizhixiaoke/xiaoke-jina-clip-v2  # 模型路径
-VECTOR_DB_DRIVER_DIR: ./backend/config_files/vector_db_driver  # 向量数据库驱动
+MODEL_PATH: ./models/jina-embeddings-v4  # 新模型路径 (原: ./models/yizhixiaoke/xiaoke-jina-clip-v2)
+VECTOR_DB_DRIVER_DIR: ./backend/config/files/vector_db_driver  # 向量数据库驱动目录
+EMBEDDING_DIMENSION: 2048  # 向量维度（与原模型保持兼容）
 UPLOAD_DIR: ./data/images  # 图片上传目录
 DB_PATH: ./data/db/smartimagefinder.db  # 数据库路径
 HOST: 0.0.0.0  # 服务监听地址
 PORT: 10050  # 服务端口（默认）
 ```
+
+> 如果你从旧版本迁移：更新 `config.yaml` 中 `MODEL_PATH` 到新目录并确保已下载对应模型；维度保持 2048 时无需重新建库，仅在更换到不同维度模型时才需重新初始化向量表。
 
 ### 💡 使用提示
 
