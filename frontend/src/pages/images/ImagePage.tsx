@@ -210,30 +210,38 @@ const ImagesPage: React.FC = () => {
       const response = await imageService.batchDeleteImages({ image_ids: imageIds });
 
       if (response.status === 'success' && response.data) {
-        const { success_count, failed_count, failed_ids } = response.data;
+        // 兼容后端两种可能结构
+        const data: any = response.data || {};
+        const deletedCount: number = data.deleted_count ?? data.success_count ?? 0;
+        const failedIds: number[] = Array.isArray(data.failed_ids) ? data.failed_ids : [];
+        const failedCount: number = data.failed_count ?? failedIds.length ?? 0;
 
-        if (success_count > 0) {
-          message.success(`成功删除 ${success_count} 张图片`);
-
-          // 更新图片列表，移除已删除的图片
-          setImages(prevImages =>
-            prevImages.filter(img => !imageIds.includes(img.id) || failed_ids.includes(img.id))
-          );
-          setTotal(prev => prev - success_count);
+        if (deletedCount > 0) {
+          message.success(`成功删除 ${deletedCount} 张图片`);
+          setImages(prevImages => prevImages.filter(img => {
+            // 如果在要删除列表且不在失败列表，则移除
+            if (imageIds.includes(img.id) && !failedIds.includes(img.id)) return false;
+            return true;
+          }));
+          setTotal(prev => Math.max(0, prev - deletedCount));
         }
 
-        if (failed_count > 0) {
-          message.warning(`有 ${failed_count} 张图片删除失败`);
+        if (failedCount > 0) {
+          message.warning(`有 ${failedCount} 张图片删除失败`);
         }
 
-        // 清空选择
         setSelectedImageIds(new Set());
 
-        // 如果当前页没有图片了，回到上一页
-        const remainingImages = images.filter(img => !imageIds.includes(img.id) || failed_ids.includes(img.id));
-        if (remainingImages.length === 0 && page > 1) {
+        // 重新计算当前页面是否为空
+        const remainingAfter = images.filter(img => {
+          if (imageIds.includes(img.id) && !failedIds.includes(img.id)) return false;
+          return true;
+        });
+        if (remainingAfter.length === 0 && page > 1) {
           setPage(page - 1);
         }
+      } else {
+        message.error('批量删除接口返回异常');
       }
     } catch (error) {
       console.error('批量删除失败:', error);

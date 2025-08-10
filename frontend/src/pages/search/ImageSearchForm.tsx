@@ -40,6 +40,7 @@ const ImageSearchForm: React.FC<ImageSearchFormProps> = ({ onSearch, loading, ta
   const [searchFile, setSearchFile] = useState<RcFile | null>(null);
   const [imageUrl, setImageUrl] = useState<string>('');
   const [selectedSearchTargets, setSelectedSearchTargets] = useState<string[]>([VectorSearchTarget.IMAGE]);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   // 处理搜索目标变化
   const handleSearchTargetsChange = (targets: string[]) => {
@@ -86,6 +87,20 @@ const ImageSearchForm: React.FC<ImageSearchFormProps> = ({ onSearch, loading, ta
         const endDate = new Date(values.date_range[1]);
         params.start_date = startDate.toISOString();
         params.end_date = endDate.toISOString();
+      }
+
+      // 权重
+      const wt: Record<string, number> = {};
+      ['titleWeight','descriptionWeight','imageWeight'].forEach(k => {
+        if (values[k] !== undefined && values[k] !== null && values[k] !== '') {
+          const v = parseFloat(values[k]);
+            if (!Number.isNaN(v) && v > 0) wt[k.replace('Weight','')] = v;
+        }
+      });
+      if (Object.keys(wt).length > 0) (params as any).weights = wt;
+      if (values.min_score !== undefined && values.min_score !== null && values.min_score !== '') {
+        const ms = parseFloat(values.min_score);
+        if (!Number.isNaN(ms)) (params as any).min_score = ms;
       }
 
       // 调用搜索
@@ -197,6 +212,38 @@ const ImageSearchForm: React.FC<ImageSearchFormProps> = ({ onSearch, loading, ta
         >
           <Input placeholder="输入文件名关键词" />
         </Form.Item>
+        <Divider />
+        <Button type="link" style={{ paddingLeft: 0 }} onClick={() => setShowAdvanced(s => !s)}>
+          {showAdvanced ? '收起融合参数' : '展开融合参数 (权重 / 最小得分)'}
+        </Button>
+        {showAdvanced && (
+          <>
+            <Row gutter={16}>
+              <Col xs={24} md={8}>
+                <Form.Item label="Title权重" name="titleWeight" initialValue={1}>
+                  <Input type="number" min={0} step="0.1" />
+                </Form.Item>
+              </Col>
+              <Col xs={24} md={8}>
+                <Form.Item label="Desc权重" name="descriptionWeight" initialValue={1}>
+                  <Input type="number" min={0} step="0.1" />
+                </Form.Item>
+              </Col>
+              <Col xs={24} md={8}>
+                <Form.Item label="Image权重" name="imageWeight" initialValue={1}>
+                  <Input type="number" min={0} step="0.1" />
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row gutter={16}>
+              <Col xs={24} md={8}>
+                <Form.Item label="最小得分" name="min_score">
+                  <Input placeholder="例如 0.6 (可选)" />
+                </Form.Item>
+              </Col>
+            </Row>
+          </>
+        )}
       </Form>
     </Card>
   );

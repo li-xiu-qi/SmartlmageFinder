@@ -173,6 +173,8 @@ python start.py --frontend-only
 - **Jina Embeddings v4** - 新一代多模态/文本统一向量编码模型（默认 2048 维）
 - **连接池管理** - 高效的数据库连接管理
 - **向量缓存** - diskcache实现的向量缓存系统
+- **大模型智能重排** - 智能图片推荐
+- **多模态分析** - 图片内容理解和分析
 
 #### 前端 (`frontend/`)
 
@@ -181,20 +183,6 @@ python start.py --frontend-only
 - **Vite** - 快速构建工具
 - **React Router 7.5** - 路由管理
 - **Axios** - HTTP客户端
-
-### AI服务技术栈
-
-#### AI后端 (`ai_backend/`)
-
-- **FastAPI** - AI服务API框架
-- **推荐算法** - 智能图片推荐引擎
-- **多模态分析** - 图片内容理解和分析
-
-#### AI前端 (`ai_frontend/`)
-
-- **React 18 + TypeScript** - AI交互界面
-- **Ant Design 5.4** - UI组件库
-- **智能搜索** - AI驱动的搜索体验
 
 ### 核心组件
 
@@ -261,8 +249,6 @@ DB_PATH: ./data/db/smartimagefinder.db  # 数据库路径
 HOST: 0.0.0.0  # 服务监听地址
 PORT: 10050  # 服务端口（默认）
 ```
-
-> 如果你从旧版本迁移：更新 `config.yaml` 中 `MODEL_PATH` 到新目录并确保已下载对应模型；维度保持 2048 时无需重新建库，仅在更换到不同维度模型时才需重新初始化向量表。
 
 ### 💡 使用提示
 

@@ -241,7 +241,8 @@ class SearchRepository(BaseRepository):
         return self.vector_search('description', query_vector, top_k)
     
     def image_search(self, image_path: str, search_targets: List[str] = ["image"], 
-                    filters: Dict[str, Any] = None, limit: int = 20, offset: int = 0) -> List[Dict[str, Any]]:
+                    filters: Dict[str, Any] = None, limit: int = 20, offset: int = 0,
+                    weights: Optional[Dict[str, float]] = None, min_score: Optional[float] = None) -> List[Dict[str, Any]]:
         """
         使用图像路径执行向量搜索
         
@@ -266,7 +267,9 @@ class SearchRepository(BaseRepository):
             search_targets=search_targets,
             filters=filters,
             limit=limit,
-            offset=offset
+            offset=offset,
+            weights=weights,
+            min_score=min_score
         )
     
     def _get_images_by_ids(self, image_ids: List[int]) -> List[Dict[str, Any]]:
@@ -279,7 +282,8 @@ class SearchRepository(BaseRepository):
         return self.execute_query(query, image_ids)
     
     def text_search(self, text_query: str, search_targets: List[str] = ["title", "description", "image"],
-                   filters: Dict[str, Any] = None, limit: int = 20, offset: int = 0) -> List[Dict[str, Any]]:
+                   filters: Dict[str, Any] = None, limit: int = 20, offset: int = 0,
+                   weights: Optional[Dict[str, float]] = None, min_score: Optional[float] = None) -> List[Dict[str, Any]]:
         """
         使用文本查询执行多维向量搜索
         
@@ -304,93 +308,133 @@ class SearchRepository(BaseRepository):
             search_targets=self._sanitize_targets(search_targets),
             filters=filters,
             limit=limit,
-            offset=offset
+            offset=offset,
+            weights=weights,
+            min_score=min_score
         )
 
-    def unified_search(self, query_type: str, query_content: str, 
+    def unified_search(self, query_type: str, query_content: str,
                       search_targets: List[str] = ["title", "description", "image"],
-                      filters: Dict[str, Any] = None, limit: int = 20, offset: int = 0) -> List[Dict[str, Any]]:
-        """
-        统一的搜索方法，支持文本查询和图像查询
-        Args:
-            query_type: 查询类型，可选值："text", "image"
-            query_content: 文本内容或临时图片路径
-            search_targets: 向量搜索目标
-            filters: 过滤条件
-            limit / offset: 分页
-        Returns: 排序后的图像信息列表
+                      filters: Dict[str, Any] = None, limit: int = 20, offset: int = 0,
+                      weights: Optional[Dict[str, float]] = None, min_score: Optional[float] = None) -> List[Dict[str, Any]]:
+        """统一搜索入口。
+
+        当前 text/image 入口沿用原有 encode + _multi_vector_search 逻辑；如需权重应用到文本/图像入口可改造为直接在此分支调用 _multi_vector_search。
         """
         if query_type == "text":
-            return self.text_search(query_content, self._sanitize_targets(search_targets), filters, limit, offset)
-        elif query_type == "image":
-            return self.image_search(query_content, search_targets, filters, limit, offset)
-        else:
-            raise ValueError(f"不支持的查询类型: {query_type}，支持的类型：'text', 'image'")
+            return self.text_search(query_content, self._sanitize_targets(search_targets), filters, limit, offset, weights=weights, min_score=min_score)
+        if query_type == "image":
+            return self.image_search(query_content, search_targets, filters, limit, offset, weights=weights, min_score=min_score)
+        raise ValueError(f"不支持的查询类型: {query_type}，支持的类型：'text', 'image'")
 
     def vector_search_direct(self, query_embedding: list, search_targets: List[str] = ["title", "description", "image"],
-                           filters: Dict[str, Any] = None, limit: int = 20, offset: int = 0) -> List[Dict[str, Any]]:
-        """
-        直接使用向量进行搜索
-        
-        Args:
-            query_embedding: 查询向量
-            search_targets: 要搜索的目标类型列表，可包含："title", "description", "image"
-            filters: 过滤条件字典
-            limit: 返回结果的最大数量
-            offset: 结果的起始偏移量，用于分页
-            
-        Returns:
-            List[Dict]: 图像信息字典的列表，按综合得分排序
-        """
+                           filters: Dict[str, Any] = None, limit: int = 20, offset: int = 0,
+                           weights: Optional[Dict[str, float]] = None, min_score: Optional[float] = None) -> List[Dict[str, Any]]:
         return self._multi_vector_search(
             query_embedding=query_embedding,
             search_targets=search_targets,
             filters=filters,
             limit=limit,
-            offset=offset
+            offset=offset,
+            weights=weights,
+            min_score=min_score
         )
-    
-    def _multi_vector_search(self, query_embedding: list, search_targets: List[str], 
-                           filters: Dict[str, Any] = None, limit: int = 20, offset: int = 0) -> List[Dict[str, Any]]:
-        """执行多向量检索并融合得分。
 
-        1. 过滤得到候选 ID
-        2. 针对每个向量目标执行向量检索
-        3. 融合 (平均得分) 并排序 + 分页
-        4. 附加 score 与 public_url
-        """
+    def _multi_vector_search(self, query_embedding: list, search_targets: List[str],
+                           filters: Dict[str, Any] = None, limit: int = 20, offset: int = 0,
+                           weights: Optional[Dict[str, float]] = None, min_score: Optional[float] = None) -> List[Dict[str, Any]]:
         search_targets = self._sanitize_targets(search_targets)
         filtered_ids = self.get_filtered_image_ids(filters or {})
         if not filtered_ids:
             return []
 
+        # 单目标：直接距离排序（SQL 保序）
         if len(search_targets) == 1:
             vector_results = self._vector_search_with_filter(search_targets[0], query_embedding, filtered_ids, limit + offset)
             if not vector_results:
                 return []
             paginated = vector_results[offset:offset + limit]
             ids = [r[0] for r in paginated]
-            images = self._get_images_by_ids(ids)
-            id2score = {r[0]: 1 - r[1] for r in paginated}
+            if not ids:
+                return []
+            placeholders = ','.join(['?'] * len(ids))
+            order_case = 'CASE id ' + ' '.join(f"WHEN ? THEN {idx}" for idx, _ in enumerate(paginated)) + ' END'
+            sql = f"SELECT * FROM images WHERE id IN ({placeholders}) ORDER BY {order_case}"
+            params = ids + ids
+            images = self.execute_query(sql, params)
+            id2score = {iid: 1 - dist for iid, dist in paginated}
+            id2dist = {iid: dist for iid, dist in paginated}
+            out = []
             for img in images:
-                img['score'] = id2score.get(img['id'], 0)
-            return self._attach_public_url(images)
+                score = id2score.get(img['id'], 0.0)
+                if min_score is not None and score < min_score:
+                    continue
+                img['score'] = score
+                img['distance'] = id2dist.get(img['id'])
+                out.append(img)
+            return self._attach_public_url(out)
 
-        all_results: Dict[int, List[float]] = {}
+        # 多目标：收集每个目标的分数再加权融合
+        weights = weights or {}
+        norm_weights: Dict[str, float] = {}
+        total_w = 0.0
+        for t in search_targets:
+            w = float(weights.get(t, 1.0))
+            if w > 0:
+                norm_weights[t] = w
+                total_w += w
+        if not norm_weights:
+            norm_weights = {t: 1.0 for t in search_targets}
+            total_w = float(len(search_targets))
+
+        per_target_scores: Dict[str, Dict[int, float]] = {}
+        candidate_ids: set[int] = set()
+        fetch_k = limit * 2
         for target in search_targets:
-            vres = self._vector_search_with_filter(target, query_embedding, filtered_ids, limit * 2)
+            vres = self._vector_search_with_filter(target, query_embedding, filtered_ids, fetch_k)
+            target_map: Dict[int, float] = {}
             for iid, dist in vres:
                 score = 1 - dist
-                all_results.setdefault(iid, []).append(score)
+                target_map[iid] = max(target_map.get(iid, 0.0), score)
+                candidate_ids.add(iid)
+            per_target_scores[target] = target_map
 
-        scored = [(iid, sum(scores)/len(scores)) for iid, scores in all_results.items()]
+        scored: List[Tuple[int, float]] = []
+        for iid in candidate_ids:
+            weighted_sum = 0.0
+            weight_sum = 0.0
+            for t, w in norm_weights.items():
+                s = per_target_scores.get(t, {}).get(iid)
+                if s is not None:
+                    weighted_sum += s * w
+                    weight_sum += w
+            if weight_sum == 0:
+                continue
+            final_score = weighted_sum / weight_sum
+            if min_score is not None and final_score < min_score:
+                continue
+            scored.append((iid, final_score))
+
+        if not scored:
+            return []
+
         scored.sort(key=lambda x: x[1], reverse=True)
         page = scored[offset:offset + limit]
+        if not page:
+            return []
         ids = [i for i, _ in page]
         images = self._get_images_by_ids(ids)
         id2score = {i: s for i, s in page}
+        # 取最小 distance 作为参考
+        min_dist_ref: Dict[int, float] = {}
+        for tmap in per_target_scores.values():
+            for iid, s in tmap.items():
+                dist = 1 - s
+                if iid not in min_dist_ref or dist < min_dist_ref[iid]:
+                    min_dist_ref[iid] = dist
         for img in images:
-            img['score'] = id2score.get(img['id'], 0)
+            img['score'] = id2score.get(img['id'], 0.0)
+            img['distance'] = min_dist_ref.get(img['id'])
         images.sort(key=lambda x: x['score'], reverse=True)
         return self._attach_public_url(images)
     

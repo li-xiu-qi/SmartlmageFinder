@@ -118,6 +118,11 @@ def get_db_connection():
     try:
         conn = sqlite3.connect(settings.get_config().DB_PATH, check_same_thread=False)
         conn.row_factory = sqlite3.Row
+        # 尝试加载扩展 (静默) — 避免重复噪音
+        try:
+            setup_connection(conn, silent=True)
+        except Exception:
+            pass
         yield conn
     finally:
         if conn:

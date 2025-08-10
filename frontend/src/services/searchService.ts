@@ -66,7 +66,7 @@ const searchService: SearchClient = {
    * @param params 统一文本搜索参数
    */
   unifiedTextSearch: (params: UnifiedTextSearchParams): Promise<UnifiedSearchResponse> => {
-    const { tags, vector_targets, ...restParams } = params;
+    const { tags, vector_targets, weights, min_score, ...restParams } = params;
     const apiParams: Record<string, unknown> = { ...restParams };
     
     // 处理标签参数
@@ -78,6 +78,12 @@ const searchService: SearchClient = {
     if (vector_targets && vector_targets.length > 0) {
       // 为每个目标创建数组参数
       apiParams['vector_targets[]'] = vector_targets;
+    }
+    if (weights && Object.keys(weights).length > 0) {
+      try { apiParams.weights = JSON.stringify(weights); } catch { /* ignore */ }
+    }
+    if (typeof min_score === 'number') {
+      apiParams.min_score = min_score;
     }
     
   return apiClient.getWithTransform<ImageSearchResult[]>('/search/unified', { params: apiParams })
@@ -120,6 +126,12 @@ const searchService: SearchClient = {
     
     if (typeof params.offset === 'number') {
       formData.append('offset', params.offset.toString());
+    }
+    if (params.weights && Object.keys(params.weights).length > 0) {
+      try { formData.append('weights', JSON.stringify(params.weights)); } catch { /* ignore */ }
+    }
+    if (typeof params.min_score === 'number') {
+      formData.append('min_score', params.min_score.toString());
     }
 
   return apiClient.postWithTransform<ImageSearchResult[]>('/search/unified/image', formData, {
@@ -165,6 +177,12 @@ const searchService: SearchClient = {
     
     if (typeof params.offset === 'number') {
       formData.append('offset', params.offset.toString());
+    }
+    if (params.weights && Object.keys(params.weights).length > 0) {
+      try { formData.append('weights', JSON.stringify(params.weights)); } catch { /* ignore */ }
+    }
+    if (typeof params.min_score === 'number') {
+      formData.append('min_score', params.min_score.toString());
     }
 
   return apiClient.postWithTransform<ImageSearchResult[]>('/search/unified/vector', formData, {

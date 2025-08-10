@@ -52,6 +52,8 @@ export interface SimilarSearchQueryParams {
 export interface UnifiedTextSearchParams {
   q: string;                                     // 搜索文本
   vector_targets?: VectorSearchTarget[];         // 向量搜索目标
+  weights?: Record<string, number>;              // 各目标权重 JSON (前端对象，会被序列化)
+  min_score?: number;                            // 最小得分过滤阈值
   filename?: string;                             // 按文件名过滤
   tags?: string[];                               // 按标签过滤
   start_date?: string;                           // 开始日期
@@ -76,6 +78,8 @@ export interface FuzzySearchParams {
 export interface UnifiedImageSearchParams {
   file: File;                                    // 上传用于搜索的图片文件
   search_targets?: VectorSearchTarget[];         // 搜索目标，默认为 image
+  weights?: Record<string, number>;              // 各目标权重
+  min_score?: number;                            // 最小得分过滤阈值
   filename?: string;                             // 按文件名过滤
   tags?: string[];                               // 按标签过滤
   start_date?: string;                           // 开始日期
@@ -90,6 +94,8 @@ export interface UnifiedImageSearchParams {
 export interface UnifiedVectorSearchParams {
   query_embedding: number[];                     // 查询向量
   search_targets?: VectorSearchTarget[];         // 搜索目标
+  weights?: Record<string, number>;              // 各目标权重
+  min_score?: number;                            // 最小得分过滤阈值
   filename?: string;                             // 按文件名过滤
   tags?: string[];                               // 按标签过滤
   start_date?: string;                           // 开始日期

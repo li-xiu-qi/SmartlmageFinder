@@ -34,6 +34,8 @@ async def unified_text_search_api(
     q: str = Query(..., description="搜索文本"),
     search_type: Literal["vector"] = Query("vector", description="搜索类型固定为 vector（已统一为多向量语义检索）"),
     vector_targets: List[str] = Query(["title", "description", "image"], alias="vector_targets[]", description="向量搜索目标，仅在search_type为vector时有效"),
+    weights: Optional[str] = Query(None, description="可选 JSON 字符串，指定各目标权重，如 {\"title\":1,\"image\":1}"),
+    min_score: Optional[float] = Query(None, description="最小得分过滤阈值，默认不启用"),
     filter_params: CommonFilterParams = Depends(get_query_filter_params)
 ):
     """
@@ -51,13 +53,24 @@ async def unified_text_search_api(
     
     if search_type == "vector":
         # 使用向量搜索 - 统一的搜索方法
+        parsed_weights = None
+        if weights:
+            import json
+            try:
+                parsed = json.loads(weights)
+                if isinstance(parsed, dict):
+                    parsed_weights = {k: float(v) for k, v in parsed.items() if isinstance(v, (int, float))}
+            except Exception:
+                parsed_weights = None
         results = search_repo.unified_search(
             query_type="text",
             query_content=q,
             search_targets=vector_targets,
             filters=filters,
             limit=filter_params.limit,
-            offset=filter_params.offset
+            offset=filter_params.offset,
+            weights=parsed_weights,
+            min_score=min_score
         )
         
         return results
@@ -70,6 +83,8 @@ async def unified_text_search_api(
 async def unified_image_search_api(
     file: UploadFile = File(..., description="上传的图像文件"),
     search_targets: List[str] = Form(["image"], description="搜索目标类型，可选：image-图像向量，title-标题向量，description-描述向量"),
+    weights: Optional[str] = Form(None, description="可选 JSON 字符串，指定权重，如 {\"title\":1,\"image\":1}"),
+    min_score: Optional[float] = Form(None, description="最小得分过滤阈值"),
     filter_params: CommonFilterParams = Depends(get_form_filter_params)
 ):
     """
@@ -88,13 +103,24 @@ async def unified_image_search_api(
     
     try:
         # 使用统一的搜索方法
+        parsed_weights = None
+        if weights:
+            import json
+            try:
+                parsed = json.loads(weights)
+                if isinstance(parsed, dict):
+                    parsed_weights = {k: float(v) for k, v in parsed.items() if isinstance(v, (int, float))}
+            except Exception:
+                parsed_weights = None
         results = search_repo.unified_search(
             query_type="image",
             query_content=temp_file_path,
             search_targets=search_targets,
             filters=filters,
             limit=filter_params.limit,
-            offset=filter_params.offset
+            offset=filter_params.offset,
+            weights=parsed_weights,
+            min_score=min_score
         )
         
         return results
@@ -108,6 +134,8 @@ async def unified_image_search_api(
 async def unified_vector_search_api(
     query_embedding: List[float] = Form(..., description="查询向量"),
     search_targets: List[str] = Form(["title", "description", "image"], description="搜索目标类型，可选：image-图像向量，title-标题向量，description-描述向量"),
+    weights: Optional[str] = Form(None, description="可选 JSON 字符串，指定权重，如 {\"title\":1,\"image\":1}"),
+    min_score: Optional[float] = Form(None, description="最小得分过滤阈值"),
     filter_params: CommonFilterParams = Depends(get_form_filter_params)
 ):
     """
@@ -122,12 +150,23 @@ async def unified_vector_search_api(
     search_repo = SearchRepository()
     
     # 使用直接向量搜索方法
+    parsed_weights = None
+    if weights:
+        import json
+        try:
+            parsed = json.loads(weights)
+            if isinstance(parsed, dict):
+                parsed_weights = {k: float(v) for k, v in parsed.items() if isinstance(v, (int, float))}
+        except Exception:
+            parsed_weights = None
     results = search_repo.vector_search_direct(
         query_embedding=query_embedding,
         search_targets=search_targets,
         filters=filters,
         limit=filter_params.limit,
-        offset=filter_params.offset
+        offset=filter_params.offset,
+        weights=parsed_weights,
+        min_score=min_score
     )
     
     return results

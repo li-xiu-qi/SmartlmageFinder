@@ -8,6 +8,7 @@ from datetime import datetime
 from typing import List, Optional
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends, Query
 from pydantic import BaseModel
+from PIL import Image as PILImage
 
 # 导入数据库连接函数
 # 数据访问通过仓库内部管理连接，无需显式依赖注入 get_db
@@ -163,9 +164,16 @@ async def upload_images(
             with open(filepath, "wb") as buffer:
                 shutil.copyfileobj(file.file, buffer)
             
-            # 获取文件信息
+            # 获取文件信息 + 尺寸
             file_stat = os.stat(filepath)
             file_size = file_stat.st_size
+            width = 0
+            height = 0
+            try:
+                with PILImage.open(filepath) as im:
+                    width, height = im.size
+            except Exception as img_e:
+                print(f"读取图片尺寸失败 {filepath}: {img_e}")
             
             # 基础图片信息
             image_data = {
@@ -175,8 +183,8 @@ async def upload_images(
                 'description': description or '',
                 'file_size': file_size,
                 'file_type': file.content_type,
-                'width': 0,  # 后续可以通过PIL获取
-                'height': 0,
+                'width': width,
+                'height': height,
                 'created_at': datetime.now(),
                 'updated_at': datetime.now(),
                 # 使用Python原生类型，入库时由仓库层统一转换为JSON字符串
@@ -234,6 +242,24 @@ async def upload_images(
             if refreshed:
                 result_images = refreshed
         
+        # 同步生成向量（标题/描述/图像）
+        if image_ids:
+            try:
+                from ..db_func.repositories.batch_vector_manager import BatchVectorManager
+                from ..db_func.core.connection import get_db_connection
+                batch_source = [{
+                    'image_id': img['id'],
+                    'filepath': img.get('filepath'),
+                    'title': img.get('title') or '',
+                    'description': img.get('description') or ''
+                } for img in result_images]
+                with get_db_connection() as conn:
+                    mgr = BatchVectorManager(conn)
+                    processed_ids = mgr.add_batch_vectors(batch_source)
+                    print(f"上传后自动生成向量完成: {len(processed_ids)} 张图片")
+            except Exception as e:
+                print(f"上传后自动生成向量失败: {e}")
+
         return ResponseModel.success(
             data=result_images,
             message=f"成功上传 {len(result_images)} 张图片"
@@ -285,6 +311,18 @@ async def update_image(
         if success:
             # 获取更新后的数据
             updated_image = image_repo.get_by_id(image_id)
+            if updated_image:
+                # 内部策略：仅对本次明确更新的字段生成对应向量
+                try:
+                    from ..db_func.repositories.vectors import VectorRepository
+                    vec_repo = VectorRepository()
+                    if request.title is not None:
+                        vec_repo.add_title_vector(image_id, updated_image.get('title') or '')
+                    if request.description is not None:
+                        vec_repo.add_description_vector(image_id, updated_image.get('description') or '')
+                    print(f"更新后已重建相关文本向量: image_id={image_id}")
+                except Exception as e:
+                    print(f"更新后重建向量失败: {e}")
             return ResponseModel.success(
                 data=updated_image,
                 message="图片信息更新成功"
