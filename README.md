@@ -58,7 +58,6 @@ SmartImageFinder 是一个现代化的智能图片搜索与管理系统，采用
 - **SSE 流式输出**：事件包括 `rewrite_start` / `assistant_delta` / `complete` / `error`
 - **会话管理**：支持创建 / 列出 / 删除会话，`conversation_id` 绑定上下文
 - **结果增强**：返回图片精简信息（id/score/title/tags/public_url）+ 选中图片ID列表
-- **安全控制**：向量目标白名单限制检索范围（如 `title_vector` / `desc_vector` / `image_vector`）
 
 主要接口：
 
