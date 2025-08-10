@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Row, Col, Card, Empty, Drawer, Spin, message } from 'antd';
+import { Row, Col, Card, Empty, Drawer, Spin, message, Tag, Tooltip } from 'antd';
 import { RecentImagesProps } from '../../types';
 import { imageService } from '@/services/api';
 import { ImageDetail } from '@/types';
@@ -80,12 +80,25 @@ const RecentImages: React.FC<RecentImagesProps> = ({ images }) => {
               >
                 {/* Card.Meta用于展示图片标题和创建日期 */}
                 <Card.Meta
-                  title={image.title}
+                  title={image.title || '未命名图片'}
                   description={
-                    <span className="image-meta">
-                      {/* 格式化并显示图片上传的日期 */}
-                      {new Date(image.created_at).toLocaleDateString()}
-                    </span>
+                    <div className="image-meta">
+                      <div className="image-date">{new Date(image.created_at).toLocaleDateString()}</div>
+                      {Array.isArray(image.tags) && image.tags.length > 0 && (
+                        <div className="image-tags">
+                          {image.tags.slice(0, 4).map(t => (
+                            <Tooltip key={t} title={t}>
+                              <Tag color="blue" style={{ marginBottom: 4 }}>{t}</Tag>
+                            </Tooltip>
+                          ))}
+                          {image.tags.length > 4 && (
+                            <Tooltip title={image.tags.join(' , ')}>
+                              <Tag color="default">+{image.tags.length - 4}</Tag>
+                            </Tooltip>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   }
                 />
               </Card>
