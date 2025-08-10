@@ -1,0 +1,22 @@
+{
+  "apps": [
+    {
+      "name": "SmartImageFinder",
+      "cwd": "C:/Users/ke/Documents/projects/python_projects/SmartImageFinder",
+      "script": "start.py",
+      "watch": false,
+      "env": {
+        "NODE_ENV": "development",
+        "PYTHONUNBUFFERED": "1"
+      },
+      "interpreter": "python",
+      "exec_mode": "fork",
+      "detached": false,
+      "windowsHide": true,
+      "silent": true,
+      "out_file": "./logs/out.log",
+      "error_file": "./logs/error.log",
+      "log_file": "./logs/combined.log"
+    }
+  ]
+}

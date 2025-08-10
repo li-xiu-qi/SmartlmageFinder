@@ -147,9 +147,6 @@ python migrate_embeddings.py --resume   # 中断后续传
 
 ## 🚀 快速开始
 
-
-
-
 ### 环境初始化（推荐手动安装依赖，模型下载建议使用脚本）
 
 > 安装依赖和下载模型可能耗时较长，建议首次分步手动操作。
@@ -177,17 +174,20 @@ cd ..
 ### 启动服务
 
 #### 方式一：使用 start.py 一键启动（自动安装依赖、下载模型、生成配置）
+
 ```bash
 python start.py init
 python start.py
 ```
 
 #### 方式二：手动启动后端（推荐）
+
 ```bash
 python main.py
 ```
 
 #### 方式三：手动启动前端
+
 ```bash
 cd frontend
 npm run dev
