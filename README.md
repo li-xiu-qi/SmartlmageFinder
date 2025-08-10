@@ -123,6 +123,28 @@ data: {"image_ids":[12,8,5,...],"assistant_text":"已为你找到...","images_br
 - **🧠 先进的AI模型** - 集成 Jina Embeddings v4 模型（支持文本/图片多模态向量），相比旧版 Jina CLIP V2 召回与语义表示更优
 - **🎨 现代化技术栈** - React 18 + TypeScript + FastAPI，确保代码质量和开发体验
 - **🔧 智能启动管理** - 一键启动脚本，自动处理环境配置和依赖管理
+- **🔄 离线向量模型迁移** - 提供可断点续传的离线脚本 `migrate_embeddings.py`，支持自动探测维度 / 新旧维度差异判定 / 原子切换 `*_vectors` 虚表 / 缓存目录安全替换，并在完成后自动更新主配置的 `MODEL_PATH` 与 `EMBEDDING_DIMENSION`。
+
+### 🔄 向量模型迁移（Embedding Model Migration）
+
+当你需要将当前使用的向量模型（例如从 Jina CLIP V2 升级为 Jina Embeddings v4，或切换到任意其他本地 / HuggingFace 模型）并重新生成图片 / 标题 / 描述三类向量时，可使用根目录脚本：
+
+```bash
+python migrate_embeddings.py            # 使用默认配置文件 backend/config/files/migration.yaml
+python migrate_embeddings.py --resume   # 中断后续传
+```
+
+关键特性：
+
+- 自动判定是否需要创建 `*_vectors_new`（维度变更才建新表，完成后原子切换）
+- 分批处理 + `model_migrations` 表记录进度，可断点续传
+- 避免 UPSERT 不支持：使用 INSERT OR IGNORE + UPDATE 兼容写入 sqlite-vec 虚表
+- 成功后自动更新 `backend/config/files/config.yaml` 中模型路径与新维度
+- 旧缓存目录自动重命名为 `*_old`，便于回滚 / 清理
+
+运行前务必：停止后端服务并备份数据库文件（详见 `docs/model_migration.md`）。
+
+更多细节、配置字段与回滚策略参见：`docs/model_migration.md`。
 
 ## 🚀 快速开始
 

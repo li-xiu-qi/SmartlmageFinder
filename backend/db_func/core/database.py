@@ -128,6 +128,33 @@ def init_db():
         ''')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_conv_messages_conv_created ON conversation_messages(conversation_id, created_at)')
         
+        # 模型迁移记录表（离线向量重建与模型更换时使用）
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS model_migrations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            old_model_path TEXT,
+            new_model_path TEXT NOT NULL,
+            new_model_hash TEXT NOT NULL,
+            new_embedding_dim INTEGER NOT NULL,
+            status TEXT NOT NULL,
+            started_at TEXT NOT NULL,
+            finished_at TEXT,
+            total_images INTEGER,
+            processed_images INTEGER,
+            last_image_id INTEGER,            -- 新增: 已处理的最后一个 images.id, 便于断点续传
+            note TEXT
+        )
+        ''')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_model_migrations_status ON model_migrations(status)')
+        # 兼容老版本添加 last_image_id 列
+        try:
+            cursor.execute("PRAGMA table_info(model_migrations)")
+            cols = [r[1] for r in cursor.fetchall()]
+            if 'last_image_id' not in cols:
+                cursor.execute('ALTER TABLE model_migrations ADD COLUMN last_image_id INTEGER')
+        except Exception:
+            pass
+        
         conn.commit()
     
     _INIT_DONE = True

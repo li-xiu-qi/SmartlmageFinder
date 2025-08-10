@@ -141,4 +141,4 @@ uploads/
 
 rules.txt
 
-backend/db_func_old
+backend/tests/db_func_old
