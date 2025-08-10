@@ -70,10 +70,10 @@ Key Endpoints:
 | Chat recommend (single shot) | POST | `/api/v1/ai/recommend/chat` |
 | Chat recommend (SSE stream) | POST | `/api/v1/ai/recommend/chat/stream` |
 
-Request Example (Streaming Recommendation):
+Request Example (Streaming Recommendation) (default backend port 10050, configurable in config.yaml):
 
 ```bash
-curl -N -X POST http://localhost:8000/api/v1/ai/recommend/chat/stream \
+curl -N -X POST http://localhost:10050/api/v1/ai/recommend/chat/stream \
   -H "Content-Type: application/json" \
   -d '{
     "conversation_id": "demo-session-1",
@@ -241,7 +241,7 @@ SmartImageFinder/
 
 ### Service Ports
 
-- **Backend**: 8000 (default, configurable)
+- **Backend**: 10050 (default, configurable)
 - **Frontend**: 5173 (Vite default)
 
 ### Configuration Files
@@ -254,7 +254,7 @@ VECTOR_DB_DRIVER_DIR: ./backend/config_files/vector_db_driver  # Vector database
 UPLOAD_DIR: ./data/images  # Image upload directory
 DB_PATH: ./data/db/smartimagefinder.db  # Database path
 HOST: 0.0.0.0  # Service listening address
-PORT: 8000  # Service port (default)
+PORT: 10050  # Service port (default)
 ```
 
 ### Environment Variables
@@ -271,8 +271,8 @@ export OPENAI_API_BASE="https://api.openai.com/v1"
 #### Service Access URLs
 
 - **Main Frontend Interface**: <http://localhost:5173>
-- **Main Backend API**: <http://localhost:8000>  
-- **API Documentation**: <http://localhost:8000/docs>
+- **Main Backend API**: <http://localhost:10050>  
+- **API Documentation**: <http://localhost:10050/docs>
 
 ## 📊 System Monitoring & Management
 

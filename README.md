@@ -71,10 +71,10 @@ SmartImageFinder 是一个现代化的智能图片搜索与管理系统，采用
 | 对话式推荐（一次性） | POST | `/api/v1/ai/recommend/chat` |
 | 对话式推荐（SSE流） | POST | `/api/v1/ai/recommend/chat/stream` |
 
-请求示例（流式推荐，默认端口 8000，可在 config.yaml 调整）：
+请求示例（流式推荐，默认端口 10050，可在 config.yaml 调整）：
 
 ```bash
-curl -N -X POST http://localhost:8000/api/v1/ai/recommend/chat/stream \
+curl -N -X POST http://localhost:10050/api/v1/ai/recommend/chat/stream \
   -H "Content-Type: application/json" \
   -d '{
     "conversation_id": "demo-session-1",
@@ -245,7 +245,7 @@ SmartImageFinder/
 
 ### 服务端口
 
-- **后端**: 8000 (默认，可配置)
+- **后端**: 10050 (默认，可配置)
 - **前端**: 5173 (Vite 默认)
 
 ### 配置文件
@@ -258,7 +258,7 @@ VECTOR_DB_DRIVER_DIR: ./backend/config_files/vector_db_driver  # 向量数据库
 UPLOAD_DIR: ./data/images  # 图片上传目录
 DB_PATH: ./data/db/smartimagefinder.db  # 数据库路径
 HOST: 0.0.0.0  # 服务监听地址
-PORT: 8000  # 服务端口（默认）
+PORT: 10050  # 服务端口（默认）
 ```
 
 ### 💡 使用提示
@@ -266,8 +266,8 @@ PORT: 8000  # 服务端口（默认）
 #### 服务访问地址
 
 - **主前端界面**: <http://localhost:5173>
-- **主后端API**: <http://localhost:8000>  
-- **API文档**: <http://localhost:8000/docs>
+- **主后端API**: <http://localhost:10050>  
+- **API文档**: <http://localhost:10050/docs>
 
 ## 📊 系统监控与管理
 
