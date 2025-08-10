@@ -42,19 +42,44 @@ def load_model():
         print(f"正在使用设备: {device}")
         
         print(f"正在加载模型: {config.MODEL_PATH}")
-        model = SentenceTransformer(
-            config.MODEL_PATH,
-            trust_remote_code=True,
-            device=device,  # 指定模型加载到的设备
-            model_kwargs={'default_task': 'retrieval'}  # 设置默认任务为检索
-        )
-        
-        # 自动获取模型输出维度
-        embedding_dimension = model.get_sentence_embedding_dimension()
+        try:
+            model = SentenceTransformer(
+                config.MODEL_PATH,
+                trust_remote_code=True,
+                device=device,
+                model_kwargs={'default_task': 'retrieval'}
+            )
+        except TypeError as e:
+            if 'default_task' in str(e):
+                print("模型不接受 default_task 参数，使用兼容加载方式")
+                model = SentenceTransformer(
+                    config.MODEL_PATH,
+                    trust_remote_code=True,
+                    device=device
+                )
+            else:
+                raise
+
+        # 优先使用 get_sentence_embedding_dimension; 失败/为空则探测
+        try:
+            embedding_dimension = model.get_sentence_embedding_dimension()
+        except Exception:
+            embedding_dimension = None
+        if not embedding_dimension:
+            # 回退：通过一次 encode 探测维度
+            try:
+                probe = model.encode(["_dim_probe_"], normalize_embeddings=True, show_progress_bar=False)
+            except TypeError:
+                probe = model.encode(["_dim_probe_"])
+            if isinstance(probe, list) and probe and len(probe[0]) > 0:
+                embedding_dimension = len(probe[0])
+            elif hasattr(probe, 'shape') and len(getattr(probe, 'shape', [])) >= 2:
+                embedding_dimension = probe.shape[-1]
+            else:
+                fallback = settings.get_config().EMBEDDING_DIMENSION
+                print(f"无法探测维度，使用配置回退: {fallback}")
+                embedding_dimension = fallback
         print(f"模型加载成功，向量维度: {embedding_dimension}")
-        if embedding_dimension is None:
-            embedding_dimension = settings.get_config().EMBEDDING_DIMENSION
-            print(f"未能自动获取向量维度，使用默认值: {embedding_dimension}")
             
     finally:
         # 无论成功还是失败，都要重置加载状态
