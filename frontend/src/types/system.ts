@@ -87,7 +87,6 @@ export interface CacheStats {
  * 缓存系统信息
  */
 export interface CacheInfo {
-  enabled: boolean;        // 是否启用缓存
   max_size_gb: number;     // 最大缓存大小(GB)
   total_size_mb: number;   // 总缓存大小(MB)
   text_vector_cache: CacheStats;
@@ -99,7 +98,6 @@ export interface CacheInfo {
 export interface CacheBriefInfo {
   total_size_mb: number;
   last_scan?: number;
-  enabled: boolean;
 }
 
 export type CacheBriefInfoResponse = ApiResponse<CacheBriefInfo>;

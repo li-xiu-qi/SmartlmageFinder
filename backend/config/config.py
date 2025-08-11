@@ -17,7 +17,6 @@ class AppConfig(BaseModel):
     DB_PATH: str = "./data/db/smartimagefinder.db"
     TEXT_VECTOR_CACHE_DIR: str = "./data/caches/text_vector_cache"
     IMAGE_VECTOR_CACHE_DIR: str = "./data/caches/image_vector_cache"
-    USE_CACHE: bool = True
     MAX_CACHE_SIZE_GB: float = 1.5
     OPENAI_API_KEY: Optional[str] = None
     OPENAI_API_BASE: Optional[str] = None
@@ -30,11 +29,10 @@ class AppConfig(BaseModel):
             "Pro/Qwen/Qwen2.5-VL-7B-Instruct",
         ]
     )
-    HOST: str = "0.0.0.0"
-    PORT: int = 8000  # 根据当前 config.yaml 设置
 
     class Config:
         validate_assignment = True  # 验证赋值
+        extra = 'ignore'  # 忽略未知字段，兼容旧版配置中的已移除字段
 
 
 def ensure_directories_exist(file_paths=None, dir_paths=None):

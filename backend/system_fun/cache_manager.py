@@ -137,9 +137,7 @@ def get_complete_cache_stats() -> Dict[str, Any]:
     )
     
     return {
-        "enabled": config.USE_CACHE,
         "max_size_gb": config.MAX_CACHE_SIZE_GB,
-    # total_entries 移除
         "total_size_mb": total_size_mb,
         "text_vector_cache": {
             "path": config.TEXT_VECTOR_CACHE_DIR,
@@ -161,6 +159,5 @@ def get_cache_brief_stats() -> Dict[str, Any]:
     full = get_complete_cache_stats()
     return {
         "total_size_mb": full["total_size_mb"],
-        "last_scan": full.get("last_scan"),
-        "enabled": full.get("enabled", True)
+        "last_scan": full.get("last_scan")
     }

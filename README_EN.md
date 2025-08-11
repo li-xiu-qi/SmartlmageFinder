@@ -70,10 +70,11 @@ Main APIs:
 | Chat Recommendation (single) | POST | `/api/v1/ai/recommend/chat` |
 | Chat Recommendation (SSE stream) | POST | `/api/v1/ai/recommend/chat/stream` |
 
-Request Example (streaming recommendation, default port 10050, configurable in config.yaml):
+Request Example (streaming; use the actual port printed on startup, or set via SIF_PORT or root start_config.yaml):
 
 ```bash
-curl -N -X POST http://localhost:10050/api/v1/ai/recommend/chat/stream \
+# Note: replace 8000 with your actual backend port (or set via SIF_PORT)
+curl -N -X POST http://localhost:8000/api/v1/ai/recommend/chat/stream \
   -H "Content-Type: application/json" \
   -d '{
     "conversation_id": "demo-session-1",
@@ -192,6 +193,31 @@ npm run dev
 ```
 
 > Manual installation of dependencies and models is recommended to avoid long waiting times during automatic script installation.
+
+### Ports and Proxy Configuration (Important)
+
+- Backend startup precedence: CLI > environment variables > defaults.
+  - CLI supported: `python main.py --host 0.0.0.0 --port 8000 --reload`
+  - Environment variables:
+    - `SIF_HOST` (default `0.0.0.0`)
+    - `SIF_PORT` (default `8000`)
+    - `SIF_RELOAD` (`1/true` enables hot reload)
+- Frontend dev server port:
+  - `SIF_FRONTEND_PORT` (default `5173`), read by `frontend/vite.config.ts`
+  - Frontend->backend proxy origin: `SIF_BACKEND_ORIGIN` (falls back to `http://{SIF_HOST}:{SIF_PORT}`)
+- The one-click starter `start.py` reads optional root `start_config.yaml` and sets the env vars above. Example:
+
+```yaml
+# start_config.yaml example
+backend_host: 0.0.0.0
+backend_port: 10060
+reload: true
+frontend_port: 5176
+# Optional: explicitly set the frontend proxy backend origin
+backend_origin: http://localhost:10060
+```
+
+
 
 ## Application Scenarios
 

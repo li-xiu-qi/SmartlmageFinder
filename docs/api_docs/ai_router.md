@@ -22,11 +22,16 @@ POST `/api/v1/ai/recommend/chat`
   ],
   "state": { "filters": { "tags": ["海边"] } },
   "vector_targets": ["title","description","image"],
-  "limit": 20
+  "limit": 20,
+  "filters": { "tags": ["海边"] },
+  "request_id": "optional",
+  "conversation_id": "optional",
+  "user_id": "optional",
+  "query": "可直接传本次用户输入，可不传 messages"
 }
-```ts
+```
 
-响应：统一响应模型，data 内包含 images、query_rewrite、state 等。
+响应：统一响应模型，data 内包含 images、query_rewrite、state 等（由服务返回的推荐结果结构）。
 
 ### 0.2 AI 对话式推荐（流式 SSE）
 
@@ -35,14 +40,12 @@ POST `/api/v1/ai/recommend/chat/stream`
 - Content-Type: `application/json`
 - Response: `text/event-stream`（SSE）
 
-事件流说明（当前实现只会向客户端发送以下 4 类事件；内部 agent 还有 selection 事件被封装为 complete）：
+事件流说明（对外只会发送以下 4 类事件；内部 agent 的 selection 已封装为 complete）：
 
 - `rewrite_start`：流开始，包含 request_id / conversation_id
 - `assistant_delta`：助手增量文本（可能多次）
 - `complete`：包含已排序 image_ids、images_brief、assistant_text、total_found
 - `error`：出错时返回错误信息
-
-已废弃 / 未实现的旧事件（rewrite_delta / rewrite_done / search_started / result 等）不再发送，文档中移除以避免混淆。
 
 使用示例（前端）：
 
@@ -70,7 +73,7 @@ while (true) {
     // 根据 event 处理 UI
   }
 }
-```text
+```
 
 ### 0.3 上下文记忆与向量白名单说明
 
@@ -88,154 +91,23 @@ SSE 事件补充：内部 agent 会产生 `selection` 事件（包含最终排�
 
 向量目标 whitelist 固定为 `["title","description","image"]`，传入其他值会被忽略或过滤，防止非法表访问。
 
-### 1. 分析上传图片（上传文件）
+### 1. 会话管理
 
-POST `/api/v1/ai/analyze-upload-image`
+- GET `/api/v1/ai/conversations/{conversation_id}/messages`
+  - 查询参数：`limit`（默认100），`openai_only`（仅返回 role/content 数组）
+  - 返回：`messages`（完整存储行，含 image_ids/metadata）、`openai_messages`、`total`
 
-分析用户上传的图片，生成标题、描述和标签。
+- POST `/api/v1/ai/conversations/create`
+  - 请求体（可选）：`{ system_prompt?: string, conversation_id?: string }`
+  - 返回：`{ conversation_id }`
 
-#### 请求格式
+- GET `/api/v1/ai/conversations?limit=20&offset=0`
+  - 返回：`{ items, limit, offset }`
 
-`multipart/form-data`
+- DELETE `/api/v1/ai/conversations/{conversation_id}`
+  - 返回：`{ conversation_id, deleted: boolean }`
 
-#### 请求参数
-
-| 参数 | 类型 | 必填 | 描述 | 示例 |
-|---|---|---|---|---|
-| file | file | 是 | 要分析的图片文件 | - |
-| detail | string | 否 | 细节级别: low或high，默认为low | low |
-
-#### 响应示例
-
- 
-##### 成功响应 (200)
-
-```json
-{
-  "status": "success",
-  "code": 200,
-  "message": "图片分析成功",
-  "data": {
-    "title": "日落海滩",
-    "description": "一张美丽的日落海滩照片，天空呈现出橙红色，海浪轻轻拍打着沙滩",
-    "tags": ["日落", "海滩", "风景", "自然", "天空", "海浪"],
-    "confidence": 0.92,
-    "analyzed_at": "2024-01-15T14:30:00"
-  },
-  "metadata": {
-    "model": "AI多模态模型",
-    "time_ms": 1250
-  },
-  "error": null
-}
-```
-
- 
-##### 错误响应 (500)（服务不可用）
-
-```json
-{
-  "status": "error",
-  "code": 500,
-  "message": "图像分析服务不可用，请确认配置了正确的API密钥",
-  "error": {
-    "code": "SERVICE_UNAVAILABLE",
-    "message": "图像分析服务不可用，请确认配置了正确的API密钥"
-  }
-}
-```
-
- 
-##### 错误响应 (500)（处理失败）
-
-```json
-{
-  "status": "error",
-  "code": 500,
-  "message": "AI处理出错: 网络连接超时",
-  "error": {
-    "code": "AI_PROCESSING_ERROR",
-    "message": "AI处理出错: 网络连接超时"
-  }
-}
-```
-
-### 2. 分析图片ID（已存在图片）
-
-POST `/api/v1/ai/analyze-image-id/{image_id}`
-
-分析已上传的图片，生成标题、描述和标签。
-
-#### 路径参数
-
-| 参数 | 类型 | 描述 | 示例 |
-|---|---|---|---|
-| image_id | string | 图片的ID | 123 |
-
-#### 请求格式（图片ID）
-
-`multipart/form-data`
-
-#### 请求参数（图片ID）
-
-| 参数 | 类型 | 必填 | 描述 | 示例 |
-|---|---|---|---|---|
-| detail | string | 否 | 细节级别: low或high，默认为low | high |
-
-#### 响应示例（图片ID）
-
- 
-##### 成功响应 (200)（图片ID）
-
-```json
-{
-  "status": "success",
-  "code": 200,
-  "message": "图片分析成功",
-  "data": {
-    "title": "城市夜景",
-    "description": "繁华的城市夜景，高楼大厦林立，灯光璀璨",
-    "tags": ["城市", "夜景", "建筑", "灯光"],
-    "confidence": 0.88,
-    "analyzed_at": "2024-01-15T15:45:00"
-  },
-  "metadata": {
-    "model": "AI多模态模型",
-    "time_ms": 980
-  },
-  "error": null
-}
-```
-
- 
-##### 错误响应 (400)（图片ID）
-
-```json
-{
-  "status": "error",
-  "code": 400,
-  "message": "图片格式不支持",
-  "error": {
-    "code": "IMAGE_ANALYSIS_ERROR",
-    "message": "图片格式不支持"
-  }
-}
-```
-
- 
-##### 错误响应 (500)（图片ID）
-
-```json
-{
-  "status": "error",
-  "code": 500,
-  "message": "AI处理出错: 模型加载失败",
-  "error": {
-    "code": "AI_PROCESSING_ERROR",
-    "message": "AI处理出错: 模型加载失败"
-  }
-}
-```
+注：服务内部会在流式接口中自动追加 user/assistant 消息并维护会话；也可通过上述接口进行会话管理。
 
 ## 支持的图片格式与限制
 

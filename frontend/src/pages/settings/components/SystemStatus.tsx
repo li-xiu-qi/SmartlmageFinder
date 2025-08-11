@@ -150,7 +150,6 @@ const SystemStatus: React.FC<SystemStatusProps> = ({ systemStatus }) => {
               </Col>
             </Row>
             <div className="cache-info">
-              <p><strong>缓存状态:</strong> {getStatusBadge(systemStatus.cache.enabled ? 'enabled' : 'disabled')}</p>
               <p><strong>最大缓存 (GB):</strong> {systemStatus.cache.max_size_gb}</p>
               <p><strong>文本向量缓存大小:</strong> {systemStatus.cache.text_vector_cache.size_mb.toFixed(2)} MB {systemStatus.cache.text_vector_cache.db_file_size_mb !== undefined ? `(DB ${systemStatus.cache.text_vector_cache.db_file_size_mb} MB)` : ''}</p>
               <p><strong>图像向量缓存大小:</strong> {systemStatus.cache.image_vector_cache.size_mb.toFixed(2)} MB {systemStatus.cache.image_vector_cache.db_file_size_mb !== undefined ? `(DB ${systemStatus.cache.image_vector_cache.db_file_size_mb} MB)` : ''}</p>

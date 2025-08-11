@@ -70,10 +70,11 @@ SmartImageFinder 是一个现代化的智能图片搜索与管理系统，采用
 | 对话式推荐（一次性） | POST | `/api/v1/ai/recommend/chat` |
 | 对话式推荐（SSE流） | POST | `/api/v1/ai/recommend/chat/stream` |
 
-请求示例（流式推荐，默认端口 10050，可在 config.yaml 调整）：
+请求示例（流式推荐，端口以启动日志为准；也可通过环境变量 SIF_PORT 或根目录 start_config.yaml 配置）：
 
 ```bash
-curl -N -X POST http://localhost:10050/api/v1/ai/recommend/chat/stream \
+# 注意：将 8000 替换为你实际启动时显示的后端端口（或通过 SIF_PORT 指定）
+curl -N -X POST http://localhost:8000/api/v1/ai/recommend/chat/stream \
   -H "Content-Type: application/json" \
   -d '{
     "conversation_id": "demo-session-1",
@@ -194,6 +195,31 @@ npm run dev
 ```
 
 > 推荐手动安装依赖和模型，避免脚本自动安装时等待过久。
+
+### 端口与代理配置（重要）
+
+- 后端启动参数优先级：CLI > 环境变量 > 默认值。
+  - 支持 CLI：`python main.py --host 0.0.0.0 --port 8000 --reload`
+  - 环境变量：
+    - `SIF_HOST`（默认 `0.0.0.0`）
+    - `SIF_PORT`（默认 `8000`）
+    - `SIF_RELOAD`（`1/true` 启用热重载）
+- 前端开发服务器端口：
+  - `SIF_FRONTEND_PORT`（默认 `5173`），由 `frontend/vite.config.ts` 读取
+  - 前端到后端代理目标：`SIF_BACKEND_ORIGIN`（未设置则自动拼接为 `http://{SIF_HOST}:{SIF_PORT}`）
+- 一键启动脚本 `start.py` 会读取项目根目录可选文件 `start_config.yaml` 并设置上述环境变量，示例：
+
+```yaml
+# start_config.yaml 示例
+backend_host: 0.0.0.0
+backend_port: 10060
+reload: true
+frontend_port: 5176
+# 可选：显式指定前端代理到的后端地址
+backend_origin: http://localhost:10060
+```
+
+
 
 ## 应用场景
 

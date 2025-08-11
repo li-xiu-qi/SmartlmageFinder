@@ -115,17 +115,30 @@ async def root(request: Request):
     
 
 if __name__ == "__main__":
-    # 启动FastAPI应用（默认不启用热加载，除非显式传入 --reload 或设置环境变量 SIF_RELOAD=1）
+    # 启动FastAPI应用：优先级 CLI > 环境变量 > 默认值
     parser = argparse.ArgumentParser(description="Run SmartImageFinder API server")
+    parser.add_argument("--host", type=str, default=None, help="Host to bind (overrides env)")
+    parser.add_argument("--port", type=int, default=None, help="Port to bind (overrides env)")
     parser.add_argument("--reload", action="store_true", help="Enable hot reload (development mode)")
     args, _ = parser.parse_known_args()
 
-    reload_enabled = False
+    # 环境变量读取
+    env_host = os.getenv("SIF_HOST")
+    env_port = os.getenv("SIF_PORT")
+    env_reload = os.getenv("SIF_RELOAD")
+
+    # 解析得到最终值
+    host = args.host or env_host or "0.0.0.0"
+    try:
+        port = args.port or (int(env_port) if env_port else None) or 8000
+    except ValueError:
+        port = args.port or 8000
+    reload_enabled = args.reload or (str(env_reload).strip() in ("1", "true", "True"))
 
     uvicorn.run(
         "main:app",
-        host=settings.get_config().HOST,
-        port=settings.get_config().PORT,
+        host=host,
+        port=port,
         log_level="info",
         reload=reload_enabled,
     )

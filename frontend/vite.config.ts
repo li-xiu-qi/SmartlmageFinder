@@ -7,6 +7,10 @@ import { fileURLToPath } from 'url'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
+// 从环境变量获取可选的端口/后端代理地址（由 start.py 写入）
+const fePort = Number(process.env.SIF_FRONTEND_PORT) || 5173
+const backendOrigin = process.env.SIF_BACKEND_ORIGIN || `http://localhost:${process.env.SIF_PORT || 10050}`
+
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
@@ -31,16 +35,18 @@ export default defineConfig({
     },
   },
   server: {
+    port: fePort,
+    host: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:10050',
+        target: backendOrigin,
         changeOrigin: true,
         secure: false,
         timeout: 60000, // 60秒超时，适合AI推荐等长时间操作
       },
       // 直接代理 /static 以支持后端返回的 public_url=/static/images/xxx
       '/static': {
-        target: 'http://localhost:10050',
+        target: backendOrigin,
         changeOrigin: true,
         secure: false,
         timeout: 30000,

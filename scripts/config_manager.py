@@ -207,14 +207,12 @@ def configure_storage_settings(config_data: dict) -> dict:
     # 获取示例配置中的默认值
     default_upload_dir = config_data.get('UPLOAD_DIR', './data/images')
     default_cache_size = config_data.get('MAX_CACHE_SIZE_GB', 1.5)
-    default_use_cache = config_data.get('USE_CACHE', True)
     
     # 询问是否使用默认存储配置
     use_default = get_user_input(f"\n是否使用默认存储配置? (y/n)", "y").lower()
     if use_default in ["y", "yes", "是"]:
         print(f"✓ 使用默认上传目录: {default_upload_dir}")
         print(f"✓ 使用默认缓存大小: {default_cache_size}GB")
-        print(f"✓ 缓存启用状态: {'启用' if default_use_cache else '禁用'}")
         return config_data
     
     # 手动配置存储设置
@@ -229,12 +227,7 @@ def configure_storage_settings(config_data: dict) -> dict:
             config_data['MAX_CACHE_SIZE_GB'] = cache_size_float
     except ValueError:
         print("❌ 无效的缓存大小，使用默认值")
-    
-    use_cache_input = get_user_input(f"是否启用缓存? (y/n)", "y" if default_use_cache else "n").lower()
-    use_cache = use_cache_input in ["y", "yes", "是"]
-    if use_cache != default_use_cache:
-        config_data['USE_CACHE'] = use_cache
-    
+
     return config_data
 
 

@@ -41,6 +41,7 @@ GET `/api/v1/images/`
       "id": 1,
       "filename": "a.jpg",
       "filepath": "/uploads/a.jpg",
+      "public_url": "/static/uploads/a.jpg",
       "title": "示例",
       "description": "...",
       "file_size": 102400,
@@ -203,6 +204,7 @@ POST `/api/v1/images/batch-update`
   "id": 1,
   "filename": "a.jpg",
   "filepath": "/uploads/a.jpg",
+  "public_url": "/static/uploads/a.jpg",
   "title": "标题",
   "description": "描述",
   "file_size": 102400,
@@ -221,4 +223,4 @@ POST `/api/v1/images/batch-update`
 - 上传时 `metadata`/`tags` 在服务端统一转换为 JSON 存储；读取时统一解析为对象/数组。
 - 列表查询的标签过滤支持 `tags` 与 `tags[]` 两种形式，并支持混合输入与去重。
 - 删除接口会尝试删除磁盘文件，若文件缺失或权限不足，不影响数据库删除结果。
- 
+- `public_url` 为后端根据静态文件服务路径与反向代理前缀拼接生成的对外可访问地址，前端可直接用于 `<img src>` 加载。实际前缀可能因部署而异（例如 Nginx/Dev 代理），请以接口返回为准.

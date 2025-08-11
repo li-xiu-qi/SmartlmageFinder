@@ -35,6 +35,18 @@
 title, description, image
 ```
 
+## 0. 轻量模糊搜索 (LIKE)
+
+GET `/api/v1/search/fuzzy`
+
+| 参数 | 位置 | 类型 | 必填 | 说明 | 示例 |
+|------|------|------|------|------|------|
+| q | query | string | 是 | 模糊搜索关键字 | 日落 |
+| fields | query | string[] | 否 | 限定匹配字段: title,description,filename | title |
+| (过滤参数) | query | - | 否 | 同上 | - |
+
+说明：用于快速关键词粗筛；语义相关搜索请使用统一搜索 unified。
+
 ## 1. 统一文本搜索 (仅向量语义检索)
 
 GET `/api/v1/search/unified`
@@ -44,17 +56,18 @@ GET `/api/v1/search/unified`
 | q | string | 是 | 查询文本 | - |
 | search_type | 固定值 "vector" | 否 | 已统一，仅支持多向量语义检索 | vector |
 | vector_targets[] | string[] | 否 | 参与向量搜索的目标集合（白名单: title/description/image） | title,description,image |
+| weights | string(JSON) | 否 | 可选 JSON 字符串，指定各目标权重，如 {"title":1,"image":1} | - |
+| min_score | float | 否 | 最小得分过滤阈值（0~1），默认不启用 | - |
 
 ### 行为说明
  
 1. 已移除传统纯 LIKE 模式入口（请使用 /search/fuzzy）
 2. 当前仅提供 `search_type=vector`，对查询文本编码后做多向量检索（可指定部分维度）
 
-
 ### 示例
 
 ```http
-GET /api/v1/search/unified?q=黄昏海边散步的人&search_type=vector&vector_targets[]=title&vector_targets[]=image&limit=30
+GET /api/v1/search/unified?q=黄昏海边散步的人&search_type=vector&vector_targets[]=title&vector_targets[]=image&weights={"title":1,"image":1}&min_score=0.5&limit=30
 ```
 
 ## 2. 统一图片搜索 (上传图片 → 向量)
@@ -67,12 +80,14 @@ Content-Type: `multipart/form-data`
 |------|------|------|------|------|
 | file | file | 是 | 待查询图片 | sunset.jpg |
 | search_targets | string[] (form) | 否 | 参与检索的向量维度（白名单） | image,title |
+| weights | string(JSON, form) | 否 | 可选 JSON 字符串，指定各目标权重 | {"image":1} |
+| min_score | float (form) | 否 | 最小得分过滤阈值 | 0.2 |
 | (过滤参数) | form | 否 | 同上表 | - |
 
 示例 (cURL)：
 
 ```bash
-curl -F "file=@sunset.jpg" -F "search_targets=title" -F "search_targets=image" -F limit=10 http://localhost:8000/api/v1/search/unified/image
+curl -F "file=@sunset.jpg" -F "search_targets=title" -F "search_targets=image" -F "weights={\"image\":1}" -F "min_score=0.2" -F limit=10 http://localhost:8000/api/v1/search/unified/image
 ```
 
 ## 3. 统一向量搜索 (直接提供向量)
@@ -85,12 +100,14 @@ Content-Type: `application/x-www-form-urlencoded` 或 `multipart/form-data`
 |------|------|------|------|
 | query_embedding | float[] | 是 | 查询向量（维度需与模型一致） |
 | search_targets | string[] | 否 | 向量检索维度（默认全部） |
+| weights | string(JSON) | 否 | 可选 JSON 字符串，指定各目标权重 |
+| min_score | float | 否 | 最小得分过滤阈值 |
 | (过滤参数) | form | 否 | 同上 |
 
 示例：
 
 ```bash
-curl -X POST -F "query_embedding=0.12" -F "query_embedding= ... 多个数值 ..." -F "search_targets=title" http://localhost:8000/api/v1/search/unified/vector
+curl -X POST -F "query_embedding=0.12" -F "query_embedding= ... 多个数值 ..." -F "search_targets=title" -F "weights={\"title\":1}" -F "min_score=0.5" http://localhost:8000/api/v1/search/unified/vector
 ```
 
 ## 4. 相似图片搜索 (基于已有图片ID)
@@ -164,6 +181,7 @@ GET /api/v1/search/similar/123?vector_type=image&limit=30
 
 - 引入统一搜索 (unified) 端点，合并文本/图片/向量路径。
 - 新增向量目标白名单校验（防止非法表名注入）。
+- 新增 `weights` 与 `min_score` 参数；新增 `fuzzy` 模糊搜索端点。
 
 ---
 

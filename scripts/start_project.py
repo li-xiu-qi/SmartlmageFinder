@@ -331,23 +331,47 @@ class SmartImageFinderStarter:
             return '127.0.0.1', 8000
 
     def show_service_info(self):
-        """显示服务信息"""
+        """显示服务信息（优先读取环境变量）"""
         self.print_colored("\n" + "="*60, Colors.GREEN)
         self.print_colored("🎉 SmartImageFinder 服务启动成功！", Colors.GREEN)
         self.print_colored("="*60, Colors.GREEN)
-        
+
+        # 后端地址
+        host, port = self.get_backend_config()
+        env_host = os.getenv("SIF_HOST")
+        env_port = os.getenv("SIF_PORT")
+        if env_host:
+            host = env_host
+        if env_port:
+            try:
+                port = int(env_port)
+            except ValueError:
+                pass
+        backend_url = f"http://{host}:{port}"
+        if host == '0.0.0.0':
+            backend_url = f"http://localhost:{port}"
+
         if not self.frontend_only:
-            host, port = self.get_backend_config()
-            backend_url = f"http://{host}:{port}"
-            if host == '0.0.0.0':
-                backend_url = f"http://localhost:{port}"  # 当绑定所有网卡时，显示 localhost
             self.print_colored(f"🔗 后端API地址: {backend_url}", Colors.CYAN)
             self.print_colored(f"📖 API文档地址: {backend_url}/docs", Colors.CYAN)
-            
+            # 显示前端代理后端的目标（若配置）
+            proxy_origin = os.getenv("SIF_BACKEND_ORIGIN")
+            if not proxy_origin:
+                proxy_origin = backend_url
+            self.print_colored(f"🧩 前端代理后端: {proxy_origin}", Colors.CYAN)
+
+        # 前端地址
         if not self.backend_only:
-            self.print_colored("🌐 前端地址: http://localhost:5173", Colors.CYAN)
-            self.print_colored("📱 移动端访问: http://你的IP:5173", Colors.CYAN)
-            
+            fe_port = 5173
+            env_fe = os.getenv("SIF_FRONTEND_PORT")
+            if env_fe:
+                try:
+                    fe_port = int(env_fe)
+                except ValueError:
+                    pass
+            self.print_colored(f"🌐 前端地址: http://localhost:{fe_port}", Colors.CYAN)
+            self.print_colored(f"📱 移动端访问: http://你的IP:{fe_port}", Colors.CYAN)
+
         self.print_colored("="*60, Colors.GREEN)
         self.print_colored("💡 按 Ctrl+C 停止服务", Colors.YELLOW)
         self.print_colored("="*60, Colors.GREEN)
@@ -382,7 +406,7 @@ class SmartImageFinderStarter:
                 
             if not check_model_exists():
                 self.print_colored("⚠️ 模型文件不存在，请确保模型路径配置正确", Colors.YELLOW)
-
+        
         # 启动服务
         self.print_colored("\n🚀 启动服务...", Colors.BOLD)
         
@@ -396,7 +420,7 @@ class SmartImageFinderStarter:
         # 启动前端
         if not self.backend_only:
             frontend_started = self.start_frontend()
-
+ 
         # 显示服务信息并监控
         if backend_started or frontend_started:
             self.show_service_info()

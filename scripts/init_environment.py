@@ -97,10 +97,15 @@ def main():
     models_dir.mkdir(exist_ok=True)
     print(f"✓ 创建models目录: {models_dir}")
     
+    # 从模板配置中读取默认模型名（例如: org/repo）
+    default_model_name = str(config_data.get('MODEL_PATH', 'jinaai/jina-embeddings-v4')).strip()
+    selected_model_name = default_model_name
+
     model_path = None
     
     # 检查models目录下是否已存在模型
-    existing_models = list(models_dir.glob("*jina-embeddings-v4*"))
+    _repo_leaf = selected_model_name.split('/')[-1] if selected_model_name else 'jina-embeddings-v4'
+    existing_models = list(models_dir.glob(f"*{_repo_leaf}*"))
     if existing_models:
         print(f"\n发现models目录下已存在的模型: {existing_models[0]}")
         use_existing = get_user_input("是否使用现有模型? (y/n)", "y").lower()
@@ -127,15 +132,36 @@ def main():
                 else:
                     print(f"❌ 路径不存在: {custom_path}")
                     print("将改为下载模型...")
+        else:
+            # 选择下载模型，允许用户指定模型名（默认读取模板中的 MODEL_PATH）
+            user_model = get_user_input("请输入要下载的模型名 (ModelScope 仓库标识)", default_model_name).strip()
+            if user_model:
+                selected_model_name = user_model
+            # 更新用于本地已存在模型的再次匹配（若用户更改了模型名）
+            _repo_leaf = selected_model_name.split('/')[-1]
+            # 不在这里重新搜了，仅用于下载逻辑
     
     # 如果仍然没有模型路径，则下载模型
     if not model_path:
-        print("\n正在下载JINA EMBEDDINGS V4模型...")
-        model_path = download_model("jinaai/jina-embeddings-v4", str(models_dir))
+        print(f"\n正在下载模型: {selected_model_name} ...")
+        model_path = download_model(selected_model_name, str(models_dir))
 
         if not model_path:
             print("❌ 模型下载失败，脚本退出")
             return
+
+    # 6.1 询问并设置模型输出向量维度
+    try:
+        default_dim = int(config_data.get('EMBEDDING_DIMENSION', 2048))
+    except Exception:
+        default_dim = 2048
+    dim_input = get_user_input("请输入模型输出的向量维度 (整数)", str(default_dim)).strip()
+    try:
+        embed_dim = int(dim_input) if dim_input else default_dim
+    except ValueError:
+        print("❌ 无效的向量维度输入，使用默认值")
+        embed_dim = default_dim
+    config_data['EMBEDDING_DIMENSION'] = embed_dim
 
     # 7. 可选配置
     print("\n⚙️ 第7步：可选配置...")
