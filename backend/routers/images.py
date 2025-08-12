@@ -4,9 +4,13 @@
 import os
 import json
 import shutil
+import io
+import zipfile
+import tempfile
 from datetime import datetime
 from typing import List, Optional
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends, Query
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends, Query, BackgroundTasks
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from PIL import Image as PILImage
 
@@ -37,6 +41,97 @@ def _attach_public_url(image: dict) -> dict:
     if image and 'public_url' not in image:
         image['public_url'] = build_public_url(image.get('filepath') or '')
     return image
+
+
+# 导出所有图片为ZIP（单段路径）
+@router.get("/export-all")
+async def export_all_images(background_tasks: BackgroundTasks):
+    """将数据库中所有图片打包为一个ZIP并返回下载。
+
+    实现要点：
+    - 通过分页读取数据库，避免一次性加载所有记录。
+    - 使用临时文件写入ZIP，下载完成后自动删除临时文件。
+    - 对不存在或路径无效的文件进行跳过处理。
+    """
+    try:
+        image_repo = ImageRepository()
+
+        # 分页遍历所有图片
+        page = 1
+        page_size = 1000
+        all_file_entries = []  # (filepath, arcname)
+
+        while True:
+            images, total = image_repo.get_list(
+                page=page,
+                page_size=page_size,
+                sort_by="created_at",
+                order="asc",
+                filters={}
+            )
+
+            if not images:
+                break
+
+            for img in images:
+                fp = (img or {}).get('filepath') or ''
+                if not fp or not os.path.isfile(fp):
+                    continue
+                # 归档名：按相对上传目录/或文件名放根目录
+                arcname = os.path.basename(fp)
+                all_file_entries.append((fp, arcname))
+
+            # 终止条件
+            if page * page_size >= (total or 0):
+                break
+            page += 1
+
+        # 若没有可导出的文件
+        if not all_file_entries:
+            from ..global_schemas import ResponseModel
+            return ResponseModel.error(
+                code="NO_FILES_TO_EXPORT",
+                message="没有可导出的图片文件"
+            )
+
+        # 创建临时ZIP文件
+        tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".zip")
+        tmp_file_path = tmp_file.name
+        tmp_file.close()
+
+        # 写入ZIP（使用ZIP_DEFLATED）
+        with zipfile.ZipFile(tmp_file_path, 'w', compression=zipfile.ZIP_DEFLATED) as zipf:
+            for fp, arcname in all_file_entries:
+                try:
+                    zipf.write(fp, arcname)
+                except Exception as e:
+                    # 某个文件失败时跳过继续
+                    print(f"打包文件失败 {fp}: {e}")
+
+        # 下载完成后删除临时文件
+        def _cleanup_file(path: str):
+            try:
+                if os.path.exists(path):
+                    os.remove(path)
+            except Exception as e:
+                print(f"清理临时ZIP失败 {path}: {e}")
+
+        background_tasks.add_task(_cleanup_file, tmp_file_path)
+
+        # 生成下载文件名
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        download_name = f"all_images_{ts}.zip"
+        return FileResponse(
+            path=tmp_file_path,
+            media_type="application/zip",
+            filename=download_name
+        )
+    except Exception as e:
+        from ..global_schemas import ResponseModel
+        return ResponseModel.error(
+            code="EXPORT_ALL_IMAGES_ERROR",
+            message=f"导出所有图片失败: {str(e)}"
+        )
 
 @router.get("/")
 async def get_images_list(

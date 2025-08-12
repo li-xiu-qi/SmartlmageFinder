@@ -1,6 +1,6 @@
 import React from 'react';
 import { Radio, Space, Select, Button, Divider, Popconfirm } from 'antd';
-import { AppstoreOutlined, BarsOutlined, CheckSquareOutlined, DeleteOutlined } from '@ant-design/icons';
+import { AppstoreOutlined, BarsOutlined, CheckSquareOutlined, DeleteOutlined, DownloadOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
 
@@ -19,6 +19,8 @@ interface ViewControlsProps {
   onSelectAll?: () => void;
   onBatchDelete?: () => void;
   batchDeleting?: boolean;
+  // 导出全部
+  onExportAll?: () => void;
 }
 
 /**
@@ -35,7 +37,8 @@ const ViewControls: React.FC<ViewControlsProps> = ({
   onToggleMultiSelect,
   onSelectAll,
   onBatchDelete,
-  batchDeleting = false
+  batchDeleting = false,
+  onExportAll
 }) => {  return (
     <div className="view-controls" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
       <div>
@@ -47,6 +50,20 @@ const ViewControls: React.FC<ViewControlsProps> = ({
         )}
       </div>
       <Space>
+        {/* 导出全部图片（增加二次确认） */}
+        <Popconfirm
+          title="确定要导出全部图片吗？"
+          description="将把数据库中的所有图片打包为ZIP下载"
+          onConfirm={onExportAll}
+          okText="确定"
+          cancelText="取消"
+          disabled={!onExportAll || total === 0}
+        >
+          <Button icon={<DownloadOutlined />} disabled={total === 0}>
+            导出全部
+          </Button>
+        </Popconfirm>
+
         {/* 多选功能按钮 */}
         <Button
           type={multiSelectMode ? 'primary' : 'default'}

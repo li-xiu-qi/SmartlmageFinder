@@ -30,6 +30,16 @@ const ImagesPage: React.FC = () => {
   const [multiSelectMode, setMultiSelectMode] = useState(false);
   const [selectedImageIds, setSelectedImageIds] = useState<Set<number>>(new Set());
   const [batchDeleting, setBatchDeleting] = useState(false);
+  
+  // 导出全部 - 直接打开后端导出接口以触发浏览器下载
+  const handleExportAll = () => {
+    try {
+      // 直接访问相对路径，使用同域代理前缀 /api/v1
+      window.open('/api/v1/images/export-all', '_self');
+    } catch (e) {
+      message.error('导出失败');
+    }
+  };
 
   // 筛选条件
   const [filterValues, setFilterValues] = useState<GetImagesListParams>({});
@@ -277,7 +287,8 @@ const ImagesPage: React.FC = () => {
             loading={loading}
           />
         </Card>
-          <ViewControls
+        
+        <ViewControls
           total={total}
           viewMode={viewMode}
           gridColumns={gridColumns}
@@ -289,6 +300,7 @@ const ImagesPage: React.FC = () => {
           onSelectAll={handleSelectAll}
           onBatchDelete={handleBatchDelete}
           batchDeleting={batchDeleting}
+          onExportAll={handleExportAll}
         />
           <ImageList
           images={images}
