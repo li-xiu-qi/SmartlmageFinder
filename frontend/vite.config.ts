@@ -9,7 +9,19 @@ const __dirname = path.dirname(__filename)
 
 // 从环境变量获取可选的端口/后端代理地址（由 start.py 写入）
 const fePort = Number(process.env.SIF_FRONTEND_PORT) || 5173
-const backendOrigin = process.env.SIF_BACKEND_ORIGIN || `http://localhost:${process.env.SIF_PORT || 10050}`
+let backendOrigin = process.env.SIF_BACKEND_ORIGIN || `http://localhost:${process.env.SIF_PORT || 10050}`
+
+try {
+  const fePortStr = `:${fePort}`
+  if (backendOrigin.includes(fePortStr)) {
+    const corrected = `http://localhost:${process.env.SIF_PORT || 10050}`
+    console.warn(`[Vite] Detected backendOrigin referencing frontend port (${fePort}). Override to ${corrected}`)
+    backendOrigin = corrected
+  }
+} catch (_) {
+  // 忽略保护逻辑中的异常，保持默认行为
+}
+console.log(`[Vite] frontend port = ${fePort}, backend origin = ${backendOrigin}`)
 
 // https://vitejs.dev/config/
 export default defineConfig({
