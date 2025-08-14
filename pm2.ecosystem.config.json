@@ -1,15 +1,15 @@
 {
   "apps": [
     {
-      "name": "SmartImageFinder",
-      "cwd": "C:/Users/ke/Documents/projects/python_projects/SmartImageFinder",
+      "name": "SmartImager",
+      "cwd": "C:/Users/ke/Documents/projects/python_projects/SmartImager",
       "script": "start.py",
       "watch": false,
       "env": {
         "NODE_ENV": "development",
         "PYTHONUNBUFFERED": "1"
       },
-      "interpreter": "python",
+      "interpreter": "C:/Users/ke/miniconda3/envs/smart-image-finder/python.exe",
       "exec_mode": "fork",
       "detached": false,
       "windowsHide": true,

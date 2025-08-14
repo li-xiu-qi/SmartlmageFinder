@@ -3,7 +3,7 @@ VECTOR_DB_DRIVER_DIR: ./backend/config/files/vector_db_driver # 向量数据库�
 EMBEDDING_DIMENSION: 2048
 UPLOAD_DIR: ./data/images # 上传的图片存放目录
 TEMP_DIR: ./data/temp # 临时文件存放目录
-DB_PATH: ./data/db/smartimagefinder.db # 数据库路径
+DB_PATH: ./data/db/smartimager.db # 数据库路径
 TEXT_VECTOR_CACHE_DIR: ./data/caches/text_vector_cache
 IMAGE_VECTOR_CACHE_DIR: ./data/caches/image_vector_cache
 MAX_CACHE_SIZE_GB: 1.5

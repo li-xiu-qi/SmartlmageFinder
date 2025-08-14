@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-SmartImageFinder 环境检查模块
+SmartImager 环境检查模块
 提供环境状态检查功能
 """
 

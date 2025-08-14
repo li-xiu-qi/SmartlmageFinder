@@ -14,7 +14,7 @@ class AppConfig(BaseModel):
     EMBEDDING_DIMENSION: Optional[int] = None
     UPLOAD_DIR: str = "./data/images"
     TEMP_DIR: str = "./data/temp"  # 添加临时目录配置
-    DB_PATH: str = "./data/db/smartimagefinder.db"
+    DB_PATH: str = "./data/db/smartimager.db"
     TEXT_VECTOR_CACHE_DIR: str = "./data/caches/text_vector_cache"
     IMAGE_VECTOR_CACHE_DIR: str = "./data/caches/image_vector_cache"
     MAX_CACHE_SIZE_GB: float = 1.5

@@ -36,6 +36,15 @@ def init_db():
             print(f"致命错误: 向量扩展验证失败: {ver}")
             raise SystemExit(1)
         
+        # 优化并发读：启用 WAL 日志模式与合适的同步级别（幂等设置）
+        try:
+            cursor.execute("PRAGMA journal_mode=WAL;")
+            cursor.execute("PRAGMA synchronous=NORMAL;")
+            print("已设置 PRAGMA journal_mode=WAL, synchronous=NORMAL")
+        except Exception as e:
+            # PRAGMA 失败不影响主流程（例如某些环境不支持 WAL）
+            print(f"设置 WAL 失败: {e}")
+        
         # 获取向量维度
         embedding_dim = get_embedding_dimension()
         
@@ -87,6 +96,31 @@ def init_db():
             print(f"创建向量表成功，向量维度: {embedding_dim}")
         except Exception as e:
             print(f"创建向量表失败: {e}")
+
+        # 修复：若存在历史迁移遗留的 vec0 影子表名（如 image_vectors_new_chunks），统一重命名回标准名
+        # 目标：{base}_new_* -> {base}_*
+        try:
+            for base in ("title_vectors", "description_vectors", "image_vectors"):
+                cursor.execute(
+                    "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE ?",
+                    (f"{base}_new_%",),
+                )
+                rows = cursor.fetchall()
+                for r in rows:
+                    old_name = r[0] if not isinstance(r, sqlite3.Row) else r["name"]
+                    prefix = f"{base}_new_"
+                    if old_name.startswith(prefix):
+                        tail = old_name[len(prefix):]
+                        new_name = f"{base}_{tail}"
+                        try:
+                            cursor.execute(f"ALTER TABLE {old_name} RENAME TO {new_name}")
+                            print(f"修复影子表: {old_name} -> {new_name}")
+                        except Exception:
+                            # 若重命名失败（目标已存在或非影子表），跳过
+                            pass
+        except Exception:
+            # 修复逻辑失败不影响主流程
+            pass
         
         # 创建索引
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_images_created_at ON images(created_at)')

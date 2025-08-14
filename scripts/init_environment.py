@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-SmartImageFinder 环境初始化模块
+SmartImager 环境初始化模块
 负责完整的环境初始化流程
 """
 
@@ -23,7 +23,7 @@ from config_manager import (
 def main():
     """主函数"""
     print("=" * 60)
-    print("      SmartImageFinder 环境初始化脚本")
+    print("      SmartImager 环境初始化脚本")
     print("=" * 60)
     print("\n🚀 此脚本将为您完成以下工作：")
     print("   1. 检查运行环境 (Python, Node.js, npm)")

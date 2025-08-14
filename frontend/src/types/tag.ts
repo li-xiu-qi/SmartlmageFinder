@@ -1,6 +1,6 @@
-// filepath: c:\Users\k\Documents\project\programming_project\python_project\importance\SmartImageFinder\frontend\src\types\tag.ts
+// filepath: c:\Users\ke\Documents\projects\python_projects\SmartImager\frontend\src\types\tag.ts
 /**
- * SmartImageFinder 标签管理功能相关类型定义
+ * SmartImager 标签管理功能相关类型定义
  * 基于标签管理 API 文档
  */
 

@@ -1,6 +1,6 @@
 <div align="center">
-  <img src="assets/logo/logo.png" alt="SmartImageFinder Logo" width="200">
-  <h1>SmartImageFinder</h1>
+  <img src="assets/logo/logo.png" alt="SmartImager Logo" width="200">
+  <h1>SmartImager</h1>
 
   <p>Intelligent Image Search / Management & AI Conversational Recommendation System</p>
 
@@ -20,7 +20,7 @@
 
 ## Project Overview
 
-SmartImageFinder is a modern intelligent image search and management system, built with a lightweight integrated FastAPI backend and React frontend. It features vector semantic retrieval, image-to-image search, fuzzy search, and conversational AI recommendations. The default multimodal/text-unified vector model is now upgraded to Jina Embeddings v4 (replacing the original Jina CLIP V2), providing higher quality semantic representations.
+SmartImager is a modern intelligent image search and management system, built with a lightweight integrated FastAPI backend and React frontend. It features vector semantic retrieval, image-to-image search, fuzzy search, and conversational AI recommendations. The default multimodal/text-unified vector model is now upgraded to Jina Embeddings v4 (replacing the original Jina CLIP V2), providing higher quality semantic representations.
 
 ## 🏗️ System Architecture
 
@@ -266,7 +266,7 @@ backend_origin: http://localhost:10060
 ## 📁 Project Structure
 
 ```
-SmartImageFinder/
+SmartImager/
 ├── backend/                       # Backend main service (API, DB, AI recommendation, etc.)
 │   ├── routers/                   # Routers (images/tags/search/metadata, etc.)
 │   ├── db_func/                   # DB and vector operations
@@ -308,7 +308,7 @@ MODEL_PATH: ./models/jina-embeddings-v4  # New model path (old: ./models/yizhixi
 VECTOR_DB_DRIVER_DIR: ./backend/config/files/vector_db_driver  # Vector DB driver dir
 EMBEDDING_DIMENSION: 2048  # Vector dimension (compatible with old model)
 UPLOAD_DIR: ./data/images  # Image upload dir
-DB_PATH: ./data/db/smartimagefinder.db  # DB path
+DB_PATH: ./data/db/smartimager.db  # DB path
 HOST: 0.0.0.0  # Service listen address
 PORT: 10050  # Service port (default)
 ```

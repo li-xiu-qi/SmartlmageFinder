@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-SmartImageFinder 模型管理模块
+SmartImager 模型管理模块
 负责模型下载和管理
 """
 

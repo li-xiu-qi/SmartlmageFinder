@@ -1,4 +1,4 @@
-# SmartImageFinder 启动脚本
+# SmartImager 启动脚本
 
 ## 使用方法
 

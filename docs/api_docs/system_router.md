@@ -27,7 +27,7 @@ GET `/api/v1/system/info`
   "code": 200,
   "message": "操作成功",
   "data": {
-    "name": "SmartImageFinder",
+    "name": "SmartImager",
     "version": "1.0.0",
     "description": "智能图片搜索和管理系统",
     "uptime": "2天3小时15分钟"

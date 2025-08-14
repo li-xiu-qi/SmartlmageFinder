@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-SmartImageFinder 启动脚本模块
+SmartImager 启动脚本模块
 提供统一的启动入口
 """
 

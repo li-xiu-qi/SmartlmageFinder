@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-SmartImageFinder 配置管理模块
+SmartImager 配置管理模块
 负责配置文件的创建和管理
 """
 
@@ -46,7 +46,7 @@ def create_config_file(base_path: Path, config_data: dict, model_path: str):
     config_data['VECTOR_DB_DRIVER_DIR'] = "./backend/config/files/vector_db_driver"
     config_data['UPLOAD_DIR'] = "./data/images"
     config_data['TEMP_DIR'] = "./data/temp"
-    config_data['DB_PATH'] = "./data/db/smartimagefinder.db"
+    config_data['DB_PATH'] = "./data/db/smartimager.db"
     config_data['TEXT_VECTOR_CACHE_DIR'] = "./data/caches/text_vector_cache"
     config_data['IMAGE_VECTOR_CACHE_DIR'] = "./data/caches/image_vector_cache"
 
@@ -265,7 +265,7 @@ def configure_port_settings(config_data: dict) -> dict:
 def configure_all_settings(config_data: dict) -> dict:
     """配置所有设置的主函数"""
     print("\n" + "=" * 50)
-    print("   SmartImageFinder 配置向导")
+    print("   SmartImager 配置向导")
     print("=" * 50)
     print("我们将引导您完成配置过程。对于每个设置，您可以选择:")
     print("- 使用示例配置的默认值 (推荐)")

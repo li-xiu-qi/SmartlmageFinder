@@ -1,8 +1,8 @@
-# SmartImageFinder API 文档
+# SmartImager API 文档
 
 ## 简介
 
-SmartImageFinder是一个智能图片管理和搜索系统，提供了一系列API用于图片上传、管理、搜索和分析。本文档提供了系统中所有可用API端点的详细说明。
+SmartImager是一个智能图片管理和搜索系统，提供了一系列API用于图片上传、管理、搜索和分析。本文档提供了系统中所有可用API端点的详细说明。
 
 ## API 概览
 

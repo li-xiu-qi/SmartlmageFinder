@@ -6,5 +6,5 @@ old_model_path: "./models/jina-clip-v2"      # 旧模型路径 (实际当前在�
 old_embedding_dim: 1024                      # 旧模型向量维度
 new_model_path: "./models/jina-embeddings-v4"  # 新模型路径 (将要迁移到的)
 new_embedding_dim: 2048                      # 新模型向量维度（也会自动检测校验）
-db_path: "./data/db/smartimagefinder.db"       # 可选: 覆盖主配置 DB 路径
+db_path: "./data/db/smartimager.db"       # 可选: 覆盖主配置 DB 路径
 batch_size: 64                                # 批处理大小

@@ -5,9 +5,9 @@
 脚本：`migrate_embeddings.py`（项目根目录）  
 配置：`backend/config/files/migration.yaml`
 
-> ⚠️ 强制前置条件：执行迁移前必须停止后端服务（尤其是任何仍在写入 / 查询同一 SQLite 数据库的进程）。否则可能出现锁冲突、写入竞态或维度不一致风险。建议：
+> 强制前置条件：执行迁移前必须停止后端服务（尤其是任何仍在写入 / 查询同一 SQLite 数据库的进程）。否则可能出现锁冲突、写入竞态或维度不一致风险。建议：
 >
-> 1. 备份数据库：`copy data\db\smartimagefinder.db data\db\smartimagefinder.db.bak` (Windows) / `cp data/db/smartimagefinder.db data/db/smartimagefinder.db.bak` (Linux/Mac)
+> 1. 备份数据库：`copy data\db\smartimager.db data\db\smartimager.db.bak` (Windows) / `cp data/db/smartimager.db data/db/smartimager.db.bak` (Linux/Mac)
 > 2. 确认后端（API / 任务调度 / 索引构建）全部停止
 > 3. 再启动迁移脚本
 
@@ -20,7 +20,7 @@ old_model_path: "./models/jina-embeddings-v4"   # 旧模型，可留空（仅记
 old_embedding_dim: 2048                         # 旧向量维度，可留空
 new_model_path: "./models/jina-clip-v2"        # 新模型，必填
 new_embedding_dim: 1024                         # 可留空；留空则自动探测
-db_path: "./data/db/smartimagefinder.db"       # 可选；不写则使用主配置 DB_PATH
+db_path: "./data/db/smartimager.db"       # 可选；不写则使用主配置 DB_PATH
 batch_size: 64                                  # 可选；默认 64
 ```
 

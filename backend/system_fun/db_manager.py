@@ -46,11 +46,11 @@ def get_image_statistics(conn: sqlite3.Connection) -> Tuple[int, int]:
 def get_tag_count(conn: sqlite3.Connection) -> int:
     """获取标签总数"""
     try:
-        # 使用新的仓库模式获取全部标签
-        from ..db_func.repositories.tags import TagRepository
-        repo = TagRepository(conn)
-        all_tags = repo.get_all_tags()
-        return len(all_tags)
+        # 轻量化统计：仅统计有标签的图片行数，避免全表 JSON 解析
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) AS cnt FROM images WHERE tags IS NOT NULL AND tags != '[]'")
+        row = cursor.fetchone()
+        return (row_to_dict(row).get('cnt') or 0) if row else 0
     except Exception as e:
         print(f"获取标签数量失败: {e}")
         return 0
@@ -94,12 +94,22 @@ def get_database_info(conn: Optional[sqlite3.Connection] = None) -> Dict[str, An
 
     try:
         config = settings.get_config()
+        print("[db_info] start")
         
-        # 获取各项统计信息
+        # 获取各项统计信息（分步打印，便于定位阻塞点）
+        print("[db_info] images stats ...")
         image_count, total_size = get_image_statistics(conn)
+        
+        print("[db_info] tags count ...")
         tag_count = get_tag_count(conn)
+        
+        print("[db_info] vector status ...")
         vector_status = check_vector_db_status(conn)
+        
+        print("[db_info] sqlite version ...")
         db_version = get_db_version(conn)
+        
+        print("[db_info] done")
         
         db_status = "connected"
         

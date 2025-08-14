@@ -259,7 +259,7 @@ const SettingsPage: React.FC = () => {
               <SettingOutlined /> 系统设置
             </Title>
             <Paragraph type="secondary">
-              配置 SmartImageFinder 的各项参数，修改后点击"保存设置"按钮生效。部分设置项可能需要重启系统才能生效。
+              配置 SmartImager 的各项参数，修改后点击"保存设置"按钮生效。部分设置项可能需要重启系统才能生效。
             </Paragraph>
           </Card>
         </Col>

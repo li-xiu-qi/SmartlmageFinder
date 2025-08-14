@@ -23,8 +23,8 @@ initialize_connection_pool(db_path, max_connections=20)  # 设置最大连接数
 
 # 创建FastAPI应用
 app = FastAPI(
-    title="SmartImageFinder API",
-    description="SmartImageFinder API for image search and analysis",
+    title="SmartImager API",
+    description="SmartImager API for image search and analysis",
     version="1.0.0",
 )
 
@@ -96,7 +96,7 @@ async def api_root():
     return {
         "status": "success",
         "data": {
-            "message": "欢迎使用SmartImageFinder API",
+            "message": "欢迎使用SmartImager API",
             "version": "1.0.0",
         },
         "error": None,
@@ -116,7 +116,7 @@ async def root(request: Request):
 
 if __name__ == "__main__":
     # 启动FastAPI应用：优先级 CLI > 环境变量 > 默认值
-    parser = argparse.ArgumentParser(description="Run SmartImageFinder API server")
+    parser = argparse.ArgumentParser(description="Run SmartImager API server")
     parser.add_argument("--host", type=str, default=None, help="Host to bind (overrides env)")
     parser.add_argument("--port", type=int, default=None, help="Port to bind (overrides env)")
     parser.add_argument("--reload", action="store_true", help="Enable hot reload (development mode)")

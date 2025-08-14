@@ -109,6 +109,24 @@ def atomic_switch(conn: sqlite3.Connection, suffix: str):
             cur.execute(f"DROP TABLE IF EXISTS {base}")
         for base in VEC_TABLES:
             cur.execute(f"ALTER TABLE {base}{suffix} RENAME TO {base}")
+        # 同步重命名 vec0 影子表（如 *_chunks 等），避免扩展在查询时引用不到
+        # 将 {base}{suffix}_* 重命名为 {base}_*
+        for base in VEC_TABLES:
+            # 查询所有与当前 base 对应且带有后缀的影子表
+            cur.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE ?",
+                (f"{base}{suffix}_%",),
+            )
+            rows = cur.fetchall()
+            # 逐个重命名为去除后缀后的规范名
+            for r in rows:
+                old_name = r[0] if not isinstance(r, sqlite3.Row) else r["name"]
+                # 仅在名称以 {base}{suffix}_ 前缀时处理
+                prefix = f"{base}{suffix}_"
+                if old_name.startswith(prefix):
+                    tail = old_name[len(prefix):]
+                    new_name = f"{base}_{tail}"
+                    cur.execute(f"ALTER TABLE {old_name} RENAME TO {new_name}")
         cur.execute("COMMIT")
     except Exception:
         cur.execute("ROLLBACK")

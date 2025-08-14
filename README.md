@@ -1,6 +1,6 @@
 <div align="center">
-  <img src="assets/logo/logo.png" alt="SmartImageFinder Logo" width="200">
-  <h1>SmartImageFinder</h1>
+  <img src="assets/logo/logo.png" alt="SmartImager Logo" width="200">
+  <h1>SmartImager</h1>
 
   <p>智能图片搜索 / 管理与 AI 对话式推荐系统</p>
 
@@ -20,7 +20,7 @@
 
 ## 项目概述
 
-SmartImageFinder 是一个现代化的智能图片搜索与管理系统，采用轻量一体化 FastAPI 后端 + React 前端架构，集成向量语义检索、以图搜图、模糊检索与对话式 AI 推荐。当前默认内置多模态/文本统一向量模型已升级为 Jina Embeddings v4（替代原 Jina CLIP V2），提供更高质量的语义表示。
+SmartImager 是一个现代化的智能图片搜索与管理系统，采用轻量一体化 FastAPI 后端 + React 前端架构，集成向量语义检索、以图搜图、模糊检索与对话式 AI 推荐。当前默认内置多模态/文本统一向量模型已升级为 Jina Embeddings v4（替代原 Jina CLIP V2），提供更高质量的语义表示。
 
 ## 🏗️ 系统架构
 
@@ -268,7 +268,7 @@ backend_origin: http://localhost:10060
 ## 📁 项目结构
 
 ```
-SmartImageFinder/
+SmartImager/
 ├── backend/                       # 后端主服务（API、数据库、AI推荐等）
 │   ├── routers/                   # 路由模块（images/tags/search/metadata等）
 │   ├── db_func/                   # 数据库与向量相关操作
@@ -310,7 +310,7 @@ MODEL_PATH: ./models/jina-embeddings-v4  # 新模型路径 (原: ./models/yizhix
 VECTOR_DB_DRIVER_DIR: ./backend/config/files/vector_db_driver  # 向量数据库驱动目录
 EMBEDDING_DIMENSION: 2048  # 向量维度（与原模型保持兼容）
 UPLOAD_DIR: ./data/images  # 图片上传目录
-DB_PATH: ./data/db/smartimagefinder.db  # 数据库路径
+DB_PATH: ./data/db/smartimager.db  # 数据库路径
 HOST: 0.0.0.0  # 服务监听地址
 PORT: 10050  # 服务端口（默认）
 ```

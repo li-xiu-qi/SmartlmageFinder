@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-SmartImageFinder 项目启动模块
+SmartImager 项目启动模块
 负责启动前后端服务
 """
 
@@ -44,7 +44,7 @@ class LogLevel:
     OTHER = "other"
 
 
-class SmartImageFinderStarter:
+class SmartImagerStarter:
     def __init__(self, backend_only: bool = False, frontend_only: bool = False, reload: bool = False):
         self.base_path = Path(__file__).parent.parent.absolute()
         self.backend_process: Optional[subprocess.Popen] = None
@@ -68,7 +68,7 @@ class SmartImageFinderStarter:
         """打印启动横幅"""
         banner = """
 ╔══════════════════════════════════════════════════════════════╗
-║                    SmartImageFinder 启动器                    ║
+║                      SmartImager 启动器                      ║
 ║                                                              ║
 ║          🚀 智能图片搜索系统 - 快速启动服务                      ║
 ╚══════════════════════════════════════════════════════════════╝
@@ -333,7 +333,7 @@ class SmartImageFinderStarter:
     def show_service_info(self):
         """显示服务信息（优先读取环境变量）"""
         self.print_colored("\n" + "="*60, Colors.GREEN)
-        self.print_colored("🎉 SmartImageFinder 服务启动成功！", Colors.GREEN)
+        self.print_colored("🎉 SmartImager 服务启动成功！", Colors.GREEN)
         self.print_colored("="*60, Colors.GREEN)
 
         # 后端地址
@@ -438,7 +438,7 @@ class SmartImageFinderStarter:
 
 def parse_arguments():
     """解析命令行参数"""
-    parser = argparse.ArgumentParser(description="SmartImageFinder 项目启动脚本")
+    parser = argparse.ArgumentParser(description="SmartImager 项目启动脚本")
     parser.add_argument("--backend-only", action="store_true", help="仅启动后端服务")
     parser.add_argument("--frontend-only", action="store_true", help="仅启动前端服务")
     parser.add_argument("--reload", action="store_true", help="启用后端热加载 (开发模式)")
@@ -450,7 +450,7 @@ def main():
     """主函数"""
     args = parse_arguments()
     
-    starter = SmartImageFinderStarter(
+    starter = SmartImagerStarter(
         backend_only=args.backend_only,
         frontend_only=args.frontend_only,
         reload=args.reload,

@@ -53,7 +53,7 @@ const MainHeader: React.FC<MainHeaderProps> = ({ collapsed, toggleCollapse, syst
           className: 'trigger',
           onClick: toggleCollapse,
         })}
-        <h1>SmartImageFinder</h1>
+        <h1>SmartImager</h1>
       </div>
       
       <div className="header-search">
