@@ -28,7 +28,6 @@ def _process_tags(tags: Optional[List[str]]) -> Optional[List[str]]:
     return list(set(processed_tags))
 
 def build_filters(
-    filename: Optional[str] = None,
     title: Optional[str] = None,
     description: Optional[str] = None,
     tags: Optional[List[str]] = None,
@@ -52,8 +51,7 @@ def build_filters(
         Dict[str, Any]: 过滤条件字典
     """
     filters = {}
-    if filename:
-        filters["filename"] = filename
+    # 注意：搜索模块不再接收 filename 作为过滤项（文件名的模糊匹配由 fuzzy 搜索负责）
     if title:
         filters["title"] = title
     if description:

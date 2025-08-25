@@ -102,9 +102,7 @@ const TextSearchForm: React.FC<TextSearchFormProps> = ({ onSearch, loading, tags
       params.tags = values.tags;
     }
 
-    if (values.filename) {
-      params.filename = values.filename;
-    }
+  // filename 字段已移除：由模糊搜索处理文件名匹配，统一搜索不再设置 filename
 
     if (values.date_range && values.date_range.length === 2) {
       const startDate = new Date(values.date_range[0]);
@@ -212,12 +210,7 @@ const TextSearchForm: React.FC<TextSearchFormProps> = ({ onSearch, loading, tags
             </Form.Item>
           </Col>
         </Row>
-        <Form.Item
-          name="filename"
-          label="文件名包含"
-        >
-          <Input placeholder="输入文件名关键词" />
-        </Form.Item>
+  {/* filename 字段已移除：使用模糊搜索处理文件名匹配 */}
         <Divider />
         <Button type="link" style={{ paddingLeft: 0 }} onClick={() => setShowAdvanced(s => !s)}>
           {showAdvanced ? '收起融合参数' : '展开融合参数 (权重 / 最小得分)'}

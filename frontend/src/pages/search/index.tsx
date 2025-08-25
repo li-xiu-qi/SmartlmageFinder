@@ -110,7 +110,6 @@ const SearchPage: React.FC = () => {
           tags: params.tags ? formatTagsForParam(params.tags) : undefined,
           start_date: params.start_date,
           end_date: params.end_date,
-          filename: params.filename,
           tab: 'text'
         });
       } else {
@@ -143,7 +142,6 @@ const SearchPage: React.FC = () => {
           tags: params.tags ? formatTagsForParam(params.tags) : undefined,
           start_date: params.start_date,
           end_date: params.end_date,
-          filename: params.filename,
           tab: 'image'
         });
       } else {

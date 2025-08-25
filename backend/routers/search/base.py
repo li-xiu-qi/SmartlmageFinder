@@ -24,7 +24,6 @@ class CommonFilterParams:
     """定义共用的过滤参数"""
     def __init__(
         self,
-        filename: Optional[str] = None,
         title: Optional[str] = None,
         description: Optional[str] = None,
         tags: Optional[List[str]] = None,
@@ -33,11 +32,10 @@ class CommonFilterParams:
         limit: int = 20,
         offset: int = 0,
     ):
-        print("CommonFilterParams目前接收到的tags:",tags)
-        # 打印tags的数据类型
-        print("tags的数据类型：",type(tags))
-        
-        self.filename = filename
+        # 打印 tags 的信息用于调试（保留）
+        print("CommonFilterParams目前接收到的tags:", tags)
+        print("tags的数据类型：", type(tags))
+
         self.title = title
         self.description = description
         self.tags = tags
@@ -59,7 +57,6 @@ class CommonFilterParams:
 
 # 定义通用的查询参数依赖项
 def get_query_filter_params(
-    filename: Optional[str] = Query(None, description="按文件名过滤"),
     title: Optional[str] = Query(None, description="按标题过滤"),
     description: Optional[str] = Query(None, description="按描述过滤"),
     tags: Optional[List[str]] = Query(None, description="按标签过滤 (支持逗号分隔或多值)"),
@@ -86,18 +83,16 @@ def get_query_filter_params(
             merged_tags = list(set(merged))
 
     return CommonFilterParams(
-        filename=filename,
-        title=title,
-        description=description,
-        tags=merged_tags,
-        start_date=start_date,
-        end_date=end_date,
-        limit=limit,
-        offset=offset
+    title=title,
+    description=description,
+    tags=merged_tags,
+    start_date=start_date,
+    end_date=end_date,
+    limit=limit,
+    offset=offset
     )
 
 def get_form_filter_params(
-    filename: Optional[str] = Form(None, description="按文件名过滤"),
     tags: Optional[List[str]] = Form(None, description="按标签过滤"),
     start_date: Optional[str] = Form(None, description="开始日期 (YYYY-MM-DD HH:MM:SS)"),
     end_date: Optional[str] = Form(None, description="结束日期 (YYYY-MM-DD HH:MM:SS)"),
@@ -106,7 +101,6 @@ def get_form_filter_params(
 ) -> CommonFilterParams:
     """获取通用的查询过滤参数，用于POST请求的表单"""
     return CommonFilterParams(
-        filename=filename,
         tags=tags,
         start_date=start_date,
         end_date=end_date,
