@@ -47,7 +47,6 @@ class CommonFilterParams:
     def build_filters(self) -> Dict[str, Any]:
         """构建过滤条件字典"""
         return build_filters(
-            filename=self.filename,
             title=self.title,
             description=self.description,
             tags=self.tags,
