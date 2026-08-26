@@ -15,6 +15,9 @@ from ..system_fun.config_manager import get_frontend_config, update_system_confi
 from ..system_fun.db_manager import get_database_info, get_storage_info
 from ..system_fun.runtime_manager import get_runtime_info, get_system_info
 
+# 导入向量能力
+from ..vector_engine.capability import get_vector_status
+
 # 创建主路由
 router = APIRouter(prefix="/api/v1/system", tags=["system"])
 
@@ -117,3 +120,10 @@ async def get_vector_db_driver_status():
     """获取向量数据库驱动状态信息"""
     driver_status = check_vector_db_driver_status()
     return ResponseModel.success(data=driver_status)
+
+
+@router.get("/vector-status")
+async def get_vector_engine_status():
+    """获取向量引擎完整状态（驱动 + 模型 + 综合能力）"""
+    status = get_vector_status(force_refresh=True)
+    return ResponseModel.success(data=status.to_dict())

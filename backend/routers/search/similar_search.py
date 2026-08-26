@@ -7,6 +7,9 @@ from ...db_func.core.connection import get_db
 # 导入响应模型
 from ...global_schemas import ResponseModel
 
+# 导入向量能力门
+from ...vector_engine.capability import is_vector_enabled
+
 # 导入搜索功能模块
 from ...db_func.repositories.search import SearchRepository
 
@@ -26,6 +29,14 @@ async def similar_image_search(
     """
     根据已有图像ID查找相似图像，使用指定的单一向量类型进行搜索。
     """
+    # 向量能力门控
+    if not is_vector_enabled():
+        return ResponseModel.error(
+            code="VECTOR_ENGINE_UNAVAILABLE",
+            message="相似图片搜索不可用：向量模型或 sqlite-vec 扩展未配置。",
+            http_code=503,
+        )
+
     # 构建过滤条件
     filters = filter_params.build_filters()
         

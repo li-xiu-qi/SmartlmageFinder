@@ -17,7 +17,7 @@ model_loading = False  # 添加加载状态标志
 
 
 def load_model():
-    """加载设置中指定的SentenceTransformer模型并获取向量维度。优先使用CUDA。"""
+    """加载设置中指定的SentenceTransformer模型（非致命：失败返回 None）"""
     global model, embedding_dimension, model_loading
     
     # 如果模型已经加载，直接返回
@@ -29,22 +29,37 @@ def load_model():
         import time
         print("模型正在加载中，等待...")
         while model_loading and model is None:
-            time.sleep(0.1)  # 等待100ms后再检查
+            time.sleep(0.1)
         return model
     
     # 设置加载状态
     model_loading = True
     try:
         config = settings.get_config()
-        
+        model_path = getattr(config, 'MODEL_PATH', None)
+        if not model_path:
+            print("警告: MODEL_PATH 未配置，模型不可用")
+            return None
+
+        # 解析为绝对路径
+        import os
+        if not os.path.isabs(model_path):
+            model_path = os.path.normpath(os.path.join(
+                os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))),
+                model_path.lstrip("./")
+            ))
+        if not os.path.isdir(model_path):
+            print(f"警告: 模型目录不存在: {model_path}，向量功能不可用")
+            return None
+
         # 判断是否有可用的CUDA设备
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
         print(f"正在使用设备: {device}")
         
-        print(f"正在加载模型: {config.MODEL_PATH}")
+        print(f"正在加载模型: {model_path}")
         try:
             model = SentenceTransformer(
-                config.MODEL_PATH,
+                model_path,
                 trust_remote_code=True,
                 device=device,
                 model_kwargs={'default_task': 'retrieval'}
@@ -53,7 +68,7 @@ def load_model():
             if 'default_task' in str(e):
                 print("模型不接受 default_task 参数，使用兼容加载方式")
                 model = SentenceTransformer(
-                    config.MODEL_PATH,
+                    model_path,
                     trust_remote_code=True,
                     device=device
                 )
@@ -66,7 +81,6 @@ def load_model():
         except Exception:
             embedding_dimension = None
         if not embedding_dimension:
-            # 回退：通过一次 encode 探测维度
             try:
                 probe = model.encode(["_dim_probe_"], normalize_embeddings=True, show_progress_bar=False)
             except TypeError:
@@ -80,15 +94,19 @@ def load_model():
                 print(f"无法探测维度，使用配置回退: {fallback}")
                 embedding_dimension = fallback
         print(f"模型加载成功，向量维度: {embedding_dimension}")
-            
-    finally:
-        # 无论成功还是失败，都要重置加载状态
-        model_loading = False
-    
-    return model
+        return model
 
-def get_model() -> SentenceTransformer:
-    """返回加载的模型实例，如果需要就加载模型"""
+    except ImportError as e:
+        print(f"警告: 模型依赖缺失 ({e})，向量功能不可用")
+        return None
+    except Exception as e:
+        print(f"警告: 模型加载失败 ({e})，向量功能不可用")
+        return None
+    finally:
+        model_loading = False
+
+def get_model():
+    """返回加载的模型实例（可能为 None）"""
     global model
     if model is None:
         load_model()
@@ -96,13 +114,11 @@ def get_model() -> SentenceTransformer:
 
 
 def get_embedding_dimension() -> int:
-    """返回向量维度"""
+    """返回向量维度（模型不可用时返回配置值或 0）"""
     global embedding_dimension, model
-    # 如果模型未加载，先加载模型
-    if model is None:
+    if model is None and not model_loading:
         load_model()
-
-    return embedding_dimension
+    return embedding_dimension or 0
 
 
 def encode_text(text: Union[str, List[str]], cache_dir=None) -> np.ndarray:
@@ -125,6 +141,8 @@ def encode_text(text: Union[str, List[str]], cache_dir=None) -> np.ndarray:
 
     # 缓存未命中，计算向量
     model_instance = get_model()
+    if model_instance is None:
+        raise RuntimeError("向量模型未加载，语义搜索不可用。请检查模型是否已下载。")
     # encode方法会自动处理设备，结果默认返回numpy数组(在CPU上)
     # 添加 task 参数以确保兼容性
     try:
@@ -160,6 +178,8 @@ def encode_image(
 
     # 缓存未命中，计算向量
     model_instance = get_model()
+    if model_instance is None:
+        raise RuntimeError("向量模型未加载，语义搜索不可用。请检查模型是否已下载。")
     # 处理单个PIL图像或路径
     if isinstance(image_input, (Image.Image, str)):
         images_to_encode = [image_input]

@@ -8,14 +8,14 @@ import sqlite3
 
 from .connection import get_db_connection
 from ...config import settings
-from ...ai_func.generate_vector import get_embedding_dimension
 from .extensions.loader import setup_connection, verify_vector_extension
+from ...vector_engine.capability import is_vector_enabled
 
 _INIT_DONE = False
 
 
 def init_db():
-    """初始化数据库表结构"""
+    """初始化数据库表结构（向量扩展/模型缺失时降级运行，不崩溃）"""
     global _INIT_DONE
     if _INIT_DONE:
         print("init_db 已执行，跳过")
@@ -24,29 +24,30 @@ def init_db():
     with get_db_connection() as conn:
         cursor = conn.cursor()
         
-        # 统一通过扩展加载器加载 (幂等)
-        success = setup_connection(conn, silent=False)
-        if not success:
-            print("致命错误: 向量扩展加载失败，程序退出")
-            raise SystemExit(1)
-        ok, ver = verify_vector_extension(conn)
-        if ok:
-            print(f"向量扩展验证成功: {ver}")
-        else:
-            print(f"致命错误: 向量扩展验证失败: {ver}")
-            raise SystemExit(1)
-        
         # 优化并发读：启用 WAL 日志模式与合适的同步级别（幂等设置）
         try:
             cursor.execute("PRAGMA journal_mode=WAL;")
             cursor.execute("PRAGMA synchronous=NORMAL;")
             print("已设置 PRAGMA journal_mode=WAL, synchronous=NORMAL")
         except Exception as e:
-            # PRAGMA 失败不影响主流程（例如某些环境不支持 WAL）
             print(f"设置 WAL 失败: {e}")
         
-        # 获取向量维度
-        embedding_dim = get_embedding_dimension()
+        # 尝试加载向量扩展（非致命）
+        vector_ok = False
+        success, ver_or_msg = setup_connection(conn, silent=False)
+        if success:
+            ok, ver = verify_vector_extension(conn)
+            if ok:
+                print(f"向量扩展可用: {ver}")
+                vector_ok = True
+            else:
+                print(f"警告: 向量扩展验证失败: {ver}（语义搜索将不可用）")
+        else:
+            print(f"警告: 向量扩展未加载: {ver_or_msg}（语义搜索将不可用）")
+
+        # 获取向量维度（从配置读取，不加载模型）
+        config = settings.get_config()
+        embedding_dim = getattr(config, 'EMBEDDING_DIMENSION', None)
         
         # 创建图片表
         cursor.execute('''
@@ -67,35 +68,38 @@ def init_db():
         )
         ''')
         
-        # 创建向量表，使用image_id替代uuid
-        try:
-            cursor.execute(f"""
-            CREATE VIRTUAL TABLE IF NOT EXISTS title_vectors USING vec0(
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                image_id INTEGER UNIQUE NOT NULL,
-                embedding FLOAT[{embedding_dim}] DISTANCE_METRIC=cosine
-            );
-            """)
-            
-            cursor.execute(f"""
-            CREATE VIRTUAL TABLE IF NOT EXISTS description_vectors USING vec0(
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                image_id INTEGER UNIQUE NOT NULL,
-                embedding FLOAT[{embedding_dim}] DISTANCE_METRIC=cosine
-            );
-            """)
-            
-            cursor.execute(f"""
-            CREATE VIRTUAL TABLE IF NOT EXISTS image_vectors USING vec0(
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                image_id INTEGER UNIQUE NOT NULL,
-                embedding FLOAT[{embedding_dim}] DISTANCE_METRIC=cosine
-            );
-            """)
-            
-            print(f"创建向量表成功，向量维度: {embedding_dim}")
-        except Exception as e:
-            print(f"创建向量表失败: {e}")
+        # 创建向量表（仅在扩展可用 + 维度已知时）
+        if vector_ok and embedding_dim:
+            try:
+                cursor.execute(f"""
+                CREATE VIRTUAL TABLE IF NOT EXISTS title_vectors USING vec0(
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    image_id INTEGER UNIQUE NOT NULL,
+                    embedding FLOAT[{embedding_dim}] DISTANCE_METRIC=cosine
+                );
+                """)
+                
+                cursor.execute(f"""
+                CREATE VIRTUAL TABLE IF NOT EXISTS description_vectors USING vec0(
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    image_id INTEGER UNIQUE NOT NULL,
+                    embedding FLOAT[{embedding_dim}] DISTANCE_METRIC=cosine
+                );
+                """)
+                
+                cursor.execute(f"""
+                CREATE VIRTUAL TABLE IF NOT EXISTS image_vectors USING vec0(
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    image_id INTEGER UNIQUE NOT NULL,
+                    embedding FLOAT[{embedding_dim}] DISTANCE_METRIC=cosine
+                );
+                """)
+                
+                print(f"创建向量表成功，向量维度: {embedding_dim}")
+            except Exception as e:
+                print(f"创建向量表失败: {e}")
+        else:
+            print(f"向量功能降级：扩展={vector_ok}, 维度={embedding_dim}，跳过向量表创建")
 
         # 修复：若存在历史迁移遗留的 vec0 影子表名（如 image_vectors_new_chunks），统一重命名回标准名
         # 目标：{base}_new_* -> {base}_*

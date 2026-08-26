@@ -1,8 +1,9 @@
 from typing import List, Dict, Any, Optional
 from ...db_func.repositories.search import SearchRepository
+from ...vector_engine.capability import is_vector_enabled
 
 # 注意：此文件位于 backend/ai_func/recommendation/tools.py 下
-# 作为“工具层”，被 Agent 调用
+# 作为"工具层"，被 Agent 调用
 
 
 def tool_search_images(query: str, targets: List[str], filters: Optional[Dict[str, Any]] = None, limit: int = 20) -> List[Dict[str, Any]]:
@@ -10,7 +11,11 @@ def tool_search_images(query: str, targets: List[str], filters: Optional[Dict[st
 
     增加向量目标白名单过滤，防止将标签/风格等中文字段误当成向量表名导致
     sqlite 报错: no such table: XXX_vectors
+    向量引擎不可用时返回空列表（对话仍可继续，仅无图片结果）
     """
+    if not is_vector_enabled():
+        print("向量引擎不可用，跳过对话中的图片检索")
+        return []
     repo = SearchRepository()
     allowed = {"title", "description", "image"}
     norm_targets = [t for t in (targets or []) if isinstance(t, str) and t in allowed]

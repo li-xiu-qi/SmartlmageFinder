@@ -9,6 +9,7 @@ import {
   StorageInfo,
   CacheInfo,
   VectorDbDriverStatus,
+  VectorEngineStatus,
   CacheBriefInfo
 } from '@/types/system';
 
@@ -97,7 +98,15 @@ const systemService = {
    */
   getVectorDbDriverStatus: (): Promise<ApiResponse<VectorDbDriverStatus>> => {
     return apiClient.getWithTransform<VectorDbDriverStatus>('/system/vector-driver');
-  }
+  },
+
+  /**
+   * 获取向量引擎完整状态（驱动 + 模型 + 综合能力）
+   * GET /api/v1/system/vector-status
+   */
+  getVectorStatus: (): Promise<ApiResponse<VectorEngineStatus>> => {
+    return apiClient.getWithTransform<VectorEngineStatus>('/system/vector-status');
+  },
 };
 
 export default systemService;

@@ -15,7 +15,7 @@ class VectorExtensionLoader:
     @staticmethod
     def load_extension(connection: sqlite3.Connection, silent: bool = False) -> Tuple[bool, Optional[str]]:
         """
-        为数据库连接加载向量扩展
+        为数据库连接加载向量扩展（非致命：失败返回 False + 错误信息）
         
         Args:
             connection: SQLite数据库连接
@@ -39,26 +39,20 @@ class VectorExtensionLoader:
             config = settings.get_config()
             driver_path = getattr(config, 'VECTOR_DB_DRIVER', None)
             if not driver_path:
-                print("错误: 未配置 VECTOR_DB_DRIVER，无法加载 sqlite-vec。")
-                raise SystemExit(1)
+                msg = "未配置 VECTOR_DB_DRIVER，向量功能不可用"
+                if not silent:
+                    print(f"警告: {msg}")
+                return False, msg
             if not os.path.exists(driver_path):
-                print(f"错误: 驱动文件不存在: {driver_path}")
-                raise SystemExit(1)
+                msg = f"驱动文件不存在: {driver_path}"
+                if not silent:
+                    print(f"警告: {msg}")
+                return False, msg
             if not silent:
                 print(f"使用配置中的 VECTOR_DB_DRIVER: {driver_path}")
 
             # 启用扩展加载
             connection.enable_load_extension(True)
-            # 额外诊断: 文件是否存在 / 大小
-            if not os.path.exists(driver_path):
-                raise FileNotFoundError(f"驱动文件不存在: {driver_path}")
-            try:
-                size = os.path.getsize(driver_path)
-                if size < 32 * 1024:  # 小于32KB 不合理
-                    if not silent:
-                        print(f"警告: 驱动文件大小异常 (仅 {size} bytes)")
-            except Exception:
-                pass
             connection.execute(f"SELECT load_extension('{driver_path}')")
 
             # 验证扩展是否正确加载
@@ -74,9 +68,9 @@ class VectorExtensionLoader:
             return True, version
         except Exception as e:
             error_msg = f"加载sqlite-vec扩展失败: {e}"
-            print(error_msg)
-            print("进程退出: 向量扩展是必需组件。")
-            raise SystemExit(1)
+            if not silent:
+                print(f"警告: {error_msg}（向量功能将不可用）")
+            return False, error_msg
     
     @staticmethod
     def verify_extension(connection: sqlite3.Connection) -> Tuple[bool, Optional[str]]:

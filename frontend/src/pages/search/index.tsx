@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Tabs, message } from 'antd';
+import { Tabs, message, Alert } from 'antd';
 import { SearchOutlined, PictureOutlined, FontSizeOutlined } from '@ant-design/icons';
 import { useSearchParams } from 'react-router-dom';
 import searchService from '@/services/searchService';
 import tagService from '@/services/tagService';
+import { useVectorCapability } from '@/hooks/useVectorCapability';
 import { ImageSearchResult, TagInfo } from '@/types/models';
 import { UnifiedTextSearchParams, UnifiedImageSearchParams, FuzzySearchParams } from '@/types/search';
 import TextSearchForm from './TextSearchForm';
@@ -28,6 +29,9 @@ const SearchPage: React.FC = () => {
   const [searchTime, setSearchTime] = useState<number>(0);
   const [searchKeyword, setSearchKeyword] = useState<string>('');
   const [referenceImage, setReferenceImage] = useState<{id: number, title: string} | undefined>(undefined);
+
+  // 向量能力检测
+  const { vectorEnabled, status: vectorStatus } = useVectorCapability();
 
   // 初始化 - 加载热门标签
   useEffect(() => {
@@ -179,8 +183,37 @@ const SearchPage: React.FC = () => {
     setSearchParams(newParams);
   };
 
+  // 向量不可用时自动切换到模糊搜索
+  useEffect(() => {
+    if (!vectorEnabled && (activeTab === 'text' || activeTab === 'image')) {
+      setActiveTab('fuzzy');
+    }
+  }, [vectorEnabled, activeTab]);
+
+  // 构建降级提示信息
+  const unavailableReasons: string[] = [];
+  if (vectorStatus && !vectorStatus.driver.available) {
+    unavailableReasons.push('sqlite-vec 驱动未加载');
+  }
+  if (vectorStatus && !vectorStatus.model.available) {
+    unavailableReasons.push('Embedding 模型未配置或未下载');
+  }
+  const degradeMessage = unavailableReasons.length > 0
+    ? `语义搜索不可用（${unavailableReasons.join('、')}）。请使用「模糊搜索」进行关键词检索。`
+    : '';
+
   return (
     <div className="search-page-container">
+      {!vectorEnabled && degradeMessage && (
+        <Alert
+          message="语义搜索暂不可用"
+          description={degradeMessage}
+          type="warning"
+          showIcon
+          style={{ marginBottom: 16 }}
+          banner
+        />
+      )}
       <Tabs
         activeKey={activeTab}
         onChange={handleTabChange}
@@ -200,6 +233,7 @@ const SearchPage: React.FC = () => {
           {
             key: 'text',
             label: <span><SearchOutlined /> 语义搜索</span>,
+            disabled: !vectorEnabled,
             children: (
               <TextSearchForm 
                 onSearch={handleTextSearch} 
@@ -211,6 +245,7 @@ const SearchPage: React.FC = () => {
           {
             key: 'image',
             label: <span><PictureOutlined /> 以图语义搜索</span>,
+            disabled: !vectorEnabled,
             children: (
               <ImageSearchForm 
                 onSearch={handleImageSearch} 

@@ -7,6 +7,12 @@ from typing import List, Optional, Literal
 # 导入搜索功能模块
 from ...db_func.repositories.search import SearchRepository
 
+# 导入向量能力门
+from ...vector_engine.capability import is_vector_enabled
+
+# 导入响应模型
+from ...global_schemas import ResponseModel
+
 # 导入基础组件
 from .base import (
     CommonFilterParams, get_query_filter_params, get_form_filter_params, 
@@ -44,6 +50,14 @@ async def unified_text_search_api(
     - 向量搜索（vector）- 默认类型
     """
     print(f"统一搜索 - 搜索文本: {q}, 搜索类型: {search_type}, 向量搜索目标: {vector_targets}")
+    
+    # 向量能力门控
+    if not is_vector_enabled():
+        return ResponseModel.error(
+            code="VECTOR_ENGINE_UNAVAILABLE",
+            message="语义搜索不可用：向量模型或 sqlite-vec 扩展未配置。请使用「模糊搜索」功能。",
+            http_code=503,
+        )
     
     # 构建过滤条件
     filters = filter_params.build_filters()
@@ -91,6 +105,14 @@ async def unified_image_search_api(
     统一图像搜索API，通过向量搜索寻找相似图片
     """
     print(f"统一图像搜索 - 搜索目标: {search_targets}")
+    
+    # 向量能力门控
+    if not is_vector_enabled():
+        return ResponseModel.error(
+            code="VECTOR_ENGINE_UNAVAILABLE",
+            message="以图搜图不可用：向量模型或 sqlite-vec 扩展未配置。请使用「模糊搜索」功能。",
+            http_code=503,
+        )
     
     # 构建过滤条件
     filters = filter_params.build_filters()
@@ -142,6 +164,14 @@ async def unified_vector_search_api(
     统一向量搜索API，直接使用提供的向量进行搜索
     """
     print(f"统一向量搜索 - 向量维度: {len(query_embedding)}, 搜索目标: {search_targets}")
+    
+    # 向量能力门控
+    if not is_vector_enabled():
+        return ResponseModel.error(
+            code="VECTOR_ENGINE_UNAVAILABLE",
+            message="向量搜索不可用：向量模型或 sqlite-vec 扩展未配置。",
+            http_code=503,
+        )
     
     # 构建过滤条件
     filters = filter_params.build_filters()

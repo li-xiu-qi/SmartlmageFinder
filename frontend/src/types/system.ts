@@ -37,6 +37,29 @@ export interface DatabaseInfo {
 }
 
 /**
+ * 向量引擎完整状态
+ */
+export interface VectorDriverInfo {
+  available: boolean;
+  path: string;
+  error: string;
+  version: string;
+}
+
+export interface VectorModelInfo {
+  available: boolean;
+  path: string;
+  error: string;
+  dimension: number;
+}
+
+export interface VectorEngineStatus {
+  enabled: boolean;             // 向量功能是否可用（驱动+模型均可用）
+  driver: VectorDriverInfo;     // sqlite-vec 驱动状态
+  model: VectorModelInfo;       // embedding 模型状态
+}
+
+/**
  * 向量数据库驱动状态
  */
 export interface VectorDbDriverStatus {
