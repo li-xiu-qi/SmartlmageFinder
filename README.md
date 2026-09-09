@@ -336,7 +336,7 @@ SmartImager/
 │   └── package.json              # Next.js 16 + React 19 + TypeScript
 ├── assets/                       # Logo 等静态资源
 ├── docs/                         # 架构图、截图、设计文档
-│   ├── 架构图.png / 架构图.html   #   系统架构图（源文件为 HTML，可用浏览器渲染导出）
+│   ├── 架构图.png / 架构图.dot    #   系统架构图（源文件为 Graphviz DOT，dot 渲染导出）
 │   ├── screenshots/              # 界面截图
 │   └── 推理服务独立-拆分设计.md    #   推理服务拆分方案
 ├── main.py                       # 旧一体化后端入口（已归档，保留兼容）

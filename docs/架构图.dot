@@ -1,0 +1,87 @@
+// SmartImager 系统架构 · README 配图
+// 渲染：dot -Tpng -Gdpi=170 架构图.dot -o 架构图.png
+digraph arch {
+    bgcolor = "white";
+    rankdir = TB;
+    fontname = "Microsoft YaHei";
+    labelloc = "t";
+    label = "SmartImager 系统架构：一体化部署，AI 算力可按需卸载到第二台机器";
+    fontsize = 15;
+    fontcolor = "#333333";
+    splines = polyline;
+    nodesep = 0.30;
+    ranksep = 0.42;
+    compound = true;
+
+    node [shape = box, style = "filled,rounded", penwidth = 1.2,
+          fontname = "Microsoft YaHei", fontsize = 11,
+          margin = "0.22,0.13"];
+    edge [color = "#666666", penwidth = 1.1, arrowhead = vee,
+          fontname = "Microsoft YaHei", fontsize = 9.5, fontcolor = "#777777"];
+
+    /* ============ 一体机（默认） ============ */
+    subgraph cluster_box {
+        label = "主机器 · 一体机部署（默认）";
+        labeljust = "l";
+        style = "filled,rounded";
+        fillcolor = "#f7f9fc";
+        color = "#3b6fe0";
+        penwidth = 2.2;
+        fontname = "Microsoft YaHei";
+        fontsize = 13;
+        fontcolor = "#3b6fe0";
+        margin = 16;
+
+        // 展示层
+        node [fillcolor = "#dce9f8", color = "#8fb3dd", fontcolor = "#1a2b45"];
+        FE1 [label = "前端 7 页面\nReact 19 + shadcn/ui"];
+        FE2 [label = "交互能力\n语义检索 · 以图搜图 · 对话推荐"];
+
+        // 业务层
+        node [fillcolor = "#e2f0da", color = "#95c187", fontcolor = "#1d3a1a"];
+        API [label = "业务 API  /api/v1/*\nNext.js 16 App Router"];
+        DB  [label = "本地 SQLite\nbetter-sqlite3"];
+
+        // AI 推理层
+        node [fillcolor = "#fcebd2", color = "#e0b273", fontcolor = "#4a3416"];
+        ENC [label = "向量编码 /encode\njina-embeddings-v4"];
+        VEC [label = "向量检索 /vectors/*\nsqlite-vec"];
+        ANA [label = "图像分析 /analyze\nglm-4.6v-flash"];
+
+        { rank = same; FE1; FE2; }
+        { rank = same; API; DB; }
+        { rank = same; ENC; VEC; ANA; }
+
+        FE1 -> API [label = " HTTP "];
+        FE2 -> API [arrowhead = none];
+        API -> DB  [label = " 读写 ", dir = both];
+        API -> ENC [label = " 进程内调用 "];
+        API -> VEC [arrowhead = none];
+        API -> ANA [arrowhead = none];
+        ENC -> VEC [style = invis];
+        // AI 层内部为并列能力，画一条隐形中线便于对齐
+        ENC -> VEC -> ANA [style = invis];
+    }
+
+    /* ============ 可选：第二台算力机 ============ */
+    subgraph cluster_remote {
+        label = "第二台机器 · 可选算力机";
+        labeljust = "l";
+        style = "dashed,rounded";
+        fillcolor = "#f4f6f9";
+        color = "#9aa7b8";
+        penwidth = 1.6;
+        fontname = "Microsoft YaHei";
+        fontsize = 12.5;
+        fontcolor = "#6b7280";
+        margin = 14;
+
+        node [fillcolor = "#eef0f3", color = "#c3cad4", fontcolor = "#414b60"];
+        RNOTE [label = "同一套 AI 推理层\n仅部署位置不同\n向量编码 + 向量检索 + 图像分析",
+               shape = box, style = "filled,rounded"];
+    }
+
+    /* AI 推理层可整体卸载到第二台（可选） */
+    edge [style = dashed, color = "#7d4fc4", fontcolor = "#7d4fc4", penwidth = 1.5];
+    VEC -> RNOTE [label = " 可选：整个 AI 层\n 卸载到第二台 ", lhead = cluster_remote];
+}

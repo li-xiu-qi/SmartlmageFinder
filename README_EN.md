@@ -323,7 +323,7 @@ SmartImager/
 │   └── package.json              # Next.js 16 + React 19 + TypeScript
 ├── assets/                       # Static assets such as logos
 ├── docs/                         # Architecture diagram, screenshots, design docs
-│   ├── 架构图.png / 架构图.html   #   System architecture diagram (source is HTML, renderable in browser)
+│   ├── 架构图.png / 架构图.dot    #   System architecture diagram (source is Graphviz DOT, rendered with dot)
 │   ├── screenshots/              # UI screenshots
 │   └── 推理服务独立-拆分设计.md    #   Inference service split design
 ├── main.py                       # Legacy all-in-one backend entry (archived, kept for compatibility)
