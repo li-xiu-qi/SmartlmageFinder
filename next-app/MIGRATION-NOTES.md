@@ -65,3 +65,31 @@
 ### 待补后端接口（search 页需要，改 searchClient.ts 的 SEARCH_API_STATUS 开关接入）
 - `GET /api/v1/search/unified` — 文本语义搜索（q, vector_targets, tags, weights, min_score, limit）
 - `POST /api/v1/search/unified/image` — 上传图片语义搜索（multipart, file, search_targets, tags, weights, min_score, limit）
+
+### AI 对话/推荐接口契约（2026-09-09 迁移中）
+
+**表结构已存在**：`conversation_messages`、`request_sessions`（本地 DB 已有，勿重建）
+
+**POST /api/v1/ai/recommend/chat** — 非流式推荐
+- 请求：`{ messages?: [{role, content}], query?: string, vector_targets?: string[], limit?: number, filters?: { tags?, filename?, start_date?, end_date? }, conversation_id?, user_id?, request_id? }`
+- 响应：`{ code: 0, message, data: { success: boolean, images: ImageRow[], image_ids: number[], limit: number, error?: string } }`
+
+**POST /api/v1/ai/recommend/chat/stream** — SSE 流式（前端已有解析器，勿改事件名）
+- 请求同上
+- 响应 Content-Type: text/event-stream，事件类型固定为：
+  - `event: rewrite_start` / `data: {}`
+  - `event: assistant_delta` / `data: { "delta": "文本片段" }`
+  - `event: complete` / `data: { images, image_ids, ... }`
+  - `event: error` / `data: { "message": "..." }`
+- 分段符 `\n\n`，每段内 `event:` 与 `data:` 各一行
+
+**GET /api/v1/ai/conversations** — 会话列表
+**POST /api/v1/ai/conversations/create** — 建会话
+**DELETE /api/v1/ai/conversations/{id}** — 删会话
+**GET /api/v1/ai/conversations/{id}/messages** — 会话消息（最多 40 条）
+
+**实现要求**
+- LLM 调用走远程推理服务 8100 的 `/chat` 接口（若未实现则先在推理服务加）
+- 向量检索走本地 `/api/v1/vectors/search`（已通）
+- 对话历史读写本地 SQLite
+- 图片数据从本地 images 表查
