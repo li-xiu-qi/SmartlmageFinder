@@ -7,9 +7,8 @@
   <div>
     <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License"></a>
     <img src="https://img.shields.io/badge/version-1.0.0-green.svg" alt="Version">
-    <img src="https://img.shields.io/badge/Python-3.8+-blue.svg" alt="Python">
-    <img src="https://img.shields.io/badge/FastAPI-0.100+-orange.svg" alt="FastAPI">
-    <img src="https://img.shields.io/badge/React-18-61DAFB.svg" alt="React">
+    <img src="https://img.shields.io/badge/Next.js-16-000000.svg" alt="Next.js">
+    <img src="https://img.shields.io/badge/React-19-61DAFB.svg" alt="React">
   </div>
 
   <div>
@@ -20,14 +19,14 @@
 
 ## Project Overview
 
-SmartImager is a modern intelligent image search and management system, built with a lightweight integrated FastAPI backend and React frontend. It features vector semantic retrieval, image-to-image search, fuzzy search, and conversational AI recommendations. The default multimodal/text-unified vector model is now upgraded to Jina Embeddings v4 (replacing the original Jina CLIP V2), providing higher quality semantic representations.
+SmartImager is a modern intelligent image search and management system, built with a **Next.js full-stack + standalone inference service** architecture: the business layer (frontend pages, REST API, local SQLite) runs in Next.js, while vector encoding, vector retrieval, and image analysis are handled by an independent Python inference service. It features vector semantic retrieval, image-to-image search, fuzzy search, and conversational AI recommendations. The default multimodal/text-unified vector model is Jina Embeddings v4 (replacing the original Jina CLIP V2), providing higher quality semantic representations.
 
 ## 🏗️ System Architecture
 
 ### Architecture Overview
 
 ![System Architecture](docs/架构图.png)
-The current version uses an integrated backend (FastAPI) + frontend (React) architecture. The AI recommendation/conversational agent is integrated in `backend/ai_func/recommendation`, combining sqlite-vec vector retrieval and SSE streaming output. No extra AI microservice is required for intelligent search and multi-turn recommendations.
+The current version consists of two independent nodes communicating over HTTP. The **Next.js full-stack (localhost :3000)** serves the frontend pages and `/api/v1/*` business endpoints, with a local SQLite storing image metadata, conversations, and tags. The **Python inference service (remote :8100)** holds the jina-embeddings-v4 encoding model, the sqlite-vec vector store, and the glm vision model, exposing encoding, vector retrieval, and image analysis capabilities over HTTP. The separation lets the inference service restart or scale independently without slowing down the business layer.
 
 ## Features
 
@@ -52,9 +51,9 @@ The current version uses an integrated backend (FastAPI) + frontend (React) arch
 
 Multi-turn conversational intelligent image retrieval and recommendation:
 
-- **Context Memory**: Supports 64K rolling window conversation history, auto-trims to keep key info
-- **Smart Query Rewriting**: Normalizes user input/keyword extraction to improve vector retrieval accuracy
-- **Phased Process**: Rewrite -> Multi-vector retrieval (title/desc/image) -> Result re-ranking -> Generate reply
+- **Context Memory**: Conversation history bound by `conversation_id`, messages stored in chronological order
+- **Query Processing**: User input is directly encoded into a query vector for multi-path retrieval (title/desc/image content)
+- **Phased Process**: Retrieval -> score aggregation -> generate reply
 - **SSE Streaming Output**: Events include `rewrite_start` / `assistant_delta` / `complete` / `error`
 - **Session Management**: Create/list/delete sessions, `conversation_id` binds context
 - **Result Enhancement**: Returns brief image info (id/score/title/tags/public_url) + selected image ID list
@@ -70,11 +69,11 @@ Main APIs:
 | Chat Recommendation (single) | POST | `/api/v1/ai/recommend/chat` |
 | Chat Recommendation (SSE stream) | POST | `/api/v1/ai/recommend/chat/stream` |
 
-Request Example (streaming; use the actual port printed on startup, or set via SIF_PORT or root start_config.yaml):
+Request Example (streaming; the Next.js full-stack defaults to `:3000`):
 
 ```bash
-# Note: replace 8000 with your actual backend port (or set via SIF_PORT)
-curl -N -X POST http://localhost:8000/api/v1/ai/recommend/chat/stream \
+# Replace 3000 with the actual port printed on startup
+curl -N -X POST http://localhost:3000/api/v1/ai/recommend/chat/stream \
   -H "Content-Type: application/json" \
   -d '{
     "conversation_id": "demo-session-1",
@@ -101,14 +100,14 @@ Frontend can render "AI thinking / incremental reply / show image results" in re
 
 ### 🤖 AI Analysis Features
 
-- **Auto Analysis** - Image content understanding based on CLIP model
+- **Auto Analysis** - Image content understanding based on glm-4.6v-flash vision model
 - **Smart Annotation** - Auto-generate image title, description, and tags
 - **Batch Processing** - Supports large-scale batch AI analysis
-- **API Integration** - Supports various multimodal vision model APIs
+- **Vectorization** - Unified text/image vector encoding via jina-embeddings-v4 (2048-dim)
 
 ### 🎨 User Interface
 
-- **Modern Design** - Warm gallery-style UI based on React 18 + shadcn/ui
+- **Modern Design** - Warm gallery-style UI based on React 19 + shadcn/ui
 - **Responsive Layout** - Perfect for desktop and mobile
 - **Real-time Interaction** - Supports image preview, zoom, and editing
 - **Status Monitoring** - Real-time progress and system status
@@ -159,16 +158,16 @@ Frontend can render "AI thinking / incremental reply / show image results" in re
 - **🔌 Streaming SSE Output** - AI recommendation process pushes rewrite/search/result for better UX
 - **⚡ High-performance Vector Retrieval** - SQLite + sqlite-vec lightweight vector DB, millisecond-level search
 - **🧠 Advanced AI Models** - Integrated Jina Embeddings v4 (text/image multimodal vectors), better recall and semantics than old Jina CLIP V2
-- **🎨 Modern Tech Stack** - React 18 + TypeScript + FastAPI for code quality and dev experience
-- **🔧 Smart Startup Management** - One-click startup script, auto environment and dependency setup
-- **🔄 Offline Vector Model Migration** - Script `migrate_embeddings.py` supports breakpoint resume, auto dimension detection, atomic switch of `*_vectors` virtual tables, safe cache replacement, and auto-update of main config `MODEL_PATH` and `EMBEDDING_DIMENSION` after completion.
+- **🎨 Modern Tech Stack** - Next.js 16 + React 19 + TypeScript + shadcn/ui + Tailwind CSS for code quality and dev experience
+- **🔧 Standalone Inference Service** - Vector encoding, retrieval, and image analysis deployed independently; restarts on its own without slowing the business layer
+- **🔄 Offline Vector Model Migration** - Script `migrate_embeddings.py` supports breakpoint resume, auto dimension detection, atomic switch of `*_vectors` virtual tables, safe cache replacement, and auto-update of the inference service config `MODEL_PATH` and `EMBEDDING_DIMENSION` after completion.
 
 ### 🔄 Embedding Model Migration
 
 To upgrade the current vector model (e.g., from Jina CLIP V2 to Jina Embeddings v4, or switch to any local/HuggingFace model) and regenerate image/title/desc vectors, use the root script:
 
 ```bash
-python migrate_embeddings.py            # Uses default config backend/config/files/migration.yaml
+python migrate_embeddings.py            # Uses default config
 python migrate_embeddings.py --resume   # Resume after interruption
 ```
 
@@ -177,85 +176,71 @@ Key features:
 - Auto-detect if `*_vectors_new` is needed (only if dimension changes, atomic switch after completion)
 - Batch processing + `model_migrations` table records progress, supports resume
 - Avoids UPSERT unsupported: uses INSERT OR IGNORE + UPDATE for sqlite-vec virtual tables
-- Auto-updates `backend/config/files/config.yaml` with new model path and dimension after success
+- Auto-updates the inference service config with new model path and dimension after success
 - Old cache directory auto-renamed to `*_old` for rollback/cleanup
 
-Before running: stop backend service and backup DB files (see `docs/model_migration.md`).
+Before running: stop the inference service and backup DB files (see `docs/model_migration.md`).
+
+> **Note**: the migration script defaults to reading `backend/config/files/migration.yaml`. The old `backend/` has been archived to `Smartlmager-suite/archive/backend-fastapi-legacy/`. Before running, use `--config` to specify an accessible config path, or copy the needed config to an accessible location.
 
 More details, config fields, and rollback strategy: `docs/model_migration.md`.
 
 ## 🚀 Quick Start
 
+SmartImager has two components: a **Next.js full-stack service (local)** and a **Python inference service (remote)**. They are deployed and started independently.
 
-git clone https://github.com/li-xiu-qi/SmartImageFinder.git
+### Option 1: Next.js Full-Stack Version (current main version)
 
-### Environment Initialization (Recommended: Manual Dependency Installation, Model Download via Script)
-
-> Installing dependencies and downloading models may take a long time. Manual step-by-step installation is recommended.
+The business layer has fully migrated to Next.js. Frontend pages, REST API and the local SQLite database all live there.
 
 ```bash
-# Clone project
-git clone https://github.com/li-xiu-qi/SmartImageFinder.git
-cd SmartImageFinder
+# 1. Enter the Next.js app directory
+cd next-app
 
-# Manually install Python dependencies
-pip install -r requirements.txt
+# 2. Install dependencies (note: when NODE_ENV is production on this machine, it must be explicitly overridden, otherwise devDependencies are not installed)
+NODE_ENV=development npm install
 
-# Install Node.js dependencies (frontend)
-cd frontend
-npm install
-cd ..
+# 3. Start the dev server (--webpack is required; Turbopack hangs indefinitely while waiting for request compilation)
+NODE_ENV=development npx next dev --port 3000 --webpack
 ```
 
-> ⚠️ Model download is recommended via `python start.py init`. Otherwise, manually download and place the model files in the `models/` directory. Model download is slow, please prepare in advance.
+Then visit <http://localhost:3000>.
 
-For details on model download, see docs/model_migration.md or relevant README sections.
+> The inference service must be started separately (see Option 2). Otherwise AI features such as upload analysis and vector search are unavailable, and pages will show a degraded state.
 
-### Start Service
+### Option 2: Python Inference Service (remote, required by AI features)
 
-#### Method 1: Use start.py for one-click startup (auto install dependencies, download models, generate config)
+The inference service owns the jina-embeddings-v4 model, the sqlite-vec vector store and the vision language model, and exposes capabilities over HTTP on `:8100`.
+
 ```bash
-python start.py init
-python start.py
+# The inference service runs on a remote host (e.g. dgx-spark), not locally
+# Environment setup, model loading, .env config, vec0.so driver adaptation, startup commands, etc.
+# See docs/推理服务独立-拆分设计.md and docs/Next.js迁移-进度记录.md
 ```
 
-#### Method 2: Manually start backend (recommended)
-```bash
-python main.py
-```
+The inference service exposes the following endpoints (on `:8100`):
 
-#### Method 3: Manually start frontend
-```bash
-cd frontend
-npm run dev
-```
+| Function | Method | Path |
+|------|------|------|
+| Health check | GET | `/health` |
+| Text/image encoding | POST | `/encode` |
+| Vector insert | POST | `/vectors/add` |
+| Vector search | POST | `/vectors/search` |
+| Vector stats | GET | `/vectors/stats` |
+| Image analysis | POST | `/analyze` |
 
-> Manual installation of dependencies and models is recommended to avoid long waiting times during automatic script installation.
+### Startup Checklist
+
+- Next.js full-stack: `curl http://localhost:3000` should return the home page HTML
+- Inference service: `curl http://<inference-host>:8100/health` should return `{"status":"ok","model_loaded":true,...}`
+- End to end: upload an image; auto-generated title/description/tags mean the full pipeline works
 
 ### Ports and Proxy Configuration (Important)
 
-- Backend startup precedence: CLI > environment variables > defaults.
-  - CLI supported: `python main.py --host 0.0.0.0 --port 8000 --reload`
-  - Environment variables:
-    - `SIF_HOST` (default `0.0.0.0`)
-    - `SIF_PORT` (default `8000`)
-    - `SIF_RELOAD` (`1/true` enables hot reload)
-- Frontend dev server port:
-  - `SIF_FRONTEND_PORT` (default `5173`), read by `frontend/vite.config.ts`
-  - Frontend->backend proxy origin: `SIF_BACKEND_ORIGIN` (falls back to `http://{SIF_HOST}:{SIF_PORT}`)
-- The one-click starter `start.py` reads optional root `start_config.yaml` and sets the env vars above. Example:
-
-```yaml
-# start_config.yaml example
-backend_host: 0.0.0.0
-backend_port: 10060
-reload: true
-frontend_port: 5176
-# Optional: explicitly set the frontend proxy backend origin
-backend_origin: http://localhost:10060
-```
-
-
+- **Next.js full-stack**: default `:3000`, set via `npx next dev --port`
+- **Inference service**: default `:8100`, set via the inference-side env var `INFERENCE_PORT`
+- **Next.js to inference service**: defaults to `http://<remote-host>:8100`; see `next-app/src/lib/inference.ts` and `next-app/.env` for the actual target
+- **Vector DB and model paths**: configured in the inference-side `.env` (`VECTOR_DB_PATH`, `VECTOR_DB_DRIVER`, `MODEL_PATH`, etc.), decoupled from Next.js
 
 ## Application Scenarios
 
@@ -265,33 +250,37 @@ backend_origin: http://localhost:10060
 
 ## 🛠️ Technical Architecture
 
-### Main Service Tech Stack
+### Overall Topology
 
-#### Backend (`backend/`)
+Two independent components communicating over HTTP:
 
-- **FastAPI** - High-performance async web framework
-- **SQLite + sqlite-vec** - Lightweight vector database
-- **Jina Embeddings v4** - Next-gen multimodal/text-unified vector encoder (default 2048 dims)
-- **Connection Pool Management** - Efficient DB connection management
-- **Vector Cache** - diskcache-based vector caching system
-- **Smart Re-ranking** - Intelligent image recommendation
-- **Multimodal Analysis** - Image content understanding and analysis
+- **Next.js full-stack (local :3000)**: frontend + business API + local SQLite
+- **Python inference service (remote :8100)**: vector encoding + vector search + image analysis
 
-#### Frontend (`frontend/`)
+### Next.js Full-Stack (`next-app/`)
 
-- **React 18 + TypeScript** - Modern frontend framework
-- **Ant Design 5.25** - Enterprise UI component library
-- **Vite** - Fast build tool
-- **React Router 7.5** - Routing management
-- **Axios** - HTTP client
+- **Next.js 16 (App Router)** - frontend pages and route handlers in one repo, `/api/v1/*` serves as the backend API
+- **React 19 + TypeScript** - UI and types
+- **shadcn/ui + Tailwind CSS** - UI component layer and styling (warm-white gallery style)
+- **better-sqlite3** - local SQLite storing image metadata, sessions and tags
+- **Lucide** - icons
 
-### Core Components
+Frontend has 7 pages: home, image library, upload, search, tags, settings, 404.
 
-- **Vector Search Engine** - Unified semantic search (text/image/direct vector/similarity)
-- **AI Analysis Engine** - Auto image content analysis and annotation
-- **Tag Management System** - Smart tag classification and management
-- **Cache System** - High-performance vector cache
-- **Config Management** - Flexible system config management
+### Python Inference Service (remote :8100)
+
+- **jina-embeddings-v4** - unified text/image vector encoding (default 2048 dims)
+- **sqlite-vec** - lightweight vector database, millisecond-level nearest-neighbor search
+- **glm-4.6v-flash** - multimodal vision model for image content understanding and annotation
+- **FastAPI + uvicorn** - framework of the inference service itself
+- **Independently deployed** - owns models and the vector store, exposes `/encode`, `/vectors/*`, `/analyze` upward, can restart alone
+
+### Core Capabilities
+
+- **Vector Search Engine** - unified semantic search (text / image / direct vector / similarity)
+- **AI Analysis Engine** - automatic image content analysis and annotation (title / description / tags)
+- **Tag Management System** - smart tag classification and management
+- **Config Management** - the inference-side `.env` self-loads, decoupled from the business layer
 
 ## 🖥️ System Requirements
 
@@ -305,84 +294,96 @@ backend_origin: http://localhost:10060
 
 ```
 SmartImager/
-├── backend/                       # Backend main service (API, DB, AI recommendation, etc.)
-│   ├── routers/                   # Routers (images/tags/search/metadata, etc.)
-│   ├── db_func/                   # DB and vector operations
-│   ├── ai_func/                   # AI analysis & recommendation (incl. recommendation/agent.py)
-│   ├── config/                    # Config files & drivers
-│   └── global_schemas.py          # Common response models
-├── frontend/                      # Frontend main service (React+AntD)
-│   ├── src/pages/                 # Page components
-│   ├── src/components/            # Common components
-│   ├── src/services/              # API service layer
-│   └── public/                    # Static assets
-├── models/                        # AI model files (local or downloaded)
-├── data/                          # Data storage
-│   ├── db/                        # SQLite DB files
-│   ├── images/                    # Image storage
-│   ├── caches/                    # Vector cache
-│   └── temp/                      # Temp files
-├── scripts/                       # Startup & environment management scripts
-├── docs/                          # Architecture & API docs
-├── requirements.txt               # Python dependencies
-├── main.py                        # Backend main entry (API service)
-├── start.py                       # One-click startup entry
-└── README.md                      # Project description
+├── next-app/                     # Next.js full-stack (frontend + business API + local SQLite)
+│   ├── src/
+│   │   ├── app/                  # Pages and routes
+│   │   │   ├── page.tsx          # Home
+│   │   │   ├── images/           # Image library
+│   │   │   ├── upload/           # Upload
+│   │   │   ├── search/           # Search
+│   │   │   ├── tags/             # Tags
+│   │   │   ├── settings/         # Settings
+│   │   │   ├── not-found.tsx     # 404
+│   │   │   └── api/v1/           # Business API route handlers
+│   │   │       ├── images/       #   Image CRUD / upload / export / file serving
+│   │   │       ├── tags/         #   Tags
+│   │   │       ├── search/       #   Similarity search
+│   │   │       ├── system/       #   System status / config
+│   │   │       └── ai/           #   Sessions + conversational recommendation (SSE)
+│   │   ├── components/           # UI components (layout / ui / ai / GalleryImageCard, etc.)
+│   │   ├── lib/                  # db.ts (better-sqlite3), inference.ts (inference client)
+│   │   └── services/             # api.ts, chatService.ts, searchClient.ts
+│   ├── data/                     # Local SQLite (smartimager.db) and uploaded images
+│   ├── next.config.js            # serverExternalPackages + API proxy rewrites
+│   ├── tailwind.config.cjs       # Tailwind config (CommonJS, because package.json is ES module)
+│   ├── MIGRATION-NOTES.md        # Migration schema and status records
+│   └── package.json              # Next.js 16 + React 19 + TypeScript
+├── assets/                       # Static assets such as logos
+├── docs/                         # Architecture diagram, screenshots, migration & split design docs
+│   ├── 架构图.png / 架构图.dot    #   System architecture diagram (source is Graphviz DOT)
+│   ├── screenshots/              # UI screenshots
+│   ├── Next.js迁移-进度记录.md    #   Migration process, verified endpoints, startup commands
+│   └── 推理服务独立-拆分设计.md    #   Inference service split design
+├── main.py                       # Legacy all-in-one backend entry (archived, kept for compatibility)
+├── start.py                      # Legacy one-click startup script (archived, kept for compatibility)
+├── migrate_embeddings.py         # Offline vector model migration script (resumable)
+├── scripts/                      # Environment & startup helper scripts
+├── templates/                    # Template files
+├── requirements.txt              # Python dependencies (inference service / migration scripts)
+└── README.md                     # Project description
 ```
+
+> The legacy `frontend/` (React + Ant Design) and `backend/` (FastAPI) have been moved out of this repo and archived to the sibling `Smartlmager-suite/archive/`. Retrieve from there when needed.
 
 ## 🔧 Detailed Configuration
 
 ### Service Ports
 
-- **Backend**: 10050 (default, configurable)
-- **Frontend**: 5173 (Vite default)
+- **Next.js full-stack**: `3000` (default), set via `npx next dev --port`
+- **Python inference service**: `8100` (default), set via the env var `INFERENCE_PORT`
 
-### Config File
+### Key Configuration
 
-Main config file: `backend/config/files/config.yaml`:
+**Next.js side** (`next-app/.env` or env vars):
 
-```yaml
-MODEL_PATH: ./models/jina-embeddings-v4  # New model path (old: ./models/yizhixiaoke/xiaoke-jina-clip-v2)
-VECTOR_DB_DRIVER_DIR: ./backend/config/files/vector_db_driver  # Vector DB driver dir
-EMBEDDING_DIMENSION: 2048  # Vector dimension (compatible with old model)
-UPLOAD_DIR: ./data/images  # Image upload dir
-DB_PATH: ./data/db/smartimager.db  # DB path
-HOST: 0.0.0.0  # Service listen address
-PORT: 10050  # Service port (default)
-```
+| Variable | Default | Description |
+|------|--------|------|
+| `INFERENCE_SERVICE_URL` | `http://192.168.1.170:8100` | Inference service address |
+| `DB_PATH` | `next-app/data/smartimager.db` | Local SQLite path |
+
+**Inference service side** (`inference_service/.env`, self-loaded):
+
+| Variable | Description |
+|------|------|
+| `MODEL_PATH` | jina-embeddings-v4 model snapshot path |
+| `VECTOR_DB_DRIVER` | sqlite-vec `vec0.so` driver path |
+| `GLM_API_KEY` | Zhipu API key (glm-4.6v-flash vision / glm-4.7-flash text) |
+| `OPENAI_API_BASE` | Zhipu OpenAI-compatible endpoint |
+| `VISION_MODEL` / `CHAT_MODEL` | Vision / text model names |
+
+> `VECTOR_DB_PATH` (vector DB file path) and `INFERENCE_PORT` are passed as env vars at startup and are not written to `.env`.
 
 ### 💡 Usage Tips
 
 #### Service Access
 
-- **Frontend UI**: <http://localhost:5173>
-- **Backend API**: <http://localhost:10050>  
-- **API Docs**: <http://localhost:10050/docs>
+- **Main frontend UI**: <http://localhost:3000>
+- **Inference service health check**: <http://localhost:8100/health>
 
 ## 📊 System Monitoring & Management
 
 ### System Status Monitoring
 
-Via system settings page, you can monitor:
+The settings page shows real-time status:
 
 - **System Info** - CPU, memory, disk usage
-- **DB Status** - Connection pool, table stats
-- **Storage Info** - Image count, tag count, storage usage
-- **Cache Status** - Cache dir size (MB), optional cache.db size, last_scan
-- **Vector DB** - Driver status, index info
-
-### Cache Statistics
-
-Cache API `/api/v1/system/cache` now only returns dir size (MB), optional cache.db size, and last_scan; after cleaning, frontend polls `/api/v1/system/cache/brief` to confirm reset.
+- **DB Status** - connection pool status, table statistics
+- **Storage Info** - image count, tag count, storage usage
+- **Vector DB** - driver status, index info
 
 ### Conversational Recommendation SSE Events
 
-Streaming endpoint only sends events: `rewrite_start`, `assistant_delta` (multiple), `complete`, `error`; internal selection is aggregated in complete.
-
-## License
-
-This project is licensed under [Apache License 2.0](LICENSE).
-
+The streaming endpoint only sends events: `rewrite_start`, `assistant_delta` (multiple), `complete`, `error`; the final image results are aggregated in `complete`.
 ## Contact
 
 If you have any questions or suggestions, feel free to contact me:
