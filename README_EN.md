@@ -108,11 +108,49 @@ Frontend can render "AI thinking / incremental reply / show image results" in re
 
 ### 🎨 User Interface
 
-- **Modern Design** - Beautiful UI based on React 18 + Ant Design 5
+- **Modern Design** - Warm gallery-style UI based on React 18 + shadcn/ui
 - **Responsive Layout** - Perfect for desktop and mobile
 - **Real-time Interaction** - Supports image preview, zoom, and editing
 - **Status Monitoring** - Real-time progress and system status
 - **System Management** - Complete config and monitoring interface
+
+#### Screenshots
+
+<table>
+  <tr>
+    <td align="center" width="50%"><b>Overview</b></td>
+    <td align="center" width="50%"><b>Previous Version</b></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/smartimager-界面总览.png" alt="Overview"></td>
+    <td><img src="docs/screenshots/smartimager-原版本.png" alt="Previous Version"></td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <td align="center" width="33%"><b>Home</b></td>
+    <td align="center" width="33%"><b>Image Library</b></td>
+    <td align="center" width="33%"><b>Image Detail</b></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/smartimager-首页.png" alt="Home"></td>
+    <td><img src="docs/screenshots/smartimager-图片库.png" alt="Image Library"></td>
+    <td><img src="docs/screenshots/smartimager-图片详情.png" alt="Image Detail"></td>
+  </tr>
+  <tr>
+    <td align="center"><b>Upload</b></td>
+    <td align="center"><b>Search</b></td>
+    <td align="center"><b>Tags</b></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/smartimager-上传图片.png" alt="Upload"></td>
+    <td><img src="docs/screenshots/smartimager-搜索.png" alt="Search"></td>
+    <td><img src="docs/screenshots/smartimager-标签管理.png" alt="Tags"></td>
+  </tr>
+</table>
+
+> Screenshots are from the Next.js full-stack version (`next-app/`). See `docs/Next.js迁移-进度记录.md` for migration details.
 
 ## 🎯 Core Technical Features
 

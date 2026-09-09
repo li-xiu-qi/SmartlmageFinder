@@ -108,11 +108,61 @@ data: {"image_ids":[12,8,5,...],"assistant_text":"已为你找到...","images_br
 
 ### 🎨 用户界面
 
-- **现代化设计** - 基于React 18 + Ant Design 5的精美界面
+- **现代化设计** - 基于 React 18 + shadcn/ui 的暖白画廊风格界面
 - **响应式布局** - 完美适配桌面端和移动端
 - **实时交互** - 支持图片预览、缩放和编辑操作
 - **状态监控** - 实时显示处理进度和系统状态
 - **系统管理** - 完善的配置管理和监控界面
+
+#### 界面总览
+
+<table>
+  <tr>
+    <td align="center" width="50%"><b>界面总览</b></td>
+    <td align="center" width="50%"><b>原版本</b></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/smartimager-界面总览.png" alt="界面总览"></td>
+    <td><img src="docs/screenshots/smartimager-原版本.png" alt="原版本"></td>
+  </tr>
+</table>
+
+#### 主要页面
+
+<table>
+  <tr>
+    <td align="center" width="33%"><b>首页</b></td>
+    <td align="center" width="33%"><b>图片库</b></td>
+    <td align="center" width="33%"><b>图片详情</b></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/smartimager-首页.png" alt="首页"></td>
+    <td><img src="docs/screenshots/smartimager-图片库.png" alt="图片库"></td>
+    <td><img src="docs/screenshots/smartimager-图片详情.png" alt="图片详情"></td>
+  </tr>
+  <tr>
+    <td align="center"><b>上传图片</b></td>
+    <td align="center"><b>智能搜索</b></td>
+    <td align="center"><b>标签管理</b></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/smartimager-上传图片.png" alt="上传图片"></td>
+    <td><img src="docs/screenshots/smartimager-搜索.png" alt="智能搜索"></td>
+    <td><img src="docs/screenshots/smartimager-标签管理.png" alt="标签管理"></td>
+  </tr>
+  <tr>
+    <td align="center"><b>标签筛选</b></td>
+    <td align="center"><b>系统设置</b></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/smartimager-图片库-标签筛选.png" alt="标签筛选"></td>
+    <td><img src="docs/screenshots/smartimager-系统设置.png" alt="系统设置"></td>
+    <td></td>
+  </tr>
+</table>
+
+> 以上截图来自 Next.js 全栈迁移后的版本（`next-app/`）。完整迁移记录见 `docs/Next.js迁移-进度记录.md`。
 
 ## 🎯 核心技术特点
 
@@ -193,6 +243,20 @@ python main.py
 cd frontend
 npm run dev
 ```
+
+#### 方式四：Next.js 全栈版本（新）
+
+业务层已迁至 Next.js，推理服务独立在 dgx-spark 上运行：
+
+```bash
+# 1. 推理服务（dgx-spark:8100，见 docs/Next.js迁移-进度记录.md 的启动命令）
+
+# 2. Next.js 全栈（本机:3000）
+cd next-app
+NODE_ENV=development npx next dev --port 3000 --webpack
+```
+
+> `--webpack` 必须带，Turbopack 在请求编译阶段会无限等待。
 
 > 推荐手动安装依赖和模型，避免脚本自动安装时等待过久。
 
