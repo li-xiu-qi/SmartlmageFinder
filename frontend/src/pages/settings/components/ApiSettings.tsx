@@ -17,7 +17,7 @@ const ApiSettings: React.FC<ApiSettingsProps> = ({ loading = false }) => {
             title="配置连接到OpenAI或其他兼容服务的API参数"
             getPopupContainer={(trigger) => trigger.parentElement || document.body}
           >
-            <InfoCircleOutlined style={{ marginLeft: 8, color: '#1890ff' }} />
+            <InfoCircleOutlined style={{ marginLeft: 8, color: 'hsl(var(--primary))' }} />
           </Tooltip>
         </span>
       } 
@@ -68,7 +68,7 @@ const ApiSettings: React.FC<ApiSettingsProps> = ({ loading = false }) => {
                   title="留空则使用OpenAI默认地址"
                   getPopupContainer={(trigger) => trigger.parentElement || document.body}
                 >
-                  <InfoCircleOutlined style={{ color: 'rgba(0,0,0,.45)' }} />
+                  <InfoCircleOutlined style={{ color: 'hsl(var(--muted-foreground))' }} />
                 </Tooltip>
               }
             />

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Tabs, message, Alert } from 'antd';
-import { SearchOutlined, PictureOutlined, FontSizeOutlined } from '@ant-design/icons';
+import { message } from 'antd';
+import { ScanSearch, Image as ImageIcon, Type } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
+import { cn } from '@/lib/utils';
 import searchService from '@/services/searchService';
 import tagService from '@/services/tagService';
 import { useVectorCapability } from '@/hooks/useVectorCapability';
@@ -202,63 +203,56 @@ const SearchPage: React.FC = () => {
     ? `语义搜索不可用（${unavailableReasons.join('、')}）。请使用「模糊搜索」进行关键词检索。`
     : '';
 
+  const tabs = [
+    { key: 'text', label: '语义搜索', icon: ScanSearch, enabled: vectorEnabled, node: <TextSearchForm onSearch={handleTextSearch} loading={loading} tags={tags} /> },
+    { key: 'image', label: '以图搜图', icon: ImageIcon, enabled: vectorEnabled, node: <ImageSearchForm onSearch={handleImageSearch} loading={loading} tags={tags} /> },
+    { key: 'fuzzy', label: '关键词搜索', icon: Type, enabled: true, node: <FuzzySearchForm onSearch={handleFuzzySearch} loading={loading} tags={tags} /> },
+  ];
+
   return (
-    <div className="search-page-container">
+    <div className="space-y-6">
+      <div className="space-y-1">
+        <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">搜索图片</h1>
+        <p className="text-sm text-muted-foreground">用自然语言描述、上传参考图，或按关键词检索你的收藏</p>
+      </div>
+
       {!vectorEnabled && degradeMessage && (
-        <Alert
-          message="语义搜索暂不可用"
-          description={degradeMessage}
-          type="warning"
-          showIcon
-          style={{ marginBottom: 16 }}
-          banner
-        />
+        <div className="rounded-lg border border-amber-300/50 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <span className="font-medium">语义搜索暂不可用。</span> {degradeMessage}
+        </div>
       )}
-      <Tabs
-        activeKey={activeTab}
-        onChange={handleTabChange}
-        className="search-tabs"
-        items={[
-          {
-            key: 'fuzzy',
-            label: <span><FontSizeOutlined /> 模糊搜索</span>,
-            children: (
-              <FuzzySearchForm
-                onSearch={handleFuzzySearch}
-                loading={loading}
-                tags={tags}
-              />
-            )
-          },
-          {
-            key: 'text',
-            label: <span><SearchOutlined /> 语义搜索</span>,
-            disabled: !vectorEnabled,
-            children: (
-              <TextSearchForm 
-                onSearch={handleTextSearch} 
-                loading={loading} 
-                tags={tags} 
-              />
-            )
-          },
-          {
-            key: 'image',
-            label: <span><PictureOutlined /> 以图语义搜索</span>,
-            disabled: !vectorEnabled,
-            children: (
-              <ImageSearchForm 
-                onSearch={handleImageSearch} 
-                loading={loading} 
-                tags={tags} 
-              />
-            )
-          }
-        ]}
-      />        <SearchResults 
-        loading={loading} 
-        results={results} 
-        total={total} 
+
+      {/* 分段切换 */}
+      <div className="inline-flex rounded-lg border bg-card p-1">
+        {tabs.map(({ key, label, icon: Icon, enabled }) => (
+          <button
+            key={key}
+            type="button"
+            disabled={!enabled}
+            onClick={() => enabled && handleTabChange(key)}
+            className={cn(
+              'flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors',
+              activeTab === key
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground',
+              !enabled && 'cursor-not-allowed opacity-40 hover:text-muted-foreground'
+            )}
+          >
+            <Icon className="h-4 w-4" strokeWidth={1.9} />
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* 当前搜索表单 */}
+      <div className="rounded-xl border bg-card p-5">
+        {tabs.find((t) => t.key === activeTab)?.node}
+      </div>
+
+      <SearchResults
+        loading={loading}
+        results={results}
+        total={total}
         searchTime={searchTime}
         searchKeyword={searchKeyword}
         referenceImage={referenceImage}

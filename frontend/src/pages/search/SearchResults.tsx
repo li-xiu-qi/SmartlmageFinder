@@ -1,14 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Empty, Row, Col, Card, Spin, Drawer, message } from 'antd';
-import { LoadingOutlined } from '@ant-design/icons';
-import SearchResultImageCard from '@/components/SearchResultImageCard';
+import { Drawer, Spin, message } from 'antd';
+import { SearchX, Loader2 } from 'lucide-react';
+import GalleryImageCard from '@/components/GalleryImageCard';
 import SearchMetaBar from '@/components/SearchMetaBar';
 import SharedImageDetail from '@/components/SharedImageDetail';
 import { imageService } from '@/services/api';
-import { ImageSearchResult } from '@/types/models';
-import { ImageDetail } from '@/types';
-import './SearchResults.less'; // 导入新的样式文件
-
+import { ImageSearchResult, ImageDetail } from '@/types/models';
 
 interface SearchResultsProps {
   loading: boolean;
@@ -23,7 +20,7 @@ interface SearchResultsProps {
 }
 
 /**
- * 搜索结果组件
+ * 搜索结果：画廊网格
  */
 const SearchResults: React.FC<SearchResultsProps> = ({
   loading,
@@ -31,7 +28,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({
   total,
   searchTime,
   searchKeyword,
-  referenceImage
+  referenceImage,
 }) => {
   const [selectedImage, setSelectedImage] = useState<ImageDetail | null>(null);
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
@@ -69,87 +66,81 @@ const SearchResults: React.FC<SearchResultsProps> = ({
 
   const handleImageUpdate = (updatedImage: ImageDetail) => {
     setSelectedImage(updatedImage);
-    setCurrentResults(prevResults => 
-      prevResults.map(item => 
-        item.id === updatedImage.id 
-          ? { ...item, title: updatedImage.title } 
-          : item
-      )
+    setCurrentResults((prev) =>
+      prev.map((item) => (item.id === updatedImage.id ? { ...item, title: updatedImage.title } : item))
     );
   };
 
   const handleImageDelete = (deletedImageId: number) => {
     setIsDrawerVisible(false);
     setSelectedImage(null);
-    setCurrentResults(prevResults => prevResults.filter(item => item.id !== deletedImageId));
+    setCurrentResults((prev) => prev.filter((item) => item.id !== deletedImageId));
     message.success('图片已删除');
   };
 
+  // 加载态
   if (loading) {
     return (
-      <div className="search-loading-container">
-        <Spin indicator={<LoadingOutlined style={{ fontSize: 36 }} spin />} />
-        <p>正在搜索，请稍候...</p>
+      <div className="flex flex-col items-center justify-center gap-3 py-24 text-muted-foreground">
+        <Loader2 className="h-7 w-7 animate-spin text-primary" strokeWidth={1.8} />
+        <p className="text-sm">正在搜索，请稍候…</p>
       </div>
     );
   }
 
-  // 如果没有搜索结果
+  // 空态
   if (currentResults.length === 0 && !loading) {
     return (
-      <Card className="search-results-empty">
-        <Empty 
-          description={
-            <span>
-              {searchKeyword 
-                ? `没有找到与 "${searchKeyword}" 相关的图片`
-                : "请输入关键词或上传图片进行搜索"}
-            </span>
-          }
-        />
-      </Card>
+      <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed py-24 text-center">
+        <SearchX className="h-10 w-10 text-muted-foreground/50" strokeWidth={1.5} />
+        <p className="text-sm text-muted-foreground">
+          {searchKeyword
+            ? `没有找到与「${searchKeyword}」相关的图片`
+            : '输入关键词，或上传一张图片开始搜索'}
+        </p>
+      </div>
     );
   }
 
   return (
-    <div className="search-results-container">
+    <div className="space-y-5">
       <SearchMetaBar total={total} searchTime={searchTime} referenceImage={referenceImage} />
-      
-      <Row gutter={[16, 16]} className="search-results-grid">
-        {currentResults.map(image => (
-          <Col xs={24} sm={12} md={8} lg={6} key={image.id} onClick={() => handleImageClick(image)}>
-            <SearchResultImageCard 
-              image={image} 
-              showSimilarity={true}
-            />
-          </Col>
-        ))}
-      </Row>
 
-      {selectedImage && (
-        <Drawer
-          title={selectedImage.title || "图片详情"}
-          placement="right"
-          width={640} // 修改宽度为 640
-          onClose={handleDrawerClose}
-          open={isDrawerVisible}
-          destroyOnHidden
-        >
-          {drawerLoading ? (
-            <div className="drawer-loading-indicator"> {/* 使用 CSS 类替代内联样式 */}
-              <Spin />
-              <p>正在加载详情...</p>
-            </div>
-          ) : (
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+        {currentResults.map((image) => (
+          <GalleryImageCard
+            key={image.id}
+            image={image as never}
+            showSimilarity
+            onClick={() => handleImageClick(image)}
+          />
+        ))}
+      </div>
+
+      <Drawer
+        title={selectedImage?.title || '图片详情'}
+        placement="right"
+        width={typeof window !== 'undefined' && window.innerWidth > 768 ? 640 : '100%'}
+        onClose={handleDrawerClose}
+        open={isDrawerVisible}
+        destroyOnHidden
+      >
+        {drawerLoading ? (
+          <div className="flex flex-col items-center justify-center gap-3 py-20 text-muted-foreground">
+            <Spin />
+            <p className="text-sm">正在加载详情…</p>
+          </div>
+        ) : (
+          selectedImage && (
             <SharedImageDetail
               image={selectedImage}
               onUpdate={handleImageUpdate}
               onDelete={handleImageDelete}
               onClose={handleDrawerClose}
             />
-          )}
-        </Drawer>
-      )}
+          )
+        )}
+      </Drawer>
     </div>
   );
 };

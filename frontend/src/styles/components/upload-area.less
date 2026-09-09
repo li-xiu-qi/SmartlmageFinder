@@ -1,16 +1,44 @@
-// 上传区域通用样式（从 App.less 抽取）
+// 上传区域通用样式（暖白画廊主题）
 .upload-area {
-  background: #fafafa;
-  border: 1px dashed #d9d9d9;
-  border-radius: 2px;
+  background: hsl(var(--card));
+  border: 1.5px dashed hsl(var(--input));
+  border-radius: var(--radius);
   cursor: pointer;
-  transition: border-color 0.3s;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
   text-align: center;
-  padding: 20px;
+  padding: 24px;
+
+  &:hover {
+    border-color: hsl(var(--primary) / 0.5);
+    background: hsl(var(--accent) / 0.4);
+  }
 
   .ant-upload-drag-icon { margin-bottom: 16px; }
 
-  .ant-upload-drag-icon .anticon { font-size: 48px; color: #1677ff; }
-  .ant-upload-text { font-size: 16px; margin: 0 0 4px; }
-  .ant-upload-hint { color: rgba(0, 0, 0, 0.45); }
+  .ant-upload-drag-icon .anticon {
+    font-size: 44px;
+    color: hsl(var(--primary));
+  }
+  .ant-upload-text { font-size: 15px; font-weight: 500; margin: 0 0 4px; color: hsl(var(--foreground)); }
+  .ant-upload-hint { color: hsl(var(--muted-foreground)); }
+}
+
+// antd Dragger 拖拽区边框/悬停态收敛到主题
+.ant-upload-wrapper .ant-upload-drag {
+  background: hsl(var(--card));
+  border: 1.5px dashed hsl(var(--input));
+  border-radius: var(--radius);
+
+  &:hover {
+    border-color: hsl(var(--primary) / 0.5);
+  }
+  .ant-upload-drag-icon .anticon {
+    color: hsl(var(--primary));
+  }
+  .ant-upload-text {
+    color: hsl(var(--foreground));
+  }
+  .ant-upload-hint {
+    color: hsl(var(--muted-foreground));
+  }
 }

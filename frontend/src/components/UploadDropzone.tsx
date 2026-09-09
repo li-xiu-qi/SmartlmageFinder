@@ -153,8 +153,9 @@ const UploadDropzone: React.FC<UploadDropzoneProps> = ({
             <Card
               size="small"
               style={{
-                border: '2px dashed #1890ff',
-                backgroundColor: '#f6ffed',
+                border: '1.5px dashed hsl(var(--primary) / 0.45)',
+                backgroundColor: 'hsl(var(--accent) / 0.45)',
+                borderRadius: 'var(--radius)',
                 cursor: 'text'
               }}
             >
@@ -176,8 +177,8 @@ const UploadDropzone: React.FC<UploadDropzoneProps> = ({
               >
                 <Space direction="vertical" size="small">
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <CopyOutlined style={{ color: '#52c41a', fontSize: 16 }} />
-                    <Text strong style={{ color: '#52c41a' }}>
+                    <CopyOutlined style={{ color: 'hsl(var(--primary))', fontSize: 16 }} />
+                    <Text strong style={{ color: 'hsl(var(--primary))' }}>
                       点击此区域，然后按 Ctrl+V 粘贴剪贴板中的图片
                     </Text>
                   </div>

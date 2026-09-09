@@ -5,7 +5,7 @@
 
 .system-runtime-icon {
   margin-left: 8px;
-  color: #1890ff;
+  color: hsl(var(--primary));
 }
 
 .system-runtime-loading {
@@ -34,6 +34,6 @@
 
 .system-runtime-icon-style {
   margin-left: 8px;
-  color: #1890ff;
+  color: hsl(var(--primary));
   cursor: help;
 }

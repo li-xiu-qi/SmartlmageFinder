@@ -144,3 +144,15 @@ rules.txt
 backend/tests/db_func_old
 
 article.md
+# Next.js app
+next-app/node_modules/
+next-app/.next/
+next-app/out/
+next-app/data/
+next-app/*.tsbuildinfo
+next-app/next-env.d.ts
+
+# 依赖备份目录（npm install 前的快照）
+node_modules.bak.*/
+*.bak.json
+*.bak

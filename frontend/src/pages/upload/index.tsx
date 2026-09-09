@@ -197,8 +197,13 @@ const UploadPage: React.FC = () => {
   };
 
   return (
-    <div className="upload-page">
-      <Card title="上传图片" className="upload-card">
+    <div className="upload-page space-y-6">
+      <div className="space-y-1">
+        <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">上传图片</h1>
+        <p className="text-sm text-muted-foreground">拖拽、选择或直接粘贴图片，可用 AI 自动生成标题、描述与标签</p>
+      </div>
+
+      <Card className="upload-card" styles={{ body: { padding: '24px' } }}>
         {/* 上传区域 */}
         <UploadDropzone
           fileList={fileList}

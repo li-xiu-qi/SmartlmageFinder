@@ -47,7 +47,7 @@ const ConcurrencySettings: React.FC<ConcurrencySettingsProps> = ({
             title="启用并发分析可以同时处理多张图片，提高分析速度，但会增加服务器负载"
             getPopupContainer={(trigger) => trigger.parentElement || document.body}
           >
-            <InfoCircleOutlined style={{ color: '#1890ff' }} />
+            <InfoCircleOutlined style={{ color: 'hsl(var(--primary))' }} />
           </Tooltip>
         </Space>
 
@@ -59,7 +59,7 @@ const ConcurrencySettings: React.FC<ConcurrencySettingsProps> = ({
               title="同时处理的图片数量。建议设置为1-10之间，数量越大速度越快但服务器压力越大"
               getPopupContainer={(trigger) => trigger.parentElement || document.body}
             >
-              <InfoCircleOutlined style={{ color: '#1890ff' }} />
+              <InfoCircleOutlined style={{ color: 'hsl(var(--primary))' }} />
             </Tooltip>
           </Space>
           <InputNumber
@@ -73,7 +73,7 @@ const ConcurrencySettings: React.FC<ConcurrencySettingsProps> = ({
         </Space>
 
         {/* 说明文本 */}
-        <div style={{ fontSize: '12px', color: '#666', marginTop: 8 }}>
+        <div style={{ fontSize: '12px', color: 'hsl(var(--muted-foreground))', marginTop: 8 }}>
           {concurrentAnalysis
             ? `当前设置：同时分析 ${concurrentLimit} 张图片`
             : '当前设置：逐张分析图片（串行模式）'

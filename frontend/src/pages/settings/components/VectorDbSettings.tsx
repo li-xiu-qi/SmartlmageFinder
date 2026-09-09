@@ -39,7 +39,7 @@ const VectorDbSettings: React.FC<VectorDbSettingsProps> = ({
             title="配置向量数据库驱动和 Embedding 模型，用于存储和检索向量数据"
             getPopupContainer={(trigger) => trigger.parentElement || document.body}
           >
-            <InfoCircleOutlined style={{ marginLeft: 8, color: '#1890ff' }} />
+            <InfoCircleOutlined style={{ marginLeft: 8, color: 'hsl(var(--primary))' }} />
           </Tooltip>
           <Badge 
             status={vectorEnabled ? 'success' : 'warning'} 
@@ -58,7 +58,7 @@ const VectorDbSettings: React.FC<VectorDbSettingsProps> = ({
             <>
               {vectorEngineStatus?.driver.error && <div>驱动: {vectorEngineStatus.driver.error}</div>}
               {vectorEngineStatus?.model.error && <div>模型: {vectorEngineStatus.model.error}</div>}
-              <div style={{ marginTop: 4, color: '#888' }}>配置驱动和模型后重启服务即可启用。模糊搜索不受影响。</div>
+              <div style={{ marginTop: 4, color: 'hsl(var(--muted-foreground))' }}>配置驱动和模型后重启服务即可启用。模糊搜索不受影响。</div>
             </>
           }
           type="warning"
@@ -74,7 +74,7 @@ const VectorDbSettings: React.FC<VectorDbSettingsProps> = ({
             <Badge status={driverStatusInfo.status} text={driverStatusInfo.text} />
           )}
           {driverPath && (
-            <span style={{ marginLeft: 8, color: '#888', fontSize: 12 }}>{driverPath}</span>
+            <span style={{ marginLeft: 8, color: 'hsl(var(--muted-foreground))', fontSize: 12 }}>{driverPath}</span>
           )}
         </Descriptions.Item>
         <Descriptions.Item label="Embedding 模型">
@@ -84,7 +84,7 @@ const VectorDbSettings: React.FC<VectorDbSettingsProps> = ({
             <Tag color="warning" icon={<RobotOutlined />}>未配置</Tag>
           )}
           {vectorEngineStatus?.model.path && (
-            <span style={{ marginLeft: 8, color: '#888', fontSize: 12 }}>
+            <span style={{ marginLeft: 8, color: 'hsl(var(--muted-foreground))', fontSize: 12 }}>
               {vectorEngineStatus.model.path}
               {vectorEngineStatus.model.dimension > 0 && ` (${vectorEngineStatus.model.dimension}维)`}
             </span>

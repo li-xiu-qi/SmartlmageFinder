@@ -3,23 +3,15 @@ import {
   Form,
   Button,
   message,
-  Typography,
-  Space,
   Spin,
-  Row,
-  Col,
   Card,
-  Tabs
 } from 'antd';
-import './styles.less';
 import {
   SaveOutlined,
   ReloadOutlined,
-  SettingOutlined,
   ExclamationCircleFilled,
-  SyncOutlined,
-  HddOutlined
 } from '@ant-design/icons';
+import { Activity, SlidersHorizontal, RefreshCw } from 'lucide-react';
 import systemService from '@/services/systemService';
 import { SystemStatusData, SystemConfig } from '@/types/system';
 import {
@@ -31,9 +23,7 @@ import {
   SystemRuntime
 } from './components';
 import RefModal from '@/components/RefModal';
-
-
-const { Title, Paragraph } = Typography;
+import { cn } from '@/lib/utils';
 
 const SettingsPage: React.FC = () => {
   const [form] = Form.useForm();
@@ -250,106 +240,100 @@ const SettingsPage: React.FC = () => {
     }
   };
 
+  const navItems = [
+    { key: 'status', label: '系统状态', icon: Activity },
+    { key: 'settings', label: '系统配置', icon: SlidersHorizontal },
+  ];
+
   return (
-    <div className="settings-page">
-      <Row gutter={[0, 16]}>
-        <Col span={24}>
-          <Card>
-            <Title level={4}>
-              <SettingOutlined /> 系统设置
-            </Title>
-            <Paragraph type="secondary">
-              配置 SmartImager 的各项参数，修改后点击"保存设置"按钮生效。部分设置项可能需要重启系统才能生效。
-            </Paragraph>
-          </Card>
-        </Col>
-      </Row>
+    <div className="space-y-6">
+      {/* 标题区 */}
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="space-y-1">
+          <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">系统设置</h1>
+          <p className="text-sm text-muted-foreground">
+            查看运行状态，或调整存储、API、模型与向量库参数。部分配置需重启后生效。
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={refreshSystemStatus}
+          className="inline-flex h-9 items-center gap-2 rounded-md border border-input bg-card px-4 text-sm font-medium text-secondary-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+        >
+          <RefreshCw className="h-4 w-4" strokeWidth={1.9} />
+          刷新状态
+        </button>
+      </div>
 
       <Spin spinning={loading}>
-        <Row gutter={[0, 16]}>
-          <Col span={24}>
-            <Tabs
-              defaultActiveKey="status"
-              activeKey={activeTab}
-              onChange={setActiveTab}
-              tabPosition="top"
-              type="card"
-              tabBarExtraContent={
-                <Button
-                  type="primary"
-                  icon={<SyncOutlined />}
-                  onClick={refreshSystemStatus}
-                >
-                  刷新状态
-                </Button>
-              }
-              items={[
-                {
-                  key: 'status',
-                  label: <span><HddOutlined /> 系统状态</span>,
-                  children: (
-                    <>
-                      <SystemRuntime />
-                      {systemStatus && <SystemStatus systemStatus={systemStatus} />}
-                    </>
-                  )
-                },
-                {
-                  key: 'settings',
-                  label: <span><SettingOutlined /> 系统配置</span>,
-                  children: activeTab === 'settings' ? (
-                    <Form
-                      form={form}
-                      layout="vertical"
-                      onFinish={handleSaveSettings}
+        <div className="flex flex-col gap-6 md:flex-row">
+          {/* 左侧分段导航 */}
+          <nav className="flex shrink-0 gap-1 overflow-x-auto md:w-44 md:flex-col">
+            {navItems.map(({ key, label, icon: Icon }) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setActiveTab(key)}
+                className={cn(
+                  'flex h-10 shrink-0 items-center gap-2.5 rounded-md px-3.5 text-sm font-medium transition-colors',
+                  activeTab === key
+                    ? 'bg-accent text-accent-foreground'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                )}
+              >
+                <Icon className="h-[18px] w-[18px]" strokeWidth={1.8} />
+                {label}
+              </button>
+            ))}
+          </nav>
+
+          {/* 内容面板 */}
+          <div className="min-w-0 flex-1">
+            {activeTab === 'status' && (
+              <div className="space-y-4">
+                <SystemRuntime />
+                {systemStatus && <SystemStatus systemStatus={systemStatus} />}
+              </div>
+            )}
+
+            {activeTab === 'settings' && (
+              <Form form={form} layout="vertical" onFinish={handleSaveSettings}>
+                <StorageSettings
+                  clearCacheLoading={clearCacheLoading}
+                  onClearCache={showClearCacheConfirm}
+                  systemStatus={systemStatus}
+                  loading={loading}
+                />
+                <ApiSettings loading={loading} />
+                <ModelSettings systemStatus={systemStatus} loading={loading} form={form} />
+                <VectorDbSettings systemStatus={systemStatus} loading={loading} />
+
+                <Card>
+                  <div className="flex flex-wrap gap-3">
+                    <Button
+                      type="primary"
+                      htmlType="submit"
+                      icon={<SaveOutlined />}
+                      loading={saveLoading}
+                      size="large"
                     >
-                      <StorageSettings
-                        clearCacheLoading={clearCacheLoading}
-                        onClearCache={showClearCacheConfirm}
-                        systemStatus={systemStatus}
-                        loading={loading}
-                      />
-
-                      <ApiSettings loading={loading} />
-
-                      <ModelSettings systemStatus={systemStatus} loading={loading} form={form} />
-
-                      <VectorDbSettings systemStatus={systemStatus} loading={loading} />
-
-                      <Card>
-                        <div className="settings-actions">
-                          <Space size="large">
-                            <Button
-                              type="primary"
-                              htmlType="submit"
-                              icon={<SaveOutlined />}
-                              loading={saveLoading}
-                              size="large"
-                            >
-                              保存设置
-                            </Button>
-                            <Button
-                              icon={<ReloadOutlined />}
-                              onClick={() => form.resetFields()}
-                              size="large"
-                            >
-                              重置
-                            </Button>
-                          </Space>
-                        </div>
-                      </Card>
-                    </Form>
-                  ) : null
-                }
-              ]}
-            />
-          </Col>
-        </Row>      </Spin>
+                      保存设置
+                    </Button>
+                    <Button icon={<ReloadOutlined />} onClick={() => form.resetFields()} size="large">
+                      重置
+                    </Button>
+                  </div>
+                </Card>
+              </Form>
+            )}
+          </div>
+        </div>
+      </Spin>
 
       {/* 清除缓存确认对话框 */}      <RefModal
         title={
           <span>
-            <ExclamationCircleFilled style={{ color: '#faad14', marginRight: 8 }} />
+            <ExclamationCircleFilled style={{ color: '#d97706', marginRight: 8 }} />
             确认清除缓存
           </span>
         }
@@ -362,16 +346,16 @@ const SettingsPage: React.FC = () => {
         okButtonProps={{ danger: true }}
       >
         <p>清除缓存将删除所有向量缓存数据，可能会导致下次搜索速度变慢。确定要继续吗？</p>
-        <Paragraph type="secondary">
+        <p className="text-sm text-muted-foreground">
           当前缓存大小: {systemStatus?.cache.total_size_mb.toFixed(2) || "0.00"} MB
-        </Paragraph>
+        </p>
       </RefModal>
 
       {/* 保存设置确认对话框 */}
       <RefModal
         title={
           <span>
-            <ExclamationCircleFilled style={{ color: '#faad14', marginRight: 8 }} />
+            <ExclamationCircleFilled style={{ color: '#d97706', marginRight: 8 }} />
             确认保存设置
           </span>
         }
@@ -383,13 +367,14 @@ const SettingsPage: React.FC = () => {
         cancelText="取消"
       >
         <p>保存的设置将直接写入配置文件，应用需要重启后部分设置才能生效。确定要保存吗？</p>
-        <Paragraph type="secondary">
-          <ul>
+        <div className="text-sm text-muted-foreground">
+          <ul className="list-disc pl-5">
             <li>API设置: 立即生效</li>
             <li>存储设置: 需重启后生效</li>
             <li>模型设置: 立即生效</li>
-            <li>向量数据库设置: 需重启后生效</li>          </ul>
-        </Paragraph>
+            <li>向量数据库设置: 需重启后生效</li>
+          </ul>
+        </div>
       </RefModal>
     </div>
   );

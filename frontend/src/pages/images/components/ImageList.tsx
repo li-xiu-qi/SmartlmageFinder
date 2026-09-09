@@ -1,8 +1,8 @@
 import React from 'react';
-import { Row, Col, Card, Empty, Image, Button, Tag, Popconfirm, Checkbox } from 'antd';
+import { Card, Empty, Image, Button, Tag, Popconfirm, Checkbox } from 'antd';
 import { EyeOutlined, DeleteOutlined } from '@ant-design/icons';
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
-import SearchResultImageCard from '@/components/SearchResultImageCard';
+import GalleryImageCard from '@/components/GalleryImageCard';
 import { ImageCardModel } from '@/utils/typeConverters';
 import { ViewMode } from './ViewControls';
 import dayjs from 'dayjs';
@@ -65,32 +65,30 @@ const ImageList: React.FC<ImageListProps> = ({
     return <Empty description="暂无图片" />;
   }
 
-  // 网格视图
+  // 网格视图（画廊）
   if (viewMode === 'grid') {
+    const colClass: Record<number, string> = {
+      2: 'grid-cols-1 sm:grid-cols-2',
+      3: 'grid-cols-2 sm:grid-cols-3',
+      4: 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4',
+      5: 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5',
+      6: 'grid-cols-2 sm:grid-cols-4 lg:grid-cols-6',
+    };
     return (
-      <Row gutter={[24, 24]}>
-        {images.map(image => (
-          <Col
-            xs={24}
-            sm={12}
-            md={12}
-            lg={24 / gridColumns}
-            xl={24 / gridColumns}
+      <div className={`grid gap-4 ${colClass[gridColumns] || colClass[4]}`}>
+        {images.map((image) => (
+          <GalleryImageCard
             key={image.id}
-          >            <div className="image-card-wrapper">
-              <SearchResultImageCard
-                image={image}
-                onClick={onImageClick}
-                showTags={true}
-                onTagClick={onTagClick}
-                multiSelectMode={multiSelectMode}
-                selected={selectedImageIds.has(image.id)}
-                onSelect={onImageSelect}
-              />
-            </div>
-          </Col>
+            image={image}
+            onClick={onImageClick}
+            showTags
+            onTagClick={onTagClick}
+            multiSelectMode={multiSelectMode}
+            selected={selectedImageIds.has(image.id)}
+            onSelect={onImageSelect}
+          />
         ))}
-      </Row>
+      </div>
     );
   }
 

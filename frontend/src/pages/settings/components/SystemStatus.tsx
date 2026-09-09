@@ -38,7 +38,7 @@ const SystemStatus: React.FC<SystemStatusProps> = ({ systemStatus }) => {
             title="显示系统各组件的运行状态与配置信息"
             getPopupContainer={(trigger) => trigger.parentElement || document.body}
           >
-            <InfoCircleOutlined style={{ marginLeft: 8, color: '#1890ff' }} />
+            <InfoCircleOutlined style={{ marginLeft: 8, color: 'hsl(var(--primary))' }} />
           </Tooltip>
         </span>
       }
