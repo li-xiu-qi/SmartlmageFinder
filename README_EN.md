@@ -386,11 +386,3 @@ The settings page shows real-time status:
 ### Conversational Recommendation SSE Events
 
 The streaming endpoint only sends events: `rewrite_start`, `assistant_delta` (multiple), `complete`, `error`; the final image results are aggregated in `complete`.
-## Contact
-
-If you have any questions or suggestions, feel free to contact me:
-
-<div align="center">
-  <img src="assets/wechat/筱可AI研习社_258.jpg" alt="XiaoKe AI Study Club" width="200">
-  <p>Scan the QR code to follow "XiaoKe AI Study Club" WeChat Official Account</p>
-</div>

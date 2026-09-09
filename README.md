@@ -403,12 +403,3 @@ SmartImager/
 ## 许可证
 
 本项目采用 [Apache License 2.0](LICENSE) 许可证。
-
-## 联系方式
-
-如果您在使用过程中遇到任何问题或有任何建议，欢迎联系我：
-
-<div align="center">
-  <img src="assets/wechat/筱可AI研习社_258.jpg" alt="筱可AI研习社" width="200">
-  <p>扫描二维码关注"筱可AI研习社"公众号</p>
-</div>
