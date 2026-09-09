@@ -26,7 +26,12 @@ SmartImager is a modern intelligent image search and management system, built wi
 ### Architecture Overview
 
 ![System Architecture](docs/架构图.png)
-The current version consists of two independent nodes communicating over HTTP. The **Next.js full-stack (localhost :3000)** serves the frontend pages and `/api/v1/*` business endpoints, with a local SQLite storing image metadata, conversations, and tags. The **Python inference service (remote :8100)** holds the jina-embeddings-v4 encoding model, the sqlite-vec vector store, and the glm vision model, exposing encoding, vector retrieval, and image analysis capabilities over HTTP. The separation lets the inference service restart or scale independently without slowing down the business layer.
+
+SmartImager is designed for **all-in-one deployment**: the business layer and AI computation run on the same machine by default, with local SQLite accessed directly, ready to use out of the box.
+
+The system has four layers. The **presentation layer** is the frontend with 7 pages (home, image library, upload, search, tags, settings, 404). The **business layer** is the Next.js full-stack, where `/api/v1/*` serves as the backend API, paired with a local SQLite storing image metadata, sessions, and tags. The **AI inference layer** is the Python inference service (`:8100`), holding the jina-embeddings-v4 encoding model, the sqlite-vec vector store, and the glm vision model, providing encoding, vector retrieval, and image analysis capabilities.
+
+Under all-in-one deployment, the business layer and AI inference layer run on the same machine, with the business layer calling the inference layer in-process. When dedicated compute such as GPU or large memory is needed, the architecture **natively supports** offloading the entire AI inference layer to a second machine (communicating over HTTP `:8100`), with no code changes to the business layer, only the inference service address needs updating.
 
 ## Features
 
@@ -149,8 +154,6 @@ Frontend can render "AI thinking / incremental reply / show image results" in re
   </tr>
 </table>
 
-> Screenshots are from the Next.js full-stack version (`next-app/`). See `docs/Next.js迁移-进度记录.md` for migration details.
-
 ## 🎯 Core Technical Features
 
 - **🧠 Conversational Recommendation Agent** - Multi-turn context (64K rolling window) + tool function calls
@@ -187,7 +190,7 @@ More details, config fields, and rollback strategy: `docs/model_migration.md`.
 
 ## 🚀 Quick Start
 
-SmartImager has two components: a **Next.js full-stack service (local)** and a **Python inference service (remote)**. They are deployed and started independently.
+SmartImager supports **all-in-one deployment**: the business layer (Next.js full-stack) and the AI inference layer (Python inference service) can run on the same machine, or the inference layer can be offloaded to a separate compute machine. The two parts below are started independently.
 
 ### Option 1: Next.js Full-Stack Version (current main version)
 
@@ -213,9 +216,9 @@ Then visit <http://localhost:3000>.
 The inference service owns the jina-embeddings-v4 model, the sqlite-vec vector store and the vision language model, and exposes capabilities over HTTP on `:8100`.
 
 ```bash
-# The inference service runs on a remote host (e.g. dgx-spark), not locally
+# The inference service can run locally or on a remote compute machine (e.g. dgx-spark)
 # Environment setup, model loading, .env config, vec0.so driver adaptation, startup commands, etc.
-# See docs/推理服务独立-拆分设计.md and docs/Next.js迁移-进度记录.md
+# See docs/推理服务独立-拆分设计.md
 ```
 
 The inference service exposes the following endpoints (on `:8100`):
@@ -319,10 +322,9 @@ SmartImager/
 │   ├── MIGRATION-NOTES.md        # Migration schema and status records
 │   └── package.json              # Next.js 16 + React 19 + TypeScript
 ├── assets/                       # Static assets such as logos
-├── docs/                         # Architecture diagram, screenshots, migration & split design docs
-│   ├── 架构图.png / 架构图.dot    #   System architecture diagram (source is Graphviz DOT)
+├── docs/                         # Architecture diagram, screenshots, design docs
+│   ├── 架构图.png / 架构图.html   #   System architecture diagram (source is HTML, renderable in browser)
 │   ├── screenshots/              # UI screenshots
-│   ├── Next.js迁移-进度记录.md    #   Migration process, verified endpoints, startup commands
 │   └── 推理服务独立-拆分设计.md    #   Inference service split design
 ├── main.py                       # Legacy all-in-one backend entry (archived, kept for compatibility)
 ├── start.py                      # Legacy one-click startup script (archived, kept for compatibility)

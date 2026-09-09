@@ -26,7 +26,12 @@ SmartImager 是一个现代化的智能图片搜索与管理系统，采用 **Ne
 ### 架构概览
 
 ![系统架构](docs/架构图.png)
-当前版本由两个节点组成。**Next.js 全栈（本机 :3000）** 承载前端 7 页面与 `/api/v1/*` 业务接口，本地 SQLite 存储图片元数据、会话与标签；**Python 推理服务（远程 :8100）** 持有 jina-embeddings-v4 编码模型、sqlite-vec 向量库与 glm 视觉模型，通过 HTTP 向上提供编码、向量检索与图像分析能力。两者分离，推理服务可独立重启、独立扩容，不拖累业务层启动速度。
+
+SmartImager 按**一体化部署**设计：业务层与 AI 计算默认跑在同一台机器，本地 SQLite 直接读写，开箱即用。
+
+整套系统分四层。**展示层**是前端 7 页面（首页 / 图片库 / 上传 / 搜索 / 标签 / 设置 / 404）。**业务层**是 Next.js 全栈，`/api/v1/*` 即后端接口，配本地 SQLite 存图片元数据、会话与标签。**AI 推理层**是 Python 推理服务（`:8100`），持有 jina-embeddings-v4 编码模型、sqlite-vec 向量库与 glm 视觉模型，提供编码、向量检索与图像分析能力。
+
+在一体机部署下，业务层与 AI 推理层同机运行，业务层通过进程内调用直连推理层。当需要 GPU、大内存等专用算力时，架构**原生支持**把整个 AI 推理层卸载到第二台机器（通过 HTTP `:8100` 通信），业务层无需改动代码，只需修改推理服务地址即可。
 
 ## 功能特性
 
@@ -160,8 +165,6 @@ data: {"image_ids":[12,8,5,...],"assistant_text":"已为你找到...","images_br
   </tr>
 </table>
 
-> 以上截图来自 Next.js 全栈迁移后的版本（`next-app/`）。完整迁移记录见 `docs/Next.js迁移-进度记录.md`。
-
 ## 🎯 核心技术特点
 
 - **🧠 对话式推荐** - 支持多轮上下文（基于 `conversation_id` 绑定会话历史）+ 多路向量召回
@@ -198,7 +201,7 @@ python migrate_embeddings.py --resume   # 中断后续传
 
 ## 🚀 快速开始
 
-SmartImager 由两个节点组成：**Next.js 全栈（本机）** 与 **Python 推理服务（远程）**。两者独立部署、独立启动。
+SmartImager 支持**一体化部署**：业务层（Next.js 全栈）与 AI 推理层（Python 推理服务）既可同机运行，也可把推理层卸载到另一台算力机。下文按「业务层 + 推理层」两部分说明，两者独立启动。
 
 ### 方式一：Next.js 全栈版本（当前主版本）
 
@@ -224,9 +227,9 @@ NODE_ENV=development npx next dev --port 3000 --webpack
 推理服务持有 jina-embeddings-v4 模型、sqlite-vec 向量库与 glm 视觉模型，通过 HTTP（`:8100`）向上提供能力。
 
 ```bash
-# 推理服务运行在远程主机（如 dgx-spark），不在本机
+# 推理服务可运行在本机或远程算力机（如 dgx-spark）
 # 环境准备、模型加载、.env 配置、vec0.so 驱动适配、启动命令等
-# 详见 docs/推理服务独立-拆分设计.md 与 docs/Next.js迁移-进度记录.md
+# 详见 docs/推理服务独立-拆分设计.md
 ```
 
 推理服务提供以下接口（`:8100`）：
@@ -332,10 +335,9 @@ SmartImager/
 │   ├── MIGRATION-NOTES.md        # 迁移范式与状态记录
 │   └── package.json              # Next.js 16 + React 19 + TypeScript
 ├── assets/                       # Logo 等静态资源
-├── docs/                         # 架构图、截图、迁移与拆分设计文档
-│   ├── 架构图.png / 架构图.dot    #   系统架构图（源文件为 Graphviz DOT）
+├── docs/                         # 架构图、截图、设计文档
+│   ├── 架构图.png / 架构图.html   #   系统架构图（源文件为 HTML，可用浏览器渲染导出）
 │   ├── screenshots/              # 界面截图
-│   ├── Next.js迁移-进度记录.md    #   迁移过程、已验证接口、启动命令
 │   └── 推理服务独立-拆分设计.md    #   推理服务拆分方案
 ├── main.py                       # 旧一体化后端入口（已归档，保留兼容）
 ├── start.py                      # 旧一键启动脚本（已归档，保留兼容）
