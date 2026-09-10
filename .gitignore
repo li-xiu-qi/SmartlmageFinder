@@ -162,3 +162,6 @@ next-app/next-env.d.ts
 node_modules.bak.*/
 *.bak.json
 *.bak
+
+# 编译缓存的历史备份目录（诊断时重命名保留，非源码）
+next-app/.next.old-*/
