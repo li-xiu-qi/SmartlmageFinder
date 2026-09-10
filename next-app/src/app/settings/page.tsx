@@ -26,17 +26,25 @@ import AppShell from '@/components/layout/AppShell'
 import { systemService } from '@/services/api'
 import { cn } from '@/lib/utils'
 
-// 轮询间隔：旧前端每秒拉一次运行时信息，但那套接口未迁移；
-// 这里每次拉取都会触发远端推理服务健康检查（5s 超时），1 秒轮询会打爆推理服务，故放宽到 10 秒。
+// 轮询间隔：每次拉取都会触发远端推理服务健康检查（5s 超时），1 秒轮询会打爆推理服务，故放宽到 10 秒。
 const POLL_INTERVAL_MS = 10_000
 const TOAST_DURATION_MS = 3_000
 
-// 模型配置：配置读写接口（getSystemConfig / updateSystemConfig）尚未迁移，
-// 这两个值是当前部署的实际取值，待接口到位后改为从接口读取。
-const CURRENT_VISION_MODEL = 'glm-4.6v-flash'
-const CURRENT_EMBEDDING_MODEL = 'jina-embeddings-v4'
+// 模型配置：配置读写接口（updateSystemConfig / clearCache）尚未迁移，
+// 展示用值一律从 /api/v1/system/config 读取，这里只作加载完成前的兜底。
+const FALLBACK_VISION_MODEL = 'glm-4.6v-flash'
+const FALLBACK_EMBEDDING_MODEL = 'jina-embeddings-v4'
 
-// /api/v1/system 当前实际返回的字段
+// 四个数据源，对应旧 FastAPI 的 /system/info、/database、/storage、/cache、/config
+interface SystemDetail {
+  info: any
+  database: any
+  storage: any
+  cache: any
+  config: any
+}
+
+// /api/v1/system 聚合接口：轻量，仅用于在线状态与响应时间探针
 interface SystemStatusData {
   status?: string
   image_count?: number
@@ -83,11 +91,11 @@ function StatusBadge({ status }: { status?: string }) {
 }
 
 // 单条信息行：dl/dt/dd 结构，比 antd Descriptions 轻
-function InfoRow({ label, children, tone }: { label: string; children?: React.ReactNode; tone?: string }) {
+function InfoRow({ label, children, tone, className }: { label: string; children?: React.ReactNode; tone?: string; className?: string }) {
   return (
     <div className="flex items-baseline justify-between gap-4 py-1.5">
       <dt className="shrink-0 text-sm text-muted-foreground">{label}</dt>
-      <dd className={cn('min-w-0 break-all text-right text-sm font-medium', tone || 'text-foreground')}>
+      <dd className={cn('min-w-0 break-all text-right text-sm font-medium', tone || 'text-foreground', className)}>
         {children ?? <span className="font-normal text-muted-foreground">暂无数据</span>}
       </dd>
     </div>
@@ -97,6 +105,7 @@ function InfoRow({ label, children, tone }: { label: string; children?: React.Re
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<TabKey>('status')
   const [systemStatus, setSystemStatus] = useState<SystemStatusData | null>(null)
+  const [detail, setDetail] = useState<SystemDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -118,17 +127,32 @@ export default function SettingsPage() {
   const fetchStatus = useCallback(async () => {
     const start = Date.now()
     try {
-      const res = await systemService.getStatus()
-      const latency = Date.now() - start
-      setResponseTime(latency)
-      if (res.data) {
-        setSystemStatus(res.data)
-        setLastUpdate(new Date())
-        setLoadError(null)
-        setErrorCount(0)
+      // 六个接口一次并行。推理服务健康检查在服务端已加 15s 缓存，
+      // 因此 config 的 3s 超时只会在缓存过期时付一次，不会让每轮都卡满。
+      const [status, info, database, storage, cache, config] = await Promise.all([
+        systemService.getStatus(),
+        systemService.getInfo(),
+        systemService.getDatabase(),
+        systemService.getStorage(),
+        systemService.getCache(),
+        systemService.getConfig(),
+      ])
+      setResponseTime(Date.now() - start)
+      if (status.data) {
+        setSystemStatus(status.data)
       } else {
         setErrorCount((c) => c + 1)
       }
+      setDetail({
+        info: info.data,
+        database: database.data,
+        storage: storage.data,
+        cache: cache.data,
+        config: config.data,
+      })
+      setLastUpdate(new Date())
+      setLoadError(null)
+      setErrorCount(0)
     } catch (e) {
       setResponseTime(Date.now() - start)
       setErrorCount((c) => c + 1)
@@ -184,7 +208,7 @@ export default function SettingsPage() {
           <div className="space-y-1">
             <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">系统设置</h1>
             <p className="text-sm text-muted-foreground">
-              查看运行状态与当前配置。配置在线修改接口尚未迁移，暂只读展示。
+              查看运行状态与当前配置。配置在线修改接口尚未迁移，页面为只读展示。
             </p>
           </div>
           <button
@@ -299,15 +323,21 @@ export default function SettingsPage() {
                             <p className="flex items-center gap-2 text-xs text-muted-foreground">
                               <Clock className="h-3.5 w-3.5" /> 应用运行时间
                             </p>
-                            <p className="mt-1 text-lg font-semibold text-foreground">暂无数据</p>
-                            <p className="mt-1 text-xs text-muted-foreground">运行时接口未迁移</p>
+                            <p className="mt-1 text-lg font-semibold text-foreground">
+                              {detail?.info?.app_uptime_formatted ?? '暂无数据'}
+                            </p>
+                            <p className="mt-1 text-xs text-muted-foreground">Node.js 进程启动至今</p>
                           </div>
                           <div className="rounded-md border p-4">
                             <p className="flex items-center gap-2 text-xs text-muted-foreground">
                               <Clock className="h-3.5 w-3.5" /> 系统时间
                             </p>
-                            <p className="mt-1 text-lg font-semibold text-foreground">暂无数据</p>
-                            <p className="mt-1 text-xs text-muted-foreground">运行时接口未迁移</p>
+                            <p className="mt-1 text-lg font-semibold text-foreground">
+                              {detail?.cache?.last_scan
+                                ? new Date(detail.cache.last_scan * 1000).toLocaleString('zh-CN')
+                                : '暂无数据'}
+                            </p>
+                            <p className="mt-1 text-xs text-muted-foreground">最近一次状态统计时刻</p>
                           </div>
                         </div>
                       </>
@@ -326,16 +356,19 @@ export default function SettingsPage() {
                     </CardHeader>
                     <CardContent>
                       <dl>
-                        <InfoRow label="版本" />
+                        <InfoRow label="版本">{detail?.info?.version}</InfoRow>
                         <InfoRow label="状态">
-                          <StatusBadge status={systemStatus?.status} />
+                          <StatusBadge status={detail?.info?.status} />
                         </InfoRow>
                         <InfoRow label="后端" tone="text-foreground">
-                          {systemStatus?.backend ?? '暂无数据'}
+                          {detail?.config?.backend ?? systemStatus?.backend}
                         </InfoRow>
-                        <InfoRow label="平台" />
-                        <InfoRow label="应用运行时间" />
-                        <InfoRow label="服务器地址" />
+                        <InfoRow label="平台">{detail?.info?.platform}</InfoRow>
+                        <InfoRow label="Node 版本">{detail?.info?.node_version}</InfoRow>
+                        <InfoRow label="应用运行时间">{detail?.info?.app_uptime_formatted}</InfoRow>
+                        <InfoRow label="服务器地址" className="break-all">
+                          {detail?.config?.inference_service_url}
+                        </InfoRow>
                       </dl>
                     </CardContent>
                   </Card>
@@ -349,18 +382,30 @@ export default function SettingsPage() {
                     </CardHeader>
                     <CardContent>
                       <dl>
-                        <InfoRow label="数据库状态" />
-                        <InfoRow label="数据库类型" />
-                        <InfoRow label="数据库版本" />
-                        <InfoRow label="向量状态" />
-                        <InfoRow label="向量驱动" />
-                        <InfoRow label="推理服务状态">
-                          <StatusBadge status={systemStatus?.inference_service} />
+                        <InfoRow label="数据库状态">
+                          <StatusBadge status={detail?.database?.status} />
                         </InfoRow>
-                        <InfoRow label="多模态 API" />
-                        <InfoRow label="当前 AI 分析模型">{CURRENT_VISION_MODEL}</InfoRow>
-                        <InfoRow label="Embedding 模型">{CURRENT_EMBEDDING_MODEL}</InfoRow>
-                        <InfoRow label="Embedding 维度" />
+                        <InfoRow label="数据库类型">{detail?.database?.type}</InfoRow>
+                        <InfoRow label="数据库版本" className="break-all">{detail?.database?.db_version}</InfoRow>
+                        <InfoRow label="向量状态">
+                          <StatusBadge status={detail?.database?.vector_status ? 'available' : 'missing'} />
+                        </InfoRow>
+                        <InfoRow label="向量驱动">
+                          <StatusBadge status={detail?.cache?.vector_engine?.driver?.available ? 'available' : 'missing'} />
+                        </InfoRow>
+                        <InfoRow label="推理服务状态">
+                          <StatusBadge status={detail?.config?.inference_service_status} />
+                        </InfoRow>
+                        <InfoRow label="多模态 API">
+                          <StatusBadge status={detail?.config?.inference_service_status === 'ok' ? 'enabled' : 'disabled'} />
+                        </InfoRow>
+                        <InfoRow label="当前 AI 分析模型">
+                          {detail?.config?.vision_model ?? FALLBACK_VISION_MODEL}
+                        </InfoRow>
+                        <InfoRow label="Embedding 模型">
+                          {detail?.config?.embedding_model ?? FALLBACK_EMBEDDING_MODEL}
+                        </InfoRow>
+                        <InfoRow label="Embedding 维度">{detail?.config?.embedding_dimension}</InfoRow>
                       </dl>
                     </CardContent>
                   </Card>
@@ -379,7 +424,7 @@ export default function SettingsPage() {
                             <FileImage className="h-3.5 w-3.5" /> 图片总数
                           </p>
                           <p className="mt-1 text-xl font-semibold text-foreground">
-                            {systemStatus?.image_count ?? 0}
+                            {detail?.storage?.total_images ?? systemStatus?.image_count ?? 0}
                             <span className="ml-1 text-xs font-normal text-muted-foreground">张</span>
                           </p>
                         </div>
@@ -387,15 +432,26 @@ export default function SettingsPage() {
                           <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
                             <Boxes className="h-3.5 w-3.5" /> 标签总数
                           </p>
-                          <p className="mt-1 text-xl font-semibold text-foreground">暂无数据</p>
+                          <p className="mt-1 text-xl font-semibold text-foreground">
+                            {detail?.storage?.total_tags ?? 0}
+                            <span className="ml-1 text-xs font-normal text-muted-foreground">个</span>
+                          </p>
                         </div>
                       </div>
                       <dl>
-                        <InfoRow label="数据库路径" />
-                        <InfoRow label="图片目录" />
-                        <InfoRow label="存储总大小" />
-                        <InfoRow label="缓存大小" />
-                        <InfoRow label="统计时间" />
+                        <InfoRow label="数据库路径" className="break-all">{detail?.database?.path}</InfoRow>
+                        <InfoRow label="图片目录" className="break-all">{detail?.storage?.upload_dir}</InfoRow>
+                        <InfoRow label="存储总大小">
+                          {detail?.storage?.total_size_mb !== undefined ? `${detail.storage.total_size_mb} MB` : undefined}
+                        </InfoRow>
+                        <InfoRow label="缓存大小">
+                          {detail?.cache?.total_size_mb !== undefined ? `${detail.cache.total_size_mb} MB` : undefined}
+                        </InfoRow>
+                        <InfoRow label="统计时间">
+                          {detail?.cache?.last_scan
+                            ? new Date(detail.cache.last_scan * 1000).toLocaleString('zh-CN')
+                            : undefined}
+                        </InfoRow>
                       </dl>
                     </CardContent>
                   </Card>
@@ -408,10 +464,10 @@ export default function SettingsPage() {
                 <div className="flex items-start gap-3 rounded-md border border-amber-500/40 bg-amber-500/5 p-4">
                   <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
                   <div className="space-y-1 text-sm">
-                    <p className="font-medium text-amber-700">配置读写接口尚未迁移</p>
+                    <p className="font-medium text-amber-700">配置只读，不支持在线修改</p>
                     <p className="text-muted-foreground">
-                      旧设置页的保存、重置、清除缓存操作依赖 getSystemConfig / updateSystemConfig / clearCache 等接口，
-                      这些接口在 next-app 中还没有实现，本页暂只展示当前生效的配置，不支持在线修改。
+                      读取已接通，下面的值实时取自 /api/v1/system/config 与 /system/cache。保存与清除缓存
+                      依赖 updateSystemConfig / clearCache 接口，尚未迁移，需要改配置请直接编辑服务端配置文件。
                     </p>
                   </div>
                 </div>
@@ -425,12 +481,11 @@ export default function SettingsPage() {
                   </CardHeader>
                   <CardContent>
                     <dl>
-                      <InfoRow label="AI 分析模型">{CURRENT_VISION_MODEL}</InfoRow>
-                      <InfoRow label="Embedding 模型">{CURRENT_EMBEDDING_MODEL}</InfoRow>
-                      <InfoRow label="Embedding 维度" />
-                      <InfoRow label="可用视觉模型列表" />
+                      <InfoRow label="AI 分析模型">{detail?.config?.vision_model ?? FALLBACK_VISION_MODEL}</InfoRow>
+                      <InfoRow label="Embedding 模型">{detail?.config?.embedding_model ?? FALLBACK_EMBEDDING_MODEL}</InfoRow>
+                      <InfoRow label="Embedding 维度">{detail?.config?.embedding_dimension}</InfoRow>
                       <InfoRow label="语义搜索状态">
-                        <StatusBadge status={systemStatus?.inference_service === 'ok' ? 'available' : undefined} />
+                        <StatusBadge status={detail?.config?.inference_service_status === 'ok' ? 'available' : 'unavailable'} />
                       </InfoRow>
                     </dl>
                   </CardContent>
@@ -445,13 +500,18 @@ export default function SettingsPage() {
                   </CardHeader>
                   <CardContent>
                     <dl>
-                      <InfoRow label="存储根目录" />
-                      <InfoRow label="缓存目录" />
-                      <InfoRow label="最大缓存大小" />
-                      <InfoRow label="当前缓存大小" />
-                      <InfoRow label="图片总数" tone="text-foreground">
-                        {systemStatus?.image_count ?? 0} 张
+                      <InfoRow label="存储根目录" className="break-all">{detail?.storage?.upload_dir}</InfoRow>
+                      <InfoRow label="缓存目录" className="break-all">
+                        {detail?.cache?.text_vector_cache?.path}
                       </InfoRow>
+                      <InfoRow label="最大缓存大小">{detail?.cache?.max_size_gb} GB</InfoRow>
+                      <InfoRow label="当前缓存大小">
+                        {detail?.cache?.total_size_mb !== undefined ? `${detail.cache.total_size_mb} MB` : undefined}
+                      </InfoRow>
+                      <InfoRow label="图片总数" tone="text-foreground">
+                        {detail?.storage?.total_images ?? systemStatus?.image_count ?? 0} 张
+                      </InfoRow>
+                      <InfoRow label="标签总数" tone="text-foreground">{detail?.storage?.total_tags ?? 0} 个</InfoRow>
                     </dl>
                   </CardContent>
                 </Card>
@@ -465,11 +525,24 @@ export default function SettingsPage() {
                   </CardHeader>
                   <CardContent>
                     <dl>
-                      <InfoRow label="sqlite-vec 驱动状态" />
-                      <InfoRow label="驱动路径" />
-                      <InfoRow label="title 向量条目数" />
-                      <InfoRow label="description 向量条目数" />
-                      <InfoRow label="image 向量条目数" />
+                      <InfoRow label="sqlite-vec 驱动状态">
+                        <StatusBadge status={detail?.cache?.vector_engine?.driver?.available ? 'available' : 'missing'} />
+                      </InfoRow>
+                      <InfoRow label="驱动版本">{detail?.cache?.vector_engine?.driver?.version}</InfoRow>
+                      <InfoRow label="向量功能总开关">
+                        <StatusBadge status={detail?.cache?.vector_engine?.enabled ? 'enabled' : 'disabled'} />
+                      </InfoRow>
+                      <InfoRow label="Embedding 模型可用性">
+                        <StatusBadge status={detail?.cache?.vector_engine?.model?.available ? 'available' : 'missing'} />
+                      </InfoRow>
+                      <InfoRow label="向量库路径" className="break-all">
+                        {detail?.cache?.image_vector_cache?.path}
+                      </InfoRow>
+                      <InfoRow label="向量库大小">
+                        {detail?.cache?.image_vector_cache?.size_mb !== undefined
+                          ? `${detail.cache.image_vector_cache.size_mb} MB`
+                          : undefined}
+                      </InfoRow>
                     </dl>
                   </CardContent>
                 </Card>
@@ -489,8 +562,15 @@ export default function SettingsPage() {
                       </p>
                     </div>
                     <dl>
-                      <InfoRow label="API 密钥" />
-                      <InfoRow label="API 基础 URL" />
+                      <InfoRow label="API 密钥">
+                        <span className="font-normal text-muted-foreground">仅存于服务端，不向前端暴露</span>
+                      </InfoRow>
+                      <InfoRow label="推理服务地址" className="break-all">
+                        {detail?.config?.inference_service_url}
+                      </InfoRow>
+                      <InfoRow label="后端类型" tone="text-foreground">
+                        {detail?.config?.backend ?? systemStatus?.backend}
+                      </InfoRow>
                     </dl>
                   </CardContent>
                 </Card>

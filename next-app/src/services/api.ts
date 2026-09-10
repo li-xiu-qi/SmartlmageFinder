@@ -19,10 +19,14 @@ export interface PaginatedResponse<T> extends ApiResponse<T[]> {
 
 // 统一请求封装
 async function request<T>(url: string, options?: RequestInit): Promise<ApiResponse<T>> {
+  // FormData 时不能设 Content-Type，要交给浏览器自动生成带 boundary 的 multipart 头。
+  // 这里原先无条件预设 application/json，覆盖了 api.post 传的空 headers，
+  // 结果是 multipart 请求被声明成 JSON，后端报 Unsupported content type。
+  const isForm = options?.body instanceof FormData
   const res = await fetch(url, {
     ...options,
     headers: {
-      'Content-Type': 'application/json',
+      ...(isForm ? {} : { 'Content-Type': 'application/json' }),
       ...options?.headers,
     },
   })
@@ -98,6 +102,22 @@ export const searchService = {
 }
 
 export const systemService = {
+  // 聚合总状态：轻量，含响应时间探针，用于轮询在线状态
   getStatus: () =>
     api.get<any>('/system'),
+  // 基本系统信息：版本 / 运行时间 / 平台 / 模型
+  getInfo: () =>
+    api.get<any>('/system/info'),
+  // 数据库状态：连接 / 版本 / 统计 / 向量
+  getDatabase: () =>
+    api.get<any>('/system/database'),
+  // 存储统计：图片数 / 大小 / 标签数 / 目录
+  getStorage: () =>
+    api.get<any>('/system/storage'),
+  // 缓存与向量引擎状态
+  getCache: () =>
+    api.get<any>('/system/cache'),
+  // 当前生效配置（只读）
+  getConfig: () =>
+    api.get<any>('/system/config'),
 }
