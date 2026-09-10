@@ -1,6 +1,24 @@
 import fs from 'fs'
+import path from 'path'
 
 const INFERENCE_URL = process.env.INFERENCE_SERVICE_URL || 'http://192.168.1.170:8100'
+
+// 按扩展名推导真实 MIME。远端解码器（PIL）虽能嗅探格式，
+// 但声明与实际内容一致是正确做法，也便于将来接严格校验的服务。
+const MIME_BY_EXT: Record<string, string> = {
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.png': 'image/png',
+  '.gif': 'image/gif',
+  '.webp': 'image/webp',
+  '.bmp': 'image/bmp',
+}
+
+function toDataUrl(filePath: string): string {
+  const buf = fs.readFileSync(filePath)
+  const mime = MIME_BY_EXT[path.extname(filePath).toLowerCase()] || 'image/jpeg'
+  return `data:${mime};base64,${buf.toString('base64')}`
+}
 
 export async function encodeText(inputs: string[]): Promise<number[][] | null> {
   try {
@@ -19,10 +37,7 @@ export async function encodeText(inputs: string[]): Promise<number[][] | null> {
 // 传入本机文件路径，在本机读文件转 base64 发远程
 export async function encodeImage(imagePaths: string[]): Promise<number[][] | null> {
   try {
-    const images = imagePaths.map((p) => {
-      const buf = fs.readFileSync(p)
-      return `data:image/jpeg;base64,${buf.toString('base64')}`
-    })
+    const images = imagePaths.map(toDataUrl)
     const r = await fetch(`${INFERENCE_URL}/encode`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

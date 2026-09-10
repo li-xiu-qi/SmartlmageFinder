@@ -5,9 +5,12 @@
  *
  * 迁移自旧前端 frontend/src/pages/upload（antd 版）。
  * 保留：拖拽/点击/粘贴选择图片、缩略图列表、逐文件上传状态、auto_analyze 开关、
- *       批量上传执行、结果统计与逐图分析结果展示。
- * 未迁移：上传前单张/批量 AI 预分析、元数据编辑弹窗、并发数设置 —— 依赖 next-app
- *         尚未登记的 /analyze 接口，见交付报告。
+ *       每批并发上传张数设置、批量上传执行、结果统计与逐图分析结果展示。
+ * 未迁移：上传前单张/批量 AI 预分析、元数据编辑弹窗 —— 见交付报告。
+ *
+ * 并发设置说明：旧前端的 concurrentLimit 限制的是「前端同时发起的 AI 分析请求数」；
+ * 新架构下服务端对单批内的图片串行分析（不会打满推理服务），故这里改为控制
+ * 「每批并发上传的张数」，语义是加速而非限流。
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -17,6 +20,7 @@ import {
   CheckCircle2,
   CloudUpload,
   FileImage,
+  Layers,
   RefreshCw,
   Sparkles,
   Trash2,
@@ -27,6 +31,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import AppShell from '@/components/layout/AppShell'
 import { imageService } from '@/services/api'
 import { cn } from '@/lib/utils'
@@ -202,6 +207,8 @@ export default function UploadPage() {
 
   const [selected, setSelected] = useState<SelectedFile[]>([])
   const [autoAnalyze, setAutoAnalyze] = useState(true)
+  /** 每批并发上传的张数。后端对单批内的图片是串行处理的，分批并发可缩短批量上传总耗时 */
+  const [concurrency, setConcurrency] = useState(5)
   const [uploading, setUploading] = useState(false)
   const [overallProgress, setOverallProgress] = useState(0)
   const [hasUploaded, setHasUploaded] = useState(false)
@@ -322,21 +329,34 @@ export default function UploadPage() {
 
     try {
       setOverallProgress(60)
-      const res = await imageService.upload(files, { auto_analyze: autoAnalyze })
-      setOverallProgress(90)
+      // 按并发数分批上传。后端对单批内的图片串行处理，批间并行可缩短总耗时。
+      // 各批结果按批次顺序拼接，与 selected 的索引一一对应。
+      const uploaded: UploadedImageInfo[] = []
+      /** 整批失败时的后端消息，按 selected 索引记录，便于每张图展示真实原因 */
+      const batchError = new Map<number, string>()
+      for (let i = 0; i < files.length; i += concurrency) {
+        const batch = files.slice(i, i + concurrency)
+        const res = await imageService.upload(batch, { auto_analyze: autoAnalyze })
 
-      // 后端成功码为 0；非 0 视为整批失败
-      if (!res || (res.code !== 0 && res.code !== '0')) {
-        throw new Error(res?.message || '上传失败')
+        // 后端成功码为 0；非 0 视为整批失败，用占位让这批图片标记为失败
+        if (!res || (res.code !== 0 && res.code !== '0')) {
+          const msg = res?.message || '上传失败'
+          for (let k = 0; k < batch.length; k++) {
+            uploaded.push(undefined as unknown as UploadedImageInfo)
+            batchError.set(i + k, msg)
+          }
+          continue
+        }
+        const batchUploaded = (Array.isArray(res.data) ? res.data : []) as unknown as UploadedImageInfo[]
+        for (let k = 0; k < batch.length; k++) uploaded.push(batchUploaded[k])
       }
-
-      const uploaded = (Array.isArray(res.data) ? res.data : []) as unknown as UploadedImageInfo[]
+      setOverallProgress(90)
       const items: UploadResultItem[] = selected.map((item, index) => {
         const image = uploaded[index]
         if (image) {
           return { id: item.uid, fileName: item.file.name, success: true, image }
         }
-        return { id: item.uid, fileName: item.file.name, success: false, message: '服务器未返回该图片的结果' }
+        return { id: item.uid, fileName: item.file.name, success: false, message: batchError.get(index) || '服务器未返回该图片的结果' }
       })
 
       const successCount = items.filter((i) => i.success).length
@@ -449,6 +469,29 @@ export default function UploadPage() {
                 disabled={disabled}
                 aria-label="上传后自动 AI 分析"
               />
+            </div>
+
+            {/* 并发设置 */}
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-card p-4">
+              <div className="flex items-start gap-2.5">
+                <Layers className="mt-0.5 h-4 w-4 shrink-0 text-primary" strokeWidth={1.9} />
+                <div className="space-y-0.5">
+                  <p className="text-sm font-medium text-foreground">每批并发上传张数</p>
+                  <p className="text-xs text-muted-foreground">
+                    服务端按批次串行写入图片，批次之间并行。批量上传时调大可缩短总耗时
+                  </p>
+                </div>
+              </div>
+              <Select value={String(concurrency)} onValueChange={(v) => setConcurrency(Number(v))} disabled={disabled}>
+                <SelectTrigger className="w-24" aria-label="每批并发上传张数">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[1, 2, 3, 5, 8, 10].map((n) => (
+                    <SelectItem key={n} value={String(n)}>{n} 张</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* 操作栏 */}

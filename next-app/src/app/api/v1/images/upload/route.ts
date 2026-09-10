@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
         const analysisRes = await fetch(`${INFERENCE_URL}/analyze`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ image_base64: `data:image/jpeg;base64,${buffer.toString("base64")}` }),
+          body: JSON.stringify({ image_base64: `data:${file.mimetype || 'image/jpeg'};base64,${buffer.toString("base64")}` }),
           signal: AbortSignal.timeout(30000),
         })
         if (analysisRes.ok) {
