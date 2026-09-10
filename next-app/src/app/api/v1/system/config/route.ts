@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server'
 import { inferenceHealth } from '@/lib/inference'
 import { getDb, countDistinctTags } from '@/lib/db'
+import { getInferenceUrl, readSettings } from '@/lib/settings'
 
 // GET /api/v1/system/config —— 当前生效配置（对齐旧 FastAPI /system/config）
+//
+// inference_service_url 是可在线调整的项（见 lib/settings.ts）；推理服务侧的模型名
+// 硬编码在远端服务里、不从请求读取，因此这里只展示、不可编辑。
 export async function GET() {
   try {
     const db = getDb()
@@ -24,7 +28,9 @@ export async function GET() {
         vision_model: process.env.VISION_MODEL || 'glm-4.6v-flash',
         embedding_model: process.env.EMBEDDING_MODEL || 'jina-embeddings-v4',
         embedding_dimension: 2048,
-        inference_service_url: process.env.INFERENCE_SERVICE_URL || 'http://192.168.1.170:8100',
+        inference_service_url: getInferenceUrl(),
+        // 用户是否已覆盖默认地址，供前端提示「当前为自定义配置」
+        inference_service_overridden: Boolean(readSettings().inference_service_url),
         inference_service_status: inferenceOk ? 'ok' : 'unavailable',
         db_path: db.name,
         image_count: imageCount,

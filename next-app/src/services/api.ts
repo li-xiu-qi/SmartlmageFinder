@@ -117,7 +117,22 @@ export const systemService = {
   // 缓存与向量引擎状态
   getCache: () =>
     api.get<any>('/system/cache'),
-  // 当前生效配置（只读）
+  // 当前生效配置。inference_service_url 可在线修改，其余为部署参数（只读）
   getConfig: () =>
     api.get<any>('/system/config'),
+  /**
+   * 保存用户配置。目前只接受 inference_service_url；
+   * 传空字符串表示恢复默认值（退回环境变量）。
+   */
+  updateConfig: (payload: { inference_service_url?: string }) =>
+    api.post<any>('/system/config/update', payload),
+  /**
+   * 清除辅助数据（AI 对话消息与推荐请求会话）。向量索引不受影响。
+   * 两个布尔参数对应旧 FastAPI 契约的 text_cache / image_cache。
+   */
+  clearCache: (opts: { textCache?: boolean; imageCache?: boolean } = {}) => {
+    const { textCache = true, imageCache = true } = opts
+    const qs = `?text_cache=${textCache}&image_cache=${imageCache}`
+    return api.post<any>('/system/cache/clear' + qs, {})
+  },
 }

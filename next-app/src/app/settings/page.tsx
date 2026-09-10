@@ -24,6 +24,7 @@ import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
 import AppShell from '@/components/layout/AppShell'
 import { systemService } from '@/services/api'
+import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
 // 轮询间隔：每次拉取都会触发远端推理服务健康检查（5s 超时），1 秒轮询会打爆推理服务，故放宽到 10 秒。
@@ -118,6 +119,73 @@ export default function SettingsPage() {
 
   const [toast, setToast] = useState<ToastState>(null)
 
+  // ── 推理服务地址编辑 ──
+  const [urlDraft, setUrlDraft] = useState('')
+  const [savingConfig, setSavingConfig] = useState(false)
+  const [clearingCache, setClearingCache] = useState(false)
+  /** 当前生效值由接口拉回，避免与 detail 不同步 */
+  const activeInferenceUrl = detail?.config?.inference_service_url ?? ''
+  // 空输入框视为「未编辑」而非「要清空」，因此初始状态保存按钮是禁用的。
+  // 恢复默认走独立按钮直接提交，不依赖这里。
+  const inferenceUrlDirty = urlDraft.trim() !== '' && urlDraft.trim() !== activeInferenceUrl
+
+  const handleSaveConfig = async (valueOverride?: string) => {
+    const value = (valueOverride ?? urlDraft).trim()
+    if (savingConfig) return
+    setSavingConfig(true)
+    try {
+      const res = await systemService.updateConfig({ inference_service_url: value })
+      if (!res || (res.code !== 0 && res.code !== '0')) {
+        setToast({ type: 'error', text: res?.message || '保存失败' })
+        return
+      }
+      setToast({
+        type: 'success',
+        text: value === '' ? '已恢复默认地址' : '已保存，立即生效',
+      })
+      // 健康状态有 TTL 缓存，拉一次状态以尽快反映新地址。
+      // 用 fetchStatus 而非 handleRefresh：后者会自带「系统状态已更新」toast，
+      // 会覆盖掉上面这条保存结果的提示。
+      await fetchStatus()
+    } catch (e) {
+      setToast({ type: 'error', text: (e as Error)?.message || '保存失败' })
+    } finally {
+      setSavingConfig(false)
+    }
+  }
+
+  const handleRestoreDefault = async () => {
+    setUrlDraft('')
+    await handleSaveConfig('')
+  }
+
+  const handleClearCache = async () => {
+    if (clearingCache) return
+    const ok = window.confirm(
+      '将清除全部 AI 对话消息与推荐请求会话，此操作不可撤销。\n' +
+      '图片、标签与向量索引不受影响。是否继续？'
+    )
+    if (!ok) return
+    setClearingCache(true)
+    try {
+      const res = await systemService.clearCache()
+      if (!res || (res.code !== 0 && res.code !== '0')) {
+        setToast({ type: 'error', text: res?.message || '清理失败' })
+        return
+      }
+      const d = res.data || {}
+      const total = (d.text_cache_entries_removed || 0) + (d.image_cache_entries_removed || 0)
+      setToast({
+        type: 'success',
+        text: total > 0 ? `已清除 ${total} 条记录（对话 ${d.text_cache_entries_removed || 0} + 会话 ${d.image_cache_entries_removed || 0}）` : '没有需要清除的记录',
+      })
+    } catch (e) {
+      setToast({ type: 'error', text: (e as Error)?.message || '清理失败' })
+    } finally {
+      setClearingCache(false)
+    }
+  }
+
   useEffect(() => {
     if (!toast) return
     const t = setTimeout(() => setToast(null), TOAST_DURATION_MS)
@@ -208,7 +276,7 @@ export default function SettingsPage() {
           <div className="space-y-1">
             <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">系统设置</h1>
             <p className="text-sm text-muted-foreground">
-              查看运行状态与当前配置。配置在线修改接口尚未迁移，页面为只读展示。
+              查看运行状态与配置。推理服务地址可在此修改并立即生效，模型名由推理服务侧决定。
             </p>
           </div>
           <button
@@ -370,6 +438,93 @@ export default function SettingsPage() {
                           {detail?.config?.inference_service_url}
                         </InfoRow>
                       </dl>
+                    </CardContent>
+                  </Card>
+
+                  {/* 可编辑配置 */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <Settings2 className="h-4 w-4 text-primary" strokeWidth={1.9} />
+                        推理服务地址
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="space-y-1.5">
+                        <label htmlFor="inference-url" className="text-xs text-muted-foreground">
+                          向量编码、图片分析与以图搜图都请求这个地址。保存后立即生效，无需重启。
+                        </label>
+                        <input
+                          id="inference-url"
+                          type="text"
+                          inputMode="url"
+                          autoComplete="off"
+                          spellCheck={false}
+                          placeholder={activeInferenceUrl || 'http://192.168.1.170:8100'}
+                          value={urlDraft}
+                          onChange={(e) => setUrlDraft(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && inferenceUrlDirty) void handleSaveConfig()
+                          }}
+                          className="h-9 w-full rounded-md border border-input bg-card px-3 text-sm text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        />
+                        {detail?.config?.inference_service_overridden && (
+                          <p className="text-xs text-muted-foreground">
+                            当前为自定义地址。清空输入框并保存可恢复默认值。
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => void handleSaveConfig()}
+                          disabled={!inferenceUrlDirty || savingConfig}
+                        >
+                          {savingConfig ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : null}
+                          保存
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setUrlDraft(activeInferenceUrl)}
+                          disabled={!inferenceUrlDirty}
+                        >
+                          撤销修改
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={handleRestoreDefault}
+                          disabled={savingConfig || !detail?.config?.inference_service_overridden}
+                        >
+                          恢复默认
+                        </Button>
+                      </div>
+                      <div className="flex flex-wrap items-start justify-between gap-3 rounded-lg border border-dashed p-3">
+                        <div className="space-y-0.5">
+                          <p className="text-sm font-medium text-foreground">清除辅助数据</p>
+                          <p className="text-xs text-muted-foreground">
+                            清除 AI 对话消息与推荐请求会话。图片、标签与向量索引不受影响。
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={handleClearCache}
+                          disabled={clearingCache}
+                        >
+                          {clearingCache ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : null}
+                          清除
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        AI 分析模型（{detail?.config?.vision_model ?? 'glm-4.6v-flash'}）与 Embedding 模型
+                        （{detail?.config?.embedding_model ?? 'jina-embeddings-v4'}）由推理服务侧决定，不在此处修改。
+                      </p>
                     </CardContent>
                   </Card>
 
