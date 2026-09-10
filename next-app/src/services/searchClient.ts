@@ -4,8 +4,7 @@ import type { ImageDetail } from '@/services/api'
 /**
  * 搜索客户端：把后端各搜索接口的返回结构归一化成统一的 SearchOutcome。
  *
- * 说明：本项目尚未新增「文本语义搜索」与「上传图片语义搜索」路由，
- * 对应调用由 SEARCH_API_STATUS 门控，补齐路由后把开关改回 true 即可。
+ * 文本语义搜索与上传图片语义搜索的路由均已接入，调用由 SEARCH_API_STATUS 门控。
  */
 
 /** 搜索结果项：图片详情 + 相似度得分（GalleryImageCard 依赖 score 展示相似度） */
@@ -64,14 +63,14 @@ export interface FuzzySearchParams {
 }
 
 /**
- * 搜索接口接入状态。后端补齐路由后改回 true，页面无需其他改动。
+ * 搜索接口接入状态。后端路由已补齐，两个开关均为 true。
  * - textSearch：GET  /api/v1/search/unified
  * - imageUpload：POST /api/v1/search/unified/image
  * 已就位的接口（/search/similar/[id]、/images）不受此开关约束。
  */
 export const SEARCH_API_STATUS = {
-  textSearch: false,
-  imageUpload: false,
+  textSearch: true,
+  imageUpload: true,
 } as const
 
 /** 接口尚未接入时抛出，页面据此给出「待实现」提示而不是裸报错 */
