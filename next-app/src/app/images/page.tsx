@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { LayoutGrid, List, Trash2, Download, CheckSquare, X, Search, Filter, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -17,7 +17,7 @@ import type { ImageDetail } from '@/services/api'
 
 const PAGE_SIZES = [20, 40, 60, 100]
 
-export default function ImagesPage() {
+function ImagesPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [loading, setLoading] = useState(false)
@@ -319,5 +319,23 @@ export default function ImagesPage() {
         onDelete={handleDelete}
       />
     </AppShell>
+  )
+}
+
+export default function ImagesPage() {
+  return (
+    <Suspense
+      fallback={
+        <AppShell>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <Skeleton key={i} className="aspect-[4/3] rounded-lg" />
+            ))}
+          </div>
+        </AppShell>
+      }
+    >
+      <ImagesPageContent />
+    </Suspense>
   )
 }
